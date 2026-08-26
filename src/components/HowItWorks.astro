@@ -1,0 +1,33 @@
+---
+const steps = [
+	{ n: "1", title: "Invita a SP Agency", desc: "Un clic, sin configuración compleja de por medio." },
+	{ n: "2", title: "Define tus reglas", desc: "Umbrales de raid, verificación y listas blancas a tu medida." },
+	{ n: "3", title: "Protegido 24/7", desc: "Detección y respuesta automática desde el primer minuto." },
+];
+---
+
+<section id="how" class="mx-auto max-w-[1180px] px-8 pt-5 pb-[110px]">
+	<div class="mx-auto mb-16 max-w-[560px] text-center">
+		<div class="text-accent mb-3.5 text-[13px] font-bold tracking-[0.08em] uppercase">Cómo funciona</div>
+		<h2 class="font-display text-[38px] font-bold tracking-tight">Configurado en tres pasos</h2>
+	</div>
+
+	<div class="relative grid grid-cols-1 gap-8 md:grid-cols-3">
+		<div
+			class="border-border via-accent absolute top-[23px] right-[16.6%] left-[16.6%] hidden h-px bg-gradient-to-r from-transparent to-transparent md:block"
+			style="background: linear-gradient(90deg, var(--color-border), var(--color-accent), var(--color-border));"
+		>
+		</div>
+		{
+			steps.map((s) => (
+				<div class="relative text-center">
+					<div class="border-accent text-accent bg-bg font-display relative z-10 mx-auto mb-5 flex h-[46px] w-[46px] items-center justify-center rounded-full border-2 text-base font-bold">
+						{s.n}
+					</div>
+					<h3 class="mb-2 text-base font-bold">{s.title}</h3>
+					<p class="text-text-dim mx-auto max-w-[260px] text-sm leading-relaxed">{s.desc}</p>
+				</div>
+			))
+		}
+	</div>
+</section>

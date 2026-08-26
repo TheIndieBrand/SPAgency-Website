@@ -1,0 +1,29 @@
+<svg
+	class="pointer-events-none absolute top-0 left-0 h-[1400px] w-full opacity-50"
+	viewBox="0 0 1440 1400"
+	preserveAspectRatio="xMidYMin slice"
+>
+	<defs>
+		<pattern id="grid" width="60" height="60" patternUnits="userSpaceOnUse">
+			<path d="M60 0 L0 0 0 60" fill="none" stroke="oklch(0.4 0.03 258 / 0.35)" stroke-width="1"></path>
+		</pattern>
+		<radialGradient id="fade" cx="72%" cy="8%" r="55%">
+			<stop offset="0%" stop-color="oklch(0.84 0.16 174 / 0.16)"></stop>
+			<stop offset="45%" stop-color="oklch(0.15 0.018 258 / 0)"></stop>
+			<stop offset="100%" stop-color="oklch(0.15 0.018 258 / 0)"></stop>
+		</radialGradient>
+	</defs>
+	<rect width="1440" height="1400" fill="url(#grid)"></rect>
+	<rect width="1440" height="1400" fill="url(#fade)"></rect>
+	<g stroke="oklch(0.84 0.16 174 / 0.55)" stroke-width="1.5" fill="none">
+		<path d="M1080 60 L1080 180 L1200 180 L1200 300"></path>
+		<path d="M960 40 L960 140 L1320 140"></path>
+		<path d="M1260 260 L1380 260 L1380 420"></path>
+	</g>
+	<g fill="oklch(0.84 0.16 174 / 0.9)">
+		<circle class="animate-glow-pulse" cx="1200" cy="300" r="4" style="animation-delay: 0s"></circle>
+		<circle class="animate-glow-pulse" cx="1080" cy="180" r="3" style="animation-delay: 0.6s"></circle>
+		<circle class="animate-glow-pulse" cx="1320" cy="140" r="3" style="animation-delay: 1.2s"></circle>
+		<circle class="animate-glow-pulse" cx="1380" cy="420" r="4" style="animation-delay: 1.8s"></circle>
+	</g>
+</svg>

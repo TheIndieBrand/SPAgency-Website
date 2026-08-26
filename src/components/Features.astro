@@ -1,0 +1,60 @@
+---
+const features = [
+	{
+		icon: "bi-broadcast-pin",
+		title: "Detección de raids en tiempo real",
+		desc: "Analiza patrones de entrada y bloquea oleadas de cuentas antes de que actúen.",
+	},
+	{
+		icon: "bi-patch-check",
+		title: "Verificación de cuentas",
+		desc: "Filtra cuentas nuevas, sin avatar o sospechosas con reglas configurables.",
+	},
+	{
+		icon: "bi-funnel",
+		title: "Anti-spam inteligente",
+		desc: "Detecta mensajes masivos, menciones y enlaces maliciosos al instante.",
+	},
+	{
+		icon: "bi-file-earmark-text",
+		title: "Registros de seguridad",
+		desc: "Historial detallado de cada acción para auditar lo que pasó y cuándo.",
+	},
+	{
+		icon: "bi-cpu",
+		title: "Auto-moderación con IA",
+		desc: "Modelos entrenados para distinguir tráfico legítimo de ataques coordinados.",
+	},
+	{
+		icon: "bi-speedometer2",
+		title: "Panel de control web",
+		desc: "Configura umbrales, whitelist y alertas sin tocar comandos.",
+	},
+];
+---
+
+<section id="features" class="mx-auto max-w-[1180px] px-8 pt-5 pb-[110px]">
+	<div class="mx-auto mb-14 max-w-[560px] text-center">
+		<div class="text-accent mb-3.5 text-[13px] font-bold tracking-[0.08em] uppercase">Funciones</div>
+		<h2 class="font-display mb-3.5 text-[38px] font-bold tracking-tight">
+			Todo lo que necesitas para dormir tranquilo
+		</h2>
+		<p class="text-text-dim text-base leading-relaxed">
+			Un sistema de defensa completo, configurable en minutos y sin tocar código.
+		</p>
+	</div>
+
+	<div class="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3">
+		{
+			features.map((f) => (
+				<div class="border-border-soft bg-card hover:border-accent/45 hover:bg-card-hover rounded-[14px] border p-7 transition-all duration-200 hover:-translate-y-[3px]">
+					<div class="bg-accent-dim text-accent mb-5 flex h-11 w-11 items-center justify-center rounded-[10px] text-xl">
+						<i class={`bi ${f.icon}`} />
+					</div>
+					<h3 class="mb-2 text-[17px] font-bold">{f.title}</h3>
+					<p class="text-text-dim text-sm leading-relaxed">{f.desc}</p>
+				</div>
+			))
+		}
+	</div>
+</section>

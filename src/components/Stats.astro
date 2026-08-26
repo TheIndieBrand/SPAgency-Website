@@ -1,0 +1,21 @@
+---
+const stats = [
+	{ value: "12.4K+", label: "Servidores protegidos" },
+	{ value: "89K+", label: "Raids bloqueados" },
+	{ value: "<100ms", label: "Tiempo de respuesta" },
+	{ value: "99.9%", label: "Uptime" },
+];
+---
+
+<section class="mx-auto max-w-[1180px] px-8 pb-[100px]">
+	<div class="border-border-soft bg-border-soft grid grid-cols-2 gap-px overflow-hidden rounded-2xl border md:grid-cols-4">
+		{
+			stats.map((stat) => (
+				<div class="bg-bg-soft px-6 py-8 text-center">
+					<div class="font-display text-[34px] font-bold tracking-tight">{stat.value}</div>
+					<div class="text-text-faint mt-1.5 text-sm">{stat.label}</div>
+				</div>
+			))
+		}
+	</div>
+</section>

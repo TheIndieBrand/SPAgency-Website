@@ -1,0 +1,50 @@
+---
+import ShieldLogo from "./icons/ShieldLogo.astro";
+
+const columns = [
+	{
+		title: "Producto",
+		links: ["Funciones", "Comandos", "Changelog"],
+	},
+	{
+		title: "Recursos",
+		links: ["Documentación", "Soporte", "Estado del sistema"],
+	},
+	{
+		title: "Comunidad",
+		links: ["Discord", "GitHub", "Términos"],
+	},
+];
+---
+
+<footer class="border-border-soft border-t">
+	<div class="mx-auto grid max-w-[1180px] grid-cols-2 gap-8 px-8 pt-14 pb-10 md:grid-cols-[1.4fr_1fr_1fr_1fr]">
+		<div class="col-span-2 md:col-span-1">
+			<div class="mb-3.5 flex items-center gap-2.5">
+				<ShieldLogo size={26} />
+				<span class="font-display text-base font-bold">SP Agency</span>
+			</div>
+			<p class="text-text-faint max-w-[240px] text-sm leading-relaxed">
+				Seguridad automatizada para comunidades de Discord.
+			</p>
+		</div>
+
+		{
+			columns.map((col) => (
+				<div>
+					<div class="text-text mb-3.5 text-[13px] font-bold">{col.title}</div>
+					<div class="flex flex-col gap-2.5">
+						{col.links.map((link) => (
+							<a href="#" class="text-text-dim hover:text-text text-sm font-semibold transition-colors">
+								{link}
+							</a>
+						))}
+					</div>
+				</div>
+			))
+		}
+	</div>
+	<div class="border-border-soft text-text-faint mx-auto max-w-[1180px] border-t px-8 py-6 text-[13px]">
+		© 2026 SP Agency. Todos los derechos reservados.
+	</div>
+</footer>

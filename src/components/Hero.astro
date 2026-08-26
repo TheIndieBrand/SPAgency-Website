@@ -1,0 +1,49 @@
+---
+import ShieldOutline from "./icons/ShieldOutline.astro";
+---
+
+<section class="relative mx-auto max-w-[1180px] px-8 pt-[120px] pb-[100px] text-center">
+	<div
+		class="border-border bg-bg-soft text-accent mb-7 inline-flex items-center gap-2 rounded-full border px-3.5 py-1.5 text-[13px] font-semibold"
+	>
+		<span
+			class="bg-accent inline-block h-1.5 w-1.5 rounded-full"
+			style="box-shadow: 0 0 8px var(--color-accent);"></span>
+		Protección activa 24/7
+	</div>
+
+	<h1 class="font-display mb-6 text-[64px] leading-[1.06] font-bold tracking-tight">
+		Tu servidor,<br />
+		blindado contra <span class="text-accent">raids</span> en<br />
+		tiempo real.
+	</h1>
+
+	<p class="text-text-dim mx-auto mb-10 max-w-[600px] text-[19px] leading-relaxed">
+		SP Agency detecta oleadas de bots, cuentas falsas y ataques coordinados en segundos, y responde
+		automáticamente antes de que tu comunidad lo note.
+	</p>
+
+	<div class="flex flex-wrap items-center justify-center gap-3.5">
+		<a
+			href="#"
+			class="bg-blue hover:bg-blue-hover border-blue hover:border-blue-hover rounded-[10px] border px-[26px] py-3.5 text-[15px] font-bold text-white transition-colors"
+		>
+			Añadir a Discord — gratis
+		</a>
+		<a
+			href="#"
+			class="border-border hover:border-accent hover:bg-bg-soft rounded-[10px] border px-[26px] py-3.5 text-[15px] font-bold transition-colors"
+		>
+			Ver documentación
+		</a>
+	</div>
+
+	<div class="relative mx-auto mt-20 h-[220px] w-[220px]">
+		<div
+			class="absolute -inset-10 rounded-full"
+			style="background: radial-gradient(circle, oklch(0.84 0.16 174 / 0.22) 0%, oklch(0.15 0.018 258 / 0) 70%);"
+		>
+		</div>
+		<ShieldOutline size={220} class="relative" />
+	</div>
+</section>

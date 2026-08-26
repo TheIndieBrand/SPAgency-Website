@@ -1,0 +1,42 @@
+@import "tailwindcss";
+@import "bootstrap-icons/font/bootstrap-icons.css";
+
+@theme {
+  --font-display: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Manrope", ui-sans-serif, system-ui, sans-serif;
+
+  --color-bg: oklch(0.15 0.018 258);
+  --color-bg-soft: oklch(0.185 0.02 258);
+  --color-card: oklch(0.205 0.02 258);
+  --color-card-hover: oklch(0.235 0.02 258);
+  --color-border: oklch(0.34 0.02 258 / 0.5);
+  --color-border-soft: oklch(0.34 0.02 258 / 0.28);
+  --color-text: oklch(0.965 0.006 258);
+  --color-text-dim: oklch(0.72 0.014 258);
+  --color-text-faint: oklch(0.52 0.014 258);
+  --color-accent: oklch(0.84 0.16 174);
+  --color-accent-dim: oklch(0.84 0.16 174 / 0.14);
+  --color-blue: oklch(0.565 0.16 255);
+  --color-blue-hover: oklch(0.615 0.16 255);
+}
+
+@layer base {
+  ::selection {
+    background: var(--color-accent-dim);
+    color: var(--color-text);
+  }
+}
+
+@keyframes glow-pulse {
+  0%,
+  100% {
+    opacity: 0.35;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+.animate-glow-pulse {
+  animation: glow-pulse 2.6s ease-in-out infinite;
+}
