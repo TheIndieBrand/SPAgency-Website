@@ -1,5 +1,5 @@
 ---
-import ShieldOutline from "./icons/ShieldOutline.astro";
+import ShieldGlow from "./icons/ShieldGlow.astro";
 ---
 
 <section class="relative mx-auto max-w-[1180px] px-8 pt-[120px] pb-[100px] text-center">
@@ -38,12 +38,11 @@ import ShieldOutline from "./icons/ShieldOutline.astro";
 		</a>
 	</div>
 
-	<div class="relative mx-auto mt-20 h-[220px] w-[220px]">
-		<div
-			class="absolute -inset-10 rounded-full"
-			style="background: radial-gradient(circle, oklch(0.84 0.16 174 / 0.22) 0%, oklch(0.15 0.018 258 / 0) 70%);"
-		>
-		</div>
-		<ShieldOutline size={220} class="relative" />
+	<div class="relative mx-auto mt-20 h-[240px] w-[240px]">
+		<ShieldGlow
+			size={240}
+			class="relative"
+			style="filter: drop-shadow(0 0 18px var(--color-accent)) drop-shadow(0 0 46px var(--color-accent));"
+		/>
 	</div>
 </section>
