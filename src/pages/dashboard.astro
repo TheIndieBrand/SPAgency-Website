@@ -1,0 +1,111 @@
+---
+export const prerender = false;
+
+import Layout from "../layouts/Layout.astro";
+import Navbar from "../components/Navbar.astro";
+import { getUserGuilds, getBotGuildIds, hasAdminAccess, guildIconUrl } from "../lib/discord";
+
+const cookieName = process.env.SESSION_COOKIE_NAME || "spa_session";
+const raw = Astro.cookies.get(cookieName)?.value;
+
+if (!raw) return Astro.redirect("/auth/discord/login");
+
+let session: { access_token: string } | null = null;
+try {
+	session = JSON.parse(raw);
+} catch {
+	session = null;
+}
+
+if (!session) {
+	Astro.cookies.delete(cookieName, { path: "/" });
+	return Astro.redirect("/auth/discord/login");
+}
+
+const [userGuilds, botGuildIds] = await Promise.all([getUserGuilds(session.access_token), getBotGuildIds()]);
+
+if (!userGuilds) {
+	Astro.cookies.delete(cookieName, { path: "/" });
+	return Astro.redirect("/auth/discord/login");
+}
+
+const manageable = userGuilds
+	.filter((g) => hasAdminAccess(g) && botGuildIds.has(g.id))
+	.sort((a, b) => a.name.localeCompare(b.name));
+
+const botTokenMissing = !process.env.DISCORD_BOT_TOKEN;
+---
+
+<Layout title="Dashboard — SP Agency">
+	<div class="min-h-screen">
+		<Navbar />
+
+		<section class="mx-auto max-w-[1180px] px-8 pt-16 pb-24">
+			<div class="mb-10 flex items-center justify-between">
+				<div>
+					<h1 class="font-display text-3xl font-bold tracking-tight">Tus servidores</h1>
+					<p class="text-text-dim mt-2 text-sm">
+						Servidores donde eres administrador y SP Agency ya está presente.
+					</p>
+				</div>
+				<a
+					href="/auth/logout"
+					class="border-border hover:border-accent hover:bg-bg-soft rounded-[10px] border px-5 py-2.5 text-sm font-bold transition-colors"
+				>
+					Cerrar sesión
+				</a>
+			</div>
+
+			{
+				botTokenMissing && (
+					<div class="border-border bg-bg-soft mb-10 rounded-[14px] border px-6 py-4 text-sm text-text-dim">
+						Falta configurar <code class="text-accent">DISCORD_BOT_TOKEN</code> — no se puede comprobar en
+						qué servidores está el bot todavía.
+					</div>
+				)
+			}
+
+			{
+				manageable.length === 0 ? (
+					<div class="border-border-soft bg-card rounded-[14px] border px-8 py-16 text-center">
+						<p class="text-text-dim mb-6 text-base">
+							No encontramos servidores donde seas administrador y SP Agency esté presente.
+						</p>
+						<a
+							href="#"
+							class="bg-blue hover:bg-blue-hover border-blue hover:border-blue-hover inline-block rounded-[10px] border px-[26px] py-3.5 text-[15px] font-bold text-white transition-colors"
+						>
+							Añadir a Discord — gratis
+						</a>
+					</div>
+				) : (
+					<div class="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3">
+						{manageable.map((guild) => {
+							const icon = guildIconUrl(guild);
+							return (
+								<div class="feature-card border-border-soft bg-card rounded-[14px] border p-6">
+									<div class="mb-4 flex items-center gap-3">
+										{icon ? (
+											<img src={icon} alt={guild.name} class="h-12 w-12 rounded-full" />
+										) : (
+											<div class="bg-accent-dim text-accent flex h-12 w-12 items-center justify-center rounded-full text-lg font-bold">
+												{guild.name.charAt(0).toUpperCase()}
+											</div>
+										)}
+										<h3 class="text-text text-base font-bold">{guild.name}</h3>
+									</div>
+									<a
+										href="#"
+										class="border-border hover:border-accent hover:bg-bg-soft block rounded-[10px] border px-4 py-2.5 text-center text-sm font-bold transition-colors"
+									>
+										Gestionar
+									</a>
+								</div>
+							);
+						})}
+					</div>
+				)
+			}
+		</section>
+	</div>
+</Layout>
