@@ -3,7 +3,7 @@
   "configurations": [
     {
       "name": "spa-agency-dev",
-      "runtimeExecutable": "npm",
+      "runtimeExecutable": "pnpm",
       "runtimeArgs": ["run", "dev", "--", "--port", "4325"],
       "port": 4325
     }
