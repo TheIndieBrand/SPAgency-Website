@@ -24,6 +24,7 @@
   "allowScripts": {
     "esbuild": true
   },
+  "packageManager": "pnpm@10.34.5",
   "devDependencies": {
     "@astrojs/check": "^0.9.10",
     "@types/node": "^26.4.0",
