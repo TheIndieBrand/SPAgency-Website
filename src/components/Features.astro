@@ -35,7 +35,7 @@ const features = [
 
 <section id="features" class="mx-auto max-w-[1180px] px-8 pt-5 pb-[110px]">
 	<div class="mx-auto mb-14 max-w-[560px] text-center">
-		<div class="text-accent mb-3.5 text-[13px] font-bold tracking-[0.08em] uppercase">Funciones</div>
+		<div class="text-text-faint mb-3.5 text-[13px] font-bold tracking-[0.08em] uppercase">Funciones</div>
 		<h2 class="font-display mb-3.5 text-[38px] font-bold tracking-tight">
 			Todo lo que necesitas para dormir tranquilo
 		</h2>
@@ -47,8 +47,8 @@ const features = [
 	<div class="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3">
 		{
 			features.map((f) => (
-				<div class="border-border-soft bg-card hover:border-accent/45 hover:bg-card-hover rounded-[14px] border p-7 transition-all duration-200 hover:-translate-y-[3px]">
-					<div class="bg-accent-dim text-accent mb-5 flex h-11 w-11 items-center justify-center rounded-[10px] text-xl">
+				<div class="border-border-soft bg-card hover:border-border hover:bg-card-hover rounded-[14px] border p-7 transition-colors duration-200">
+					<div class="border-border text-text mb-5 flex h-11 w-11 items-center justify-center rounded-[10px] border text-xl">
 						<i class={`bi ${f.icon}`} />
 					</div>
 					<h3 class="mb-2 text-[17px] font-bold">{f.title}</h3>

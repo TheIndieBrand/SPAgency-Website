@@ -5,38 +5,53 @@
   --font-display: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
   --font-sans: "Manrope", ui-sans-serif, system-ui, sans-serif;
 
-  --color-bg: oklch(0.15 0.018 258);
-  --color-bg-soft: oklch(0.185 0.02 258);
-  --color-card: oklch(0.205 0.02 258);
-  --color-card-hover: oklch(0.235 0.02 258);
-  --color-border: oklch(0.34 0.02 258 / 0.5);
-  --color-border-soft: oklch(0.34 0.02 258 / 0.28);
-  --color-text: oklch(0.965 0.006 258);
-  --color-text-dim: oklch(0.72 0.014 258);
-  --color-text-faint: oklch(0.52 0.014 258);
-  --color-accent: oklch(0.84 0.16 174);
-  --color-accent-dim: oklch(0.84 0.16 174 / 0.14);
-  --color-blue: oklch(0.565 0.16 255);
-  --color-blue-hover: oklch(0.615 0.16 255);
+  /* Notion-style flat monochrome palette used by the marketing site */
+  --color-bg: #191919;
+  --color-bg-soft: #1f1f1f;
+  --color-card: #202020;
+  --color-card-hover: #262626;
+  --color-border: #2b2b2b;
+  --color-border-soft: #232323;
+  --color-text: #eeeeee;
+  --color-text-dim: #9b9b9b;
+  --color-text-faint: #6e6e6e;
+
+  /* Brand blue, sampled directly from the logo (rgb(0, 121, 187)) — the
+     one accent color the marketing site is built around. Used sparingly:
+     primary CTA, link hovers, focus rings, small highlights. */
+  --color-brand: #0079bb;
+  --color-brand-hover: #0093e4;
+  --color-brand-soft: #0079bb1a;
+  --color-navy-glow: #0a1b24;
+
+  /* Small functional accent, reserved for the "active protection" status
+     indicator only — everything else in the UI stays neutral. */
+  --color-emerald: #10b981;
 }
 
 @layer base {
   ::selection {
-    background: var(--color-accent-dim);
+    background: var(--color-brand-soft);
     color: var(--color-text);
   }
+
+  a:focus-visible,
+  button:focus-visible {
+    outline: 2px solid var(--color-brand);
+    outline-offset: 2px;
+  }
 }
 
-@keyframes glow-pulse {
+@keyframes status-pulse {
   0%,
   100% {
-    opacity: 0.35;
+    opacity: 1;
   }
   50% {
-    opacity: 1;
+    opacity: 0.35;
   }
 }
 
-.animate-glow-pulse {
-  animation: glow-pulse 2.6s ease-in-out infinite;
+.animate-status-pulse {
+  animation: status-pulse 1.8s ease-in-out infinite;
 }

@@ -1,0 +1,50 @@
+---
+const events = [
+	{ time: "14:02:11", tag: "OK", message: "Raid check passed — 3 servers scanned" },
+	{ time: "14:01:58", tag: "BLOCKED", message: "12 accounts joined in <2s — auto-banned" },
+	{ time: "14:01:40", tag: "OK", message: "New member verified — account age 4d" },
+	{ time: "14:00:55", tag: "WARN", message: "Suspicious webhook activity flagged" },
+	{ time: "14:00:22", tag: "OK", message: "Nightly config backup completed" },
+	{ time: "13:59:47", tag: "BLOCKED", message: "Spam wave detected — 40 msgs/2s" },
+];
+
+const stats = [
+	{ value: "42", label: "servidores activos" },
+	{ value: "128", label: "eventos hoy" },
+];
+---
+
+<div class="border-border border-t-brand bg-bg-soft w-full rounded-lg border border-t-2">
+	<div class="border-border flex items-center gap-2.5 border-b px-4 py-3.5">
+		<img src="/logo.png" alt="" width="16" height="16" class="h-4 w-4 rounded-[25%]" />
+		<span class="text-text text-sm font-semibold">security-console</span>
+		<span class="text-text-faint ml-auto flex items-center gap-1.5 text-xs">
+			<span class="bg-text-dim inline-block h-1.5 w-1.5 rounded-full"></span>
+			Live
+		</span>
+	</div>
+
+	<div class="divide-border-soft divide-y">
+		{
+			events.map((event) => (
+				<div class="flex items-start gap-3 px-4 py-2.5 text-[13px]">
+					<span class="text-text-faint shrink-0 tabular-nums">{event.time}</span>
+					<span class="border-border text-text-dim shrink-0 rounded border px-1.5 py-0.5 text-[10px] font-bold tracking-wide">
+						{event.tag}
+					</span>
+					<span class="text-text-dim leading-relaxed">{event.message}</span>
+				</div>
+			))
+		}
+	</div>
+
+	<div class="border-border flex items-center gap-5 border-t px-4 py-3 text-xs">
+		{
+			stats.map((stat) => (
+				<span class="text-text-faint">
+					<span class="text-brand font-bold">{stat.value}</span> {stat.label}
+				</span>
+			))
+		}
+	</div>
+</div>
