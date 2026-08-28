@@ -1,0 +1,92 @@
+---
+// Lista de testimonios: agregá o quitá objetos acá para actualizar la sección.
+// `avatar` apunta a un archivo dentro de public/avatars/ — solo hace falta
+// colocar la imagen ahí con ese nombre para que se muestre.
+//
+// `decoration` es opcional: si el usuario tiene un "avatar decoration" de
+// Discord, apuntá al PNG transparente del aro (sin componerlo con el avatar
+// a mano) y se superpone en su propia capa, más grande, sin recortar. Con
+// decoration, el avatar base no lleva el borde azul para que no choquen.
+interface Testimonial {
+	username: string;
+	role: string;
+	avatar: string;
+	decoration?: string;
+	comment: string;
+}
+
+const testimonials: Testimonial[] = [
+	{
+		username: "ether",
+		role: "Founder @ SPA",
+		avatar: "/avatars/ether.png",
+		comment: "spa en seyfert es god",
+	},
+	{
+		username: "Rensga",
+		role: "CEO @ The Indie Brand",
+		avatar: "/avatars/rensga.png",
+		decoration: "/avatars/rensga-decoration.png",
+		comment: "SPA va a ser potencia mundial ahora que no está en discord.jzzzz",
+	},
+	{
+		username: "Zaguspro",
+		role: "Admin @ Kigo",
+		avatar: "/avatars/zaguspro.png",
+		comment: "Este es un bot con muchas nuevas funciones que ayuda a protegerte a ti y a tus usuarios",
+	},
+	{
+		username: "🍁Eastๅ͟𝓦𝖗𝖎𝖙𝖊𝖗ᴿᶻ",
+		role: "Owner @ RZ",
+		avatar: "/avatars/east.png",
+		decoration: "/avatars/east-decoration.png",
+		comment: "Único para la comunidad.",
+	},
+];
+---
+
+<section class="mx-auto max-w-[1180px] px-8 pt-5 pb-[110px]">
+	<div class="mx-auto mb-14 max-w-[560px] text-center">
+		<div class="text-text-faint mb-3.5 text-[13px] font-bold tracking-[0.08em] uppercase">Testimonios</div>
+		<h2 class="font-display text-[38px] font-bold tracking-tight">Lo que dice la comunidad</h2>
+	</div>
+
+	<div class="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-4">
+		{
+			testimonials.map((t) => (
+				<div class="hover:border-brand/60 group relative rounded-[14px] border border-neutral-800 bg-[#16171b] p-6 transition-colors duration-200">
+					<i class="bi bi-discord text-text-faint group-hover:text-brand absolute top-5 right-5 text-lg transition-colors" />
+
+					<div class="mb-4 flex items-center gap-3">
+						<div class="relative inline-flex h-12 w-12 shrink-0 items-center justify-center">
+							<img
+								src={t.avatar}
+								alt={t.username}
+								width="48"
+								height="48"
+								class:list={[
+									"h-12 w-12 rounded-full object-cover",
+									t.decoration ? "border-none" : "border-brand/40 border-2",
+								]}
+							/>
+							{t.decoration && (
+								<img
+									src={t.decoration}
+									alt=""
+									aria-hidden="true"
+									class="pointer-events-none absolute inset-0 z-10 h-full w-full scale-125"
+								/>
+							)}
+						</div>
+						<div class="min-w-0">
+							<div class="text-text truncate text-sm font-bold">{t.username}</div>
+							<div class="text-text-faint truncate text-xs">{t.role}</div>
+						</div>
+					</div>
+
+					<p class="text-text-dim text-[14px] leading-relaxed">{t.comment}</p>
+				</div>
+			))
+		}
+	</div>
+</section>
