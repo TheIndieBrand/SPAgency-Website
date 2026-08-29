@@ -1,0 +1,47 @@
+---
+interface Testimonial {
+	username: string;
+	role: string;
+	avatar: string;
+	decoration?: string;
+	comment: string;
+}
+
+interface Props {
+	testimonial: Testimonial;
+}
+
+const { testimonial: t } = Astro.props;
+---
+
+<div class="hover:border-brand/60 group relative w-[320px] shrink-0 rounded-[14px] border border-neutral-800 bg-[#16171b] p-6 transition-colors duration-200">
+	<i class="bi bi-discord text-text-faint group-hover:text-brand absolute top-5 right-5 text-lg transition-colors" />
+
+	<div class="mb-4 flex items-center gap-3">
+		<div class="relative inline-flex h-12 w-12 shrink-0 items-center justify-center">
+			<img
+				src={t.avatar}
+				alt={t.username}
+				width="48"
+				height="48"
+				class:list={["h-12 w-12 rounded-full object-cover", t.decoration ? "border-none" : "border-brand/40 border-2"]}
+			/>
+			{
+				t.decoration && (
+					<img
+						src={t.decoration}
+						alt=""
+						aria-hidden="true"
+						class="pointer-events-none absolute inset-0 z-10 h-full w-full scale-125"
+					/>
+				)
+			}
+		</div>
+		<div class="min-w-0">
+			<div class="text-text truncate text-sm font-bold">{t.username}</div>
+			<div class="text-text-faint truncate text-xs">{t.role}</div>
+		</div>
+	</div>
+
+	<p class="text-text-dim text-[14px] leading-relaxed">{t.comment}</p>
+</div>

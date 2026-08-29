@@ -52,6 +52,46 @@
   }
 }
 
-.animate-status-pulse {
-  animation: status-pulse 1.8s ease-in-out infinite;
+@keyframes marquee-left {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+@keyframes marquee-right {
+  from {
+    transform: translateX(-50%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+/* These live inside Tailwind's `utilities` layer on purpose: unlayered CSS
+   always wins over layered CSS regardless of specificity, so declaring them
+   here (bare, no @layer) silently beat `group-hover:[...]` pause utilities —
+   the marquee never actually paused on hover. Layering them puts these back
+   on equal footing, where the higher-specificity hover rule wins normally. */
+@layer utilities {
+  .animate-status-pulse {
+    animation: status-pulse 1.8s ease-in-out infinite;
+  }
+
+  .animate-marquee-left {
+    animation: marquee-left 40s linear infinite;
+  }
+
+  .animate-marquee-right {
+    animation: marquee-right 32s linear infinite;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-marquee-left,
+  .animate-marquee-right {
+    animation: none;
+  }
 }

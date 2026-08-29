@@ -7,6 +7,12 @@
 // Discord, apuntá al PNG transparente del aro (sin componerlo con el avatar
 // a mano) y se superpone en su propia capa, más grande, sin recortar. Con
 // decoration, el avatar base no lleva el borde azul para que no choquen.
+//
+// Las tarjetas corren en dos filas tipo marquee (fila 1 → izquierda, fila 2
+// → derecha). Se reparten automáticamente entre las dos filas, no hace falta
+// tocar nada más al agregar o quitar testimonios.
+import TestimonialCard from "./TestimonialCard.astro";
+
 interface Testimonial {
 	username: string;
 	role: string;
@@ -42,51 +48,67 @@ const testimonials: Testimonial[] = [
 		decoration: "/avatars/east-decoration.png",
 		comment: "Único para la comunidad.",
 	},
+	{
+		username: "_zPro",
+		role: "CEO @ The Indie Brand",
+		avatar: "/avatars/zpro.png",
+		comment: "Más rápido y renovado que nunca",
+	},
+	{
+		username: "JustEvil",
+		role: "Owner @ Ganyu Studios",
+		avatar: "/avatars/justevil.png",
+		decoration: "/avatars/justevil-decoration.png",
+		comment: "Que chingue su madre el que no use seyfert",
+	},
+	{
+		username: "VirtualOx",
+		role: "CEO @ The Indie Brand",
+		avatar: "/avatars/virtualox.png",
+		decoration: "/avatars/virtualox-decoration.png",
+		comment:
+			"SP Agency no es solo un bot, es un kit completo de protección dentro de su servidor donde ayudara a evitar futuras afectaciones y dolores de cabeza.",
+	},
+	{
+		username: "Doctor",
+		role: "Admin @ Korex Hosting",
+		avatar: "/avatars/doctor.png",
+		comment: "SPA me cambió la vida, ahora soy millonario",
+	},
+	{
+		username: "Aitor",
+		role: "Founder @ Navigo Bot",
+		avatar: "/avatars/aitor.png",
+		comment:
+			"Es un bot con mucha historia y experiencia detrás. El saber hacer y gestionar, SP lo lleva dentro. Lo recomiendo.",
+	},
 ];
+
+const half = Math.ceil(testimonials.length / 2);
+const row1 = testimonials.slice(0, half);
+const row2 = testimonials.slice(half);
 ---
 
-<section class="mx-auto max-w-[1180px] px-8 pt-5 pb-[110px]">
-	<div class="mx-auto mb-14 max-w-[560px] text-center">
+<section class="group pt-5 pb-[110px]">
+	<div class="mx-auto mb-14 max-w-[560px] px-8 text-center">
 		<div class="text-text-faint mb-3.5 text-[13px] font-bold tracking-[0.08em] uppercase">Testimonios</div>
 		<h2 class="font-display text-[38px] font-bold tracking-tight">Lo que dice la comunidad</h2>
 	</div>
 
-	<div class="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-4">
-		{
-			testimonials.map((t) => (
-				<div class="hover:border-brand/60 group relative rounded-[14px] border border-neutral-800 bg-[#16171b] p-6 transition-colors duration-200">
-					<i class="bi bi-discord text-text-faint group-hover:text-brand absolute top-5 right-5 text-lg transition-colors" />
+	<div class="relative mx-auto max-w-7xl overflow-hidden">
+		<div class="from-bg pointer-events-none absolute top-0 left-0 z-10 h-full w-24 bg-gradient-to-r to-transparent">
+		</div>
+		<div class="from-bg pointer-events-none absolute top-0 right-0 z-10 h-full w-24 bg-gradient-to-l to-transparent">
+		</div>
 
-					<div class="mb-4 flex items-center gap-3">
-						<div class="relative inline-flex h-12 w-12 shrink-0 items-center justify-center">
-							<img
-								src={t.avatar}
-								alt={t.username}
-								width="48"
-								height="48"
-								class:list={[
-									"h-12 w-12 rounded-full object-cover",
-									t.decoration ? "border-none" : "border-brand/40 border-2",
-								]}
-							/>
-							{t.decoration && (
-								<img
-									src={t.decoration}
-									alt=""
-									aria-hidden="true"
-									class="pointer-events-none absolute inset-0 z-10 h-full w-full scale-125"
-								/>
-							)}
-						</div>
-						<div class="min-w-0">
-							<div class="text-text truncate text-sm font-bold">{t.username}</div>
-							<div class="text-text-faint truncate text-xs">{t.role}</div>
-						</div>
-					</div>
+		<div class="animate-marquee-left group-hover:[animation-play-state:paused] mb-5 flex w-max gap-5">
+			{row1.map((t) => <TestimonialCard testimonial={t} />)}
+			{row1.map((t) => <TestimonialCard testimonial={t} />)}
+		</div>
 
-					<p class="text-text-dim text-[14px] leading-relaxed">{t.comment}</p>
-				</div>
-			))
-		}
+		<div class="animate-marquee-right group-hover:[animation-play-state:paused] flex w-max gap-5">
+			{row2.map((t) => <TestimonialCard testimonial={t} />)}
+			{row2.map((t) => <TestimonialCard testimonial={t} />)}
+		</div>
 	</div>
 </section>
