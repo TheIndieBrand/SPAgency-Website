@@ -1,0 +1,239 @@
+---
+export const prerender = false;
+
+import Layout from "../../layouts/Layout.astro";
+import { getUserGuilds, getBotGuildIds, hasAdminAccess, guildIconUrl } from "../../lib/discord";
+
+const cookieName = process.env.SESSION_COOKIE_NAME || "spa_session";
+const raw = Astro.cookies.get(cookieName)?.value;
+
+if (!raw) return Astro.redirect("/auth/discord/login");
+
+let session: { access_token: string } | null = null;
+try {
+	session = JSON.parse(raw);
+} catch {
+	session = null;
+}
+
+if (!session) {
+	Astro.cookies.delete(cookieName, { path: "/" });
+	return Astro.redirect("/auth/discord/login");
+}
+
+const { guildId } = Astro.params;
+
+const [userGuilds, botGuildIds] = await Promise.all([getUserGuilds(session.access_token), getBotGuildIds()]);
+
+if (!userGuilds) {
+	Astro.cookies.delete(cookieName, { path: "/" });
+	return Astro.redirect("/auth/discord/login");
+}
+
+const guild = userGuilds.find((g) => g.id === guildId);
+
+// Bounce back to the list if this guild doesn't exist, the user isn't an
+// admin there, or the bot was never invited — there's nothing to manage.
+if (!guild || !hasAdminAccess(guild) || !botGuildIds.has(guild.id)) {
+	return Astro.redirect("/dashboard");
+}
+
+const icon = guildIconUrl(guild);
+
+// Placeholder data below: there's no telemetry backend wired up yet, so
+// these numbers and log lines are illustrative, not live. Swap them for a
+// real per-guild stats/activity endpoint when it exists.
+const kpis = [
+	{ label: "Ataques bloqueados hoy", value: "0", delta: "+0% vs ayer" },
+	{ label: "Cuentas sospechosas filtradas", value: "3", delta: "+2 vs ayer" },
+	{ label: "Tiempo de actividad", value: "100%", delta: "24/7" },
+];
+
+const toggles = [
+	{
+		id: "anti-raid",
+		title: "Protección Anti-Raid",
+		description: "Bloquea automáticamente oleadas de cuentas nuevas.",
+		checked: true,
+		danger: false,
+	},
+	{
+		id: "new-accounts",
+		title: "Filtro de cuentas nuevas (<24h)",
+		description: "Restringe a cuentas creadas hace menos de un día.",
+		checked: true,
+		danger: false,
+	},
+	{
+		id: "panic-mode",
+		title: "Modo Pánico",
+		description: "Bloqueo total temporal del servidor.",
+		checked: false,
+		danger: true,
+	},
+];
+
+const activity = [
+	{ time: "19:42", message: "Bloqueada cuenta sospechosa @user123" },
+	{ time: "19:31", message: "Verificación pasada — @nuevomiembro42" },
+	{ time: "18:58", message: "Filtro anti-spam activado en #general" },
+];
+
+const sidebarPanel = [
+	{ label: "General", href: `/dashboard/${guild.id}`, icon: "bi-grid", active: true },
+	{ label: "Registros de actividad", href: "#", icon: "bi-journal-text", active: false },
+];
+
+const sidebarConfig = [
+	{ label: "Módulos Anti-Raid", href: "#", icon: "bi-shield-check" },
+	{ label: "Filtros de cuentas", href: "#", icon: "bi-funnel" },
+	{ label: "Alertas y Canales", href: "#", icon: "bi-bell" },
+	{ label: "Ajustes", href: "#", icon: "bi-gear" },
+];
+---
+
+<Layout title={`${guild.name} — SP Agency`}>
+	<div class="bg-bg min-h-screen">
+		<!-- ============ TOP BAR ============ -->
+		<header class="border-border-soft border-b">
+			<div class="mx-auto flex max-w-[1400px] items-center justify-between gap-4 px-8 py-3.5">
+				<a href="/dashboard" class="text-text-dim hover:text-brand flex items-center gap-2 text-sm font-semibold transition-colors">
+					<i class="bi bi-arrow-left" />
+					Volver a mis servidores
+				</a>
+
+				<div class="flex items-center gap-3">
+					{
+						icon ? (
+							<img src={icon} alt={guild.name} class="h-7 w-7 rounded-full object-cover" />
+						) : (
+							<div class="bg-bg-soft text-text-dim border-border flex h-7 w-7 items-center justify-center rounded-full border text-xs font-bold">
+								{guild.name.charAt(0).toUpperCase()}
+							</div>
+						)
+					}
+					<span class="text-text text-sm font-bold">{guild.name}</span>
+					<span class="border-border bg-bg-soft text-text-dim inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10px] font-bold whitespace-nowrap">
+						<span class="bg-emerald animate-status-pulse inline-block h-1.5 w-1.5 rounded-full" />
+						Protección Activa
+					</span>
+				</div>
+			</div>
+		</header>
+
+		<div class="mx-auto flex max-w-[1400px] items-start">
+			<!-- ============ SIDEBAR ============ -->
+			<aside class="border-border-soft sticky top-0 hidden h-screen w-64 shrink-0 border-r px-4 py-6 md:block">
+				<div class="mb-6">
+					<div class="text-text-faint mb-2 px-3 text-[11px] font-bold tracking-[0.08em] uppercase">Panel</div>
+					<nav class="flex flex-col gap-1">
+						{
+							sidebarPanel.map((item) => (
+								<a
+									href={item.href}
+									class:list={[
+										"flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-semibold transition-colors",
+										item.active
+											? "bg-brand/10 border-brand/40 text-brand border"
+											: "text-text-dim hover:bg-bg-soft hover:text-text border border-transparent",
+									]}
+								>
+									<i class={`bi ${item.icon}`} />
+									{item.label}
+								</a>
+							))
+						}
+					</nav>
+				</div>
+
+				<div>
+					<div class="text-text-faint mb-2 px-3 text-[11px] font-bold tracking-[0.08em] uppercase">
+						Configuración
+					</div>
+					<nav class="flex flex-col gap-1">
+						{
+							sidebarConfig.map((item) => (
+								<a
+									href={item.href}
+									class="text-text-dim hover:bg-bg-soft hover:text-text flex items-center gap-2.5 rounded-lg border border-transparent px-3 py-2 text-sm font-semibold transition-colors"
+								>
+									<i class={`bi ${item.icon}`} />
+									{item.label}
+								</a>
+							))
+						}
+					</nav>
+				</div>
+			</aside>
+
+			<!-- ============ MAIN CONTENT ============ -->
+			<main class="flex-1 p-6">
+				<h1 class="font-display mb-6 text-2xl font-bold tracking-tight">General</h1>
+
+				<!-- KPI cards -->
+				<div class="mb-6 grid grid-cols-1 gap-5 sm:grid-cols-3">
+					{
+						kpis.map((kpi) => (
+							<div class="border-border-soft bg-card rounded-[14px] border p-5">
+								<div class="text-text-faint mb-2 text-xs font-semibold">{kpi.label}</div>
+								<div class="flex items-end justify-between">
+									<span class="font-display text-3xl font-bold tracking-tight">{kpi.value}</span>
+									<span class="text-text-faint text-xs">{kpi.delta}</span>
+								</div>
+							</div>
+						))
+					}
+				</div>
+
+				<!-- Quick toggles -->
+				<div class="border-border-soft bg-card mb-6 rounded-[14px] border p-5">
+					<h2 class="text-text mb-4 text-sm font-bold">Panel de control rápido</h2>
+					<div class="divide-border-soft divide-y">
+						{
+							toggles.map((t) => (
+								<label class="flex cursor-pointer items-center justify-between gap-4 py-3.5 first:pt-0 last:pb-0">
+									<div class="min-w-0">
+										<div class="text-text text-sm font-semibold">{t.title}</div>
+										<div class="text-text-faint text-xs">{t.description}</div>
+									</div>
+									<input type="checkbox" checked={t.checked} class="peer sr-only" />
+									<div
+										class:list={[
+											"relative h-6 w-11 shrink-0 rounded-full transition-colors",
+											"bg-border-soft",
+											t.danger ? "peer-checked:bg-[#ef4444]" : "peer-checked:bg-brand",
+										]}
+									>
+										<div class="absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white transition-transform peer-checked:translate-x-5" />
+									</div>
+								</label>
+							))
+						}
+					</div>
+				</div>
+
+				<!-- Live activity console -->
+				<div class="border-border-soft bg-bg-soft rounded-[14px] border">
+					<div class="border-border-soft flex items-center gap-2.5 border-b px-4 py-3.5">
+						<i class="bi bi-terminal text-text-dim text-sm" />
+						<span class="text-text text-sm font-semibold">Actividad reciente</span>
+						<span class="text-text-faint ml-auto flex items-center gap-1.5 text-xs">
+							<span class="bg-emerald animate-status-pulse inline-block h-1.5 w-1.5 rounded-full" />
+							Live
+						</span>
+					</div>
+					<div class="divide-border-soft divide-y">
+						{
+							activity.map((event) => (
+								<div class="flex items-start gap-3 px-4 py-2.5 text-[13px]">
+									<span class="text-text-faint shrink-0 tabular-nums">[{event.time}]</span>
+									<span class="text-text-dim leading-relaxed">{event.message}</span>
+								</div>
+							))
+						}
+					</div>
+				</div>
+			</main>
+		</div>
+	</div>
+</Layout>
