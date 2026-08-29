@@ -2,8 +2,15 @@
 export const prerender = false;
 
 import Layout from "../layouts/Layout.astro";
-import Navbar from "../components/Navbar.astro";
-import { getUserGuilds, getBotGuildIds, hasAdminAccess, guildIconUrl } from "../lib/discord";
+import {
+	getUserGuilds,
+	getCurrentUser,
+	getBotGuildIds,
+	hasAdminAccess,
+	guildIconUrl,
+	userAvatarUrl,
+	botInviteUrl,
+} from "../lib/discord";
 
 const cookieName = process.env.SESSION_COOKIE_NAME || "spa_session";
 const raw = Astro.cookies.get(cookieName)?.value;
@@ -22,90 +29,260 @@ if (!session) {
 	return Astro.redirect("/auth/discord/login");
 }
 
-const [userGuilds, botGuildIds] = await Promise.all([getUserGuilds(session.access_token), getBotGuildIds()]);
+const [userGuilds, currentUser, botGuildIds] = await Promise.all([
+	getUserGuilds(session.access_token),
+	getCurrentUser(session.access_token),
+	getBotGuildIds(),
+]);
 
-if (!userGuilds) {
+if (!userGuilds || !currentUser) {
 	Astro.cookies.delete(cookieName, { path: "/" });
 	return Astro.redirect("/auth/discord/login");
 }
 
-const manageable = userGuilds
-	.filter((g) => hasAdminAccess(g) && botGuildIds.has(g.id))
-	.sort((a, b) => a.name.localeCompare(b.name));
+const adminGuilds = userGuilds
+	.filter(hasAdminAccess)
+	.map((guild) => ({
+		guild,
+		protected: botGuildIds.has(guild.id),
+	}))
+	.sort((a, b) => a.guild.name.localeCompare(b.guild.name));
 
+const protectedCount = adminGuilds.filter((g) => g.protected).length;
+const pendingCount = adminGuilds.length - protectedCount;
 const botTokenMissing = !process.env.DISCORD_BOT_TOKEN;
+const displayName = currentUser.global_name || currentUser.username;
+const avatarUrl = userAvatarUrl(currentUser);
 ---
 
 <Layout title="Dashboard — SP Agency">
-	<div class="min-h-screen">
-		<Navbar />
-
-		<section class="mx-auto max-w-[1180px] px-8 pt-16 pb-24">
-			<div class="mb-10 flex items-center justify-between">
-				<div>
-					<h1 class="font-display text-3xl font-bold tracking-tight">Tus servidores</h1>
-					<p class="text-text-dim mt-2 text-sm">
-						Servidores donde eres administrador y SP Agency ya está presente.
-					</p>
+	<div class="bg-bg min-h-screen">
+		<!-- ============ TOP BAR ============ -->
+		<header class="border-border-soft border-b">
+			<div class="mx-auto flex max-w-[1280px] items-center justify-between px-8 py-3.5">
+				<div class="flex items-center gap-3">
+					<img src="/logo.png" alt="SP Agency" width="28" height="28" class="h-7 w-7 rounded-[25%]" />
+					<span class="font-display text-base font-bold tracking-tight">SP Agency</span>
+					<span class="border-border text-text-faint ml-2 hidden items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-semibold sm:flex">
+						<span class="bg-emerald inline-block h-1.5 w-1.5 rounded-full"></span>
+						Todos los sistemas operativos
+					</span>
 				</div>
-				<a
-					href="/auth/logout"
-					class="border-border hover:border-accent hover:bg-bg-soft rounded-[10px] border px-5 py-2.5 text-sm font-bold transition-colors"
-				>
-					Cerrar sesión
-				</a>
-			</div>
 
+				<details class="group relative">
+					<summary class="hover:bg-bg-soft flex cursor-pointer list-none items-center gap-2 rounded-lg px-2 py-1.5 transition-colors [&::-webkit-details-marker]:hidden">
+						<img src={avatarUrl} alt={displayName} width="30" height="30" class="h-[30px] w-[30px] rounded-full" />
+						<span class="text-text hidden text-sm font-semibold sm:inline">{displayName}</span>
+						<i class="bi bi-chevron-down text-text-faint text-xs transition-transform group-open:rotate-180" />
+					</summary>
+
+					<div class="border-border bg-bg-soft absolute top-full right-0 z-50 mt-2 w-52 rounded-lg border py-1.5 shadow-lg">
+						<a href="#" class="text-text-dim hover:bg-card hover:text-text flex items-center gap-2.5 px-4 py-2 text-sm font-medium transition-colors">
+							<i class="bi bi-person text-base" />
+							Perfil
+						</a>
+						<a href="#" class="text-text-dim hover:bg-card hover:text-text flex items-center gap-2.5 px-4 py-2 text-sm font-medium transition-colors">
+							<i class="bi bi-gear text-base" />
+							Ajustes
+						</a>
+						<div class="border-border-soft my-1.5 border-t"></div>
+						<a href="/auth/logout" class="text-text-dim hover:bg-card hover:text-text flex items-center gap-2.5 px-4 py-2 text-sm font-medium transition-colors">
+							<i class="bi bi-box-arrow-right text-base" />
+							Cerrar sesión
+						</a>
+					</div>
+				</details>
+			</div>
+		</header>
+
+		<section class="mx-auto max-w-[1280px] px-8 pt-10 pb-24">
 			{
 				botTokenMissing && (
-					<div class="border-border bg-bg-soft mb-10 rounded-[14px] border px-6 py-4 text-sm text-text-dim">
-						Falta configurar <code class="text-accent">DISCORD_BOT_TOKEN</code> — no se puede comprobar en
-						qué servidores está el bot todavía.
+					<div class="border-border bg-bg-soft mb-8 rounded-[14px] border px-6 py-4 text-sm text-text-dim">
+						Falta configurar <code class="text-brand">DISCORD_BOT_TOKEN</code> — no se puede comprobar en qué
+						servidores está el bot todavía.
 					</div>
 				)
 			}
 
+			<!-- ============ TOOLBAR ============ -->
+			<div class="mb-8 flex flex-col gap-5">
+				<div class="flex flex-wrap items-center justify-between gap-4">
+					<div class="flex items-center gap-3">
+						<h1 class="font-display text-2xl font-bold tracking-tight">Tus servidores</h1>
+						<span class="border-border text-text-dim rounded-full border px-2.5 py-0.5 text-xs font-bold">
+							{adminGuilds.length}
+						</span>
+					</div>
+
+					<div class="relative w-full sm:w-64">
+						<i class="bi bi-search text-text-faint pointer-events-none absolute top-1/2 left-3.5 -translate-y-1/2 text-sm" />
+						<input
+							id="server-search"
+							type="text"
+							placeholder="Buscar servidor..."
+							class="border-border bg-bg-soft text-text placeholder:text-text-faint focus-visible:border-brand w-full rounded-lg border py-2 pr-3 pl-9 text-sm outline-none transition-colors"
+						/>
+					</div>
+				</div>
+
+				<div class="flex items-center gap-2" id="status-filters">
+					<button
+						type="button"
+						data-filter="all"
+						class="filter-btn bg-text text-[#191919] rounded-full px-4 py-1.5 text-xs font-bold transition-colors"
+					>
+						Todos
+					</button>
+					<button
+						type="button"
+						data-filter="protected"
+						class="filter-btn border-border text-text-dim hover:border-brand hover:text-brand border rounded-full px-4 py-1.5 text-xs font-bold transition-colors"
+					>
+						Protegidos ({protectedCount})
+					</button>
+					<button
+						type="button"
+						data-filter="pending"
+						class="filter-btn border-border text-text-dim hover:border-brand hover:text-brand border rounded-full px-4 py-1.5 text-xs font-bold transition-colors"
+					>
+						Por configurar ({pendingCount})
+					</button>
+				</div>
+			</div>
+
+			<!-- ============ GRID ============ -->
 			{
-				manageable.length === 0 ? (
+				adminGuilds.length === 0 ? (
 					<div class="border-border-soft bg-card rounded-[14px] border px-8 py-16 text-center">
 						<p class="text-text-dim mb-6 text-base">
-							No encontramos servidores donde seas administrador y SP Agency esté presente.
+							No encontramos servidores de Discord donde seas administrador.
 						</p>
-						<a
-							href="#"
-							class="bg-blue hover:bg-blue-hover border-blue hover:border-blue-hover inline-block rounded-[10px] border px-[26px] py-3.5 text-[15px] font-bold text-white transition-colors"
-						>
-							Añadir a Discord — gratis
-						</a>
 					</div>
 				) : (
-					<div class="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3">
-						{manageable.map((guild) => {
+					<div id="server-grid" class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+						{adminGuilds.map(({ guild, protected: isProtected }) => {
 							const icon = guildIconUrl(guild);
+							const memberCount = guild.approximate_member_count;
 							return (
-								<div class="feature-card border-border-soft bg-card rounded-[14px] border p-6">
-									<div class="mb-4 flex items-center gap-3">
-										{icon ? (
-											<img src={icon} alt={guild.name} class="h-12 w-12 rounded-full" />
-										) : (
-											<div class="bg-accent-dim text-accent flex h-12 w-12 items-center justify-center rounded-full text-lg font-bold">
-												{guild.name.charAt(0).toUpperCase()}
+								<div
+									class="server-card group border-border-soft bg-card hover:border-brand/50 relative flex flex-col rounded-[14px] border p-5 transition-all duration-200 hover:-translate-y-[2px]"
+									data-name={guild.name.toLowerCase()}
+									data-status={isProtected ? "protected" : "pending"}
+								>
+									<div class="mb-4 flex items-start justify-between gap-2">
+										<div class="flex min-w-0 items-center gap-3">
+											{icon ? (
+												<img src={icon} alt={guild.name} class="h-11 w-11 shrink-0 rounded-full object-cover" />
+											) : (
+												<div class="bg-bg-soft text-text-dim border-border flex h-11 w-11 shrink-0 items-center justify-center rounded-full border text-base font-bold">
+													{guild.name.charAt(0).toUpperCase()}
+												</div>
+											)}
+											<div class="min-w-0">
+												<h3 class="text-text truncate text-sm font-bold">{guild.name}</h3>
+												<p class="text-text-faint truncate text-xs">
+													{memberCount ? `${memberCount.toLocaleString("es")} miembros` : guild.id}
+												</p>
 											</div>
-										)}
-										<h3 class="text-text text-base font-bold">{guild.name}</h3>
+										</div>
 									</div>
-									<a
-										href="#"
-										class="border-border hover:border-accent hover:bg-bg-soft block rounded-[10px] border px-4 py-2.5 text-center text-sm font-bold transition-colors"
-									>
-										Gestionar
-									</a>
+
+									<div class="absolute top-5 right-5">
+										{isProtected ? (
+											<span class="border-border bg-bg-soft text-text-dim inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10px] font-bold whitespace-nowrap">
+												<span class="bg-emerald animate-status-pulse inline-block h-1.5 w-1.5 rounded-full" />
+												Protegido 24/7
+											</span>
+										) : (
+											<span class="border-border text-text-faint inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10px] font-bold whitespace-nowrap">
+												<span class="bg-text-faint inline-block h-1.5 w-1.5 rounded-full" />
+												Sin invitar
+											</span>
+										)}
+									</div>
+
+									{isProtected && (
+										<div class="border-border-soft mb-4 flex items-center gap-4 border-t pt-4 text-xs">
+											<span class="text-text-dim">
+												<span class="text-text font-bold">0</span> ataques bloqueados hoy
+											</span>
+											<span class="text-text-dim">
+												<span class="text-text font-bold">4/4</span> filtros activos
+											</span>
+										</div>
+									)}
+
+									<div class="mt-auto">
+										{isProtected ? (
+											<a
+												href="#"
+												class="border-border hover:border-brand hover:text-brand block rounded-[10px] border px-4 py-2.5 text-center text-sm font-bold transition-colors"
+											>
+												Gestionar
+											</a>
+										) : (
+											<a
+												href={botInviteUrl(guild.id)}
+												class="bg-brand hover:bg-brand-hover block rounded-[10px] px-4 py-2.5 text-center text-sm font-bold text-white transition-colors"
+											>
+												Invitar bot
+											</a>
+										)}
+									</div>
 								</div>
 							);
 						})}
 					</div>
 				)
 			}
+
+			<!-- ============ EMPTY STATE (search) ============ -->
+			<div id="empty-state" class="hidden py-20 text-center">
+				<i class="bi bi-search text-text-faint mb-4 block text-4xl" />
+				<p class="text-text-dim text-base">No se encontraron servidores.</p>
+			</div>
 		</section>
 	</div>
 </Layout>
+
+<script>
+	const search = document.getElementById("server-search") as HTMLInputElement | null;
+	const filterButtons = document.querySelectorAll<HTMLButtonElement>(".filter-btn");
+	const cards = document.querySelectorAll<HTMLElement>(".server-card");
+	const emptyState = document.getElementById("empty-state");
+
+	let activeFilter = "all";
+
+	function applyFilters() {
+		const query = (search?.value || "").trim().toLowerCase();
+		let visibleCount = 0;
+
+		cards.forEach((card) => {
+			const matchesQuery = card.dataset.name?.includes(query);
+			const matchesFilter = activeFilter === "all" || card.dataset.status === activeFilter;
+			const visible = Boolean(matchesQuery && matchesFilter);
+			card.classList.toggle("hidden", !visible);
+			if (visible) visibleCount++;
+		});
+
+		emptyState?.classList.toggle("hidden", visibleCount !== 0);
+	}
+
+	search?.addEventListener("input", applyFilters);
+
+	filterButtons.forEach((btn) => {
+		btn.addEventListener("click", () => {
+			activeFilter = btn.dataset.filter || "all";
+			filterButtons.forEach((b) => {
+				const active = b === btn;
+				b.classList.toggle("bg-text", active);
+				b.classList.toggle("text-[#191919]", active);
+				b.classList.toggle("border", !active);
+				b.classList.toggle("border-border", !active);
+				b.classList.toggle("text-text-dim", !active);
+			});
+			applyFilters();
+		});
+	});
+</script>
