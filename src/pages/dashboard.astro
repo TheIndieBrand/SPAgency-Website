@@ -63,10 +63,6 @@ const avatarUrl = userAvatarUrl(currentUser);
 				<div class="flex items-center gap-3">
 					<img src="/logo.png" alt="SP Agency" width="28" height="28" class="h-7 w-7 rounded-[25%]" />
 					<span class="font-display text-base font-bold tracking-tight">SP Agency</span>
-					<span class="border-border text-text-faint ml-2 hidden items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-semibold sm:flex">
-						<span class="bg-emerald inline-block h-1.5 w-1.5 rounded-full"></span>
-						Todos los sistemas operativos
-					</span>
 				</div>
 
 				<details class="group relative">
@@ -77,16 +73,7 @@ const avatarUrl = userAvatarUrl(currentUser);
 					</summary>
 
 					<div class="border-border bg-bg-soft absolute top-full right-0 z-50 mt-2 w-52 rounded-lg border py-1.5 shadow-lg">
-						<a href="#" class="text-text-dim hover:bg-card hover:text-text flex items-center gap-2.5 px-4 py-2 text-sm font-medium transition-colors">
-							<i class="bi bi-person text-base" />
-							Perfil
-						</a>
-						<a href="#" class="text-text-dim hover:bg-card hover:text-text flex items-center gap-2.5 px-4 py-2 text-sm font-medium transition-colors">
-							<i class="bi bi-gear text-base" />
-							Ajustes
-						</a>
-						<div class="border-border-soft my-1.5 border-t"></div>
-						<a href="/auth/logout" class="text-text-dim hover:bg-card hover:text-text flex items-center gap-2.5 px-4 py-2 text-sm font-medium transition-colors">
+						<a href="/auth/logout" class="text-text-dim flex items-center gap-2.5 px-4 py-2 text-sm font-medium transition-colors hover:bg-red-500/10 hover:text-red-400">
 							<i class="bi bi-box-arrow-right text-base" />
 							Cerrar sesión
 						</a>
@@ -166,57 +153,61 @@ const avatarUrl = userAvatarUrl(currentUser);
 							const memberCount = guild.approximate_member_count;
 							return (
 								<div
-									class="server-card group border-border-soft bg-card hover:border-brand/50 relative flex flex-col rounded-[14px] border p-5 transition-all duration-200 hover:-translate-y-[2px]"
+									class="server-card group border-border-soft bg-card hover:border-brand/50 flex h-full flex-col justify-between rounded-[14px] border p-5 transition-all duration-200 hover:-translate-y-[2px]"
 									data-name={guild.name.toLowerCase()}
 									data-status={isProtected ? "protected" : "pending"}
 								>
-									<div class="mb-4 flex items-start justify-between gap-2">
-										<div class="flex min-w-0 items-center gap-3">
-											{icon ? (
-												<img src={icon} alt={guild.name} class="h-11 w-11 shrink-0 rounded-full object-cover" />
-											) : (
-												<div class="bg-bg-soft text-text-dim border-border flex h-11 w-11 shrink-0 items-center justify-center rounded-full border text-base font-bold">
-													{guild.name.charAt(0).toUpperCase()}
+									<div>
+										<div class="mb-4 flex items-start justify-between gap-2">
+											<div class="flex min-w-0 flex-1 items-center gap-3">
+												{icon ? (
+													<img src={icon} alt={guild.name} class="h-11 w-11 shrink-0 rounded-full object-cover" />
+												) : (
+													<div class="bg-bg-soft text-text-dim border-border flex h-11 w-11 shrink-0 items-center justify-center rounded-full border text-base font-bold">
+														{guild.name.charAt(0).toUpperCase()}
+													</div>
+												)}
+												<div class="min-w-0 flex-1">
+													<h3 class="text-text truncate text-sm font-bold">{guild.name}</h3>
+													<p class="text-text-faint truncate text-xs">
+														{memberCount ? `${memberCount.toLocaleString("es")} miembros` : guild.id}
+													</p>
 												</div>
-											)}
-											<div class="min-w-0">
-												<h3 class="text-text truncate text-sm font-bold">{guild.name}</h3>
-												<p class="text-text-faint truncate text-xs">
-													{memberCount ? `${memberCount.toLocaleString("es")} miembros` : guild.id}
-												</p>
 											</div>
-										</div>
-									</div>
 
-									<div class="absolute top-5 right-5">
+											{isProtected ? (
+												<span class="border-border bg-bg-soft text-text-dim inline-flex shrink-0 items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10px] font-bold whitespace-nowrap">
+													<span class="bg-emerald animate-status-pulse inline-block h-1.5 w-1.5 rounded-full" />
+													Protegido 24/7
+												</span>
+											) : (
+												<span class="border-border text-text-faint inline-flex shrink-0 items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10px] font-bold whitespace-nowrap">
+													<span class="bg-text-faint inline-block h-1.5 w-1.5 rounded-full" />
+													Sin invitar
+												</span>
+											)}
+										</div>
+
 										{isProtected ? (
-											<span class="border-border bg-bg-soft text-text-dim inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10px] font-bold whitespace-nowrap">
-												<span class="bg-emerald animate-status-pulse inline-block h-1.5 w-1.5 rounded-full" />
-												Protegido 24/7
-											</span>
+											<div class="border-border-soft flex items-center gap-4 border-t pt-4 text-xs">
+												<span class="text-text-dim">
+													<span class="text-text font-bold">0</span> ataques bloqueados hoy
+												</span>
+												<span class="text-text-dim">
+													<span class="text-text font-bold">4/4</span> filtros activos
+												</span>
+											</div>
 										) : (
-											<span class="border-border text-text-faint inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10px] font-bold whitespace-nowrap">
-												<span class="bg-text-faint inline-block h-1.5 w-1.5 rounded-full" />
-												Sin invitar
-											</span>
+											<div class="border-border-soft border-t pt-4 text-xs">
+												<span class="text-text-faint">El bot aún no está en este servidor</span>
+											</div>
 										)}
 									</div>
 
-									{isProtected && (
-										<div class="border-border-soft mb-4 flex items-center gap-4 border-t pt-4 text-xs">
-											<span class="text-text-dim">
-												<span class="text-text font-bold">0</span> ataques bloqueados hoy
-											</span>
-											<span class="text-text-dim">
-												<span class="text-text font-bold">4/4</span> filtros activos
-											</span>
-										</div>
-									)}
-
-									<div class="mt-auto">
+									<div class="mt-4">
 										{isProtected ? (
 											<a
-												href="#"
+												href={`/dashboard/${guild.id}`}
 												class="border-border hover:border-brand hover:text-brand block rounded-[10px] border px-4 py-2.5 text-center text-sm font-bold transition-colors"
 											>
 												Gestionar
