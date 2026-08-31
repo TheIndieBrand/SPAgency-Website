@@ -1,6 +1,6 @@
 # SP Agency
 
-Sitio web de SP Agency, bot de ciberseguridad anti-raid para Discord. Construido con Astro, Tailwind CSS y Express (SSR).
+Sitio web de SP Agency, bot de ciberseguridad anti-raid para Discord. Construido con Astro, Tailwind CSS, GSAP (animaciones con scroll) y Express (SSR).
 
 ## 🧞 Comandos
 
