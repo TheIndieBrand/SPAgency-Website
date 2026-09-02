@@ -1,5 +1,6 @@
 {
   "name": "technological-trappist",
+  "description": "Sitio web de SP Agency, bot de ciberseguridad anti-raid para Discord.",
   "type": "module",
   "version": "0.0.1",
   "engines": {
