@@ -1,0 +1,72 @@
+---
+export const prerender = false;
+
+import Layout from "../../../layouts/Layout.astro";
+import DashboardShell from "../../../components/dashboard/DashboardShell.astro";
+import SettingCard from "../../../components/dashboard/SettingCard.astro";
+import FieldRow from "../../../components/dashboard/FieldRow.astro";
+import { requireGuildAccess } from "../../../lib/dashboard-guard";
+import { getMockGuildConfig } from "../../../lib/mock-config";
+import { inputClass } from "../../../lib/dashboard-ui";
+
+const result = await requireGuildAccess(Astro, Astro.params.guildId);
+if ("redirect" in result) return result.redirect;
+const { guild } = result;
+
+const { configuration, protection } = getMockGuildConfig();
+---
+
+<Layout title={`Alertas y Canales — ${guild.name}`}>
+	<DashboardShell
+		guild={guild}
+		active="alerts"
+		title="Alertas y Canales"
+		subtitle="A dónde se envían los registros de moderación y quién queda exento de las protecciones."
+		raidmodeActive={protection.raidmodeEnable}
+	>
+		<div class="flex flex-col gap-6">
+			<SettingCard title="Canal de logs" description="Todas las acciones de moderación y eventos de seguridad se guardan siempre en la base de datos; este canal es solo para verlos en vivo en Discord." icon="bi-journal-text">
+				<FieldRow label="Canal" description="Si lo dejas vacío, los logs no se envían a ningún canal (pero se siguen registrando).">
+					<div class="flex items-center gap-2">
+						<span class="text-text-faint text-sm">#</span>
+						<input type="text" placeholder="mod-logs" value={configuration.logsChannel ?? ""} class={inputClass} />
+					</div>
+				</FieldRow>
+				{
+					configuration.logsChannel && (
+						<p class="text-text-faint mt-3 text-xs">
+							<i class="bi bi-info-circle mr-1" />
+							Máximo 3 envíos cada 10s por servidor; los eventos se agrupan automáticamente si hay ráfaga.
+						</p>
+					)
+				}
+			</SettingCard>
+
+			<SettingCard title="Lista blanca (Whitelist)" description="Usuarios y bots exentos de Anti-Raid, Anti-Bots y demás protecciones automáticas." icon="bi-shield-lock">
+				<div class="mb-4 flex flex-wrap gap-2">
+					{
+						configuration.whitelist.length === 0 ? (
+							<p class="text-text-faint text-xs">Ningún usuario o bot en la lista blanca todavía.</p>
+						) : (
+							configuration.whitelist.map((entry) => (
+								<span class="border-border bg-bg-soft text-text-dim inline-flex items-center gap-2 rounded-full border py-1.5 pr-2 pl-3 text-xs font-semibold">
+									<i class="bi bi-person-check text-brand text-[11px]" />
+									{entry.label}
+									<button type="button" class="text-text-faint hover:text-[#ef4444] transition-colors" aria-label={`Quitar ${entry.label} de la lista blanca`}>
+										<i class="bi bi-x-lg text-[10px]" />
+									</button>
+								</span>
+							))
+						)
+					}
+				</div>
+				<div class="flex items-center gap-2">
+					<input type="text" placeholder="ID de usuario o bot…" class={inputClass} />
+					<button type="button" class="bg-brand hover:bg-brand-hover shrink-0 rounded-lg px-4 py-2 text-sm font-bold text-white transition-colors">
+						Añadir
+					</button>
+				</div>
+			</SettingCard>
+		</div>
+	</DashboardShell>
+</Layout>

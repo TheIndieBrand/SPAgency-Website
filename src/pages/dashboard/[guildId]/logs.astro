@@ -1,0 +1,107 @@
+---
+export const prerender = false;
+
+import Layout from "../../../layouts/Layout.astro";
+import DashboardShell from "../../../components/dashboard/DashboardShell.astro";
+import { requireGuildAccess } from "../../../lib/dashboard-guard";
+import { getMockGuildConfig, getMockActivity } from "../../../lib/mock-config";
+
+const result = await requireGuildAccess(Astro, Astro.params.guildId);
+if ("redirect" in result) return result.redirect;
+const { guild } = result;
+
+const { protection } = getMockGuildConfig();
+const activity = getMockActivity();
+
+const toneClass: Record<string, string> = {
+	danger: "border-[#ef4444]/30 bg-[#ef4444]/10 text-[#ef4444]",
+	warning: "border-[#f59e0b]/30 bg-[#f59e0b]/10 text-[#f59e0b]",
+	info: "border-brand/30 bg-brand/10 text-brand",
+	success: "border-emerald/30 bg-emerald/10 text-emerald",
+};
+
+const filters = [
+	{ key: "all", label: "Todos" },
+	{ key: "danger", label: "Seguridad" },
+	{ key: "warning", label: "Automod" },
+	{ key: "info", label: "Sistema" },
+	{ key: "success", label: "Administración" },
+];
+---
+
+<Layout title={`Registros de actividad — ${guild.name}`}>
+	<DashboardShell
+		guild={guild}
+		active="logs"
+		title="Registros de actividad"
+		subtitle="Historial de eventos de seguridad y acciones de moderación de este servidor."
+		raidmodeActive={protection.raidmodeEnable}
+	>
+		<div class="mb-5 flex flex-wrap items-center gap-2" id="log-filters">
+			{
+				filters.map((f, i) => (
+					<button
+						type="button"
+						data-filter={f.key}
+						class:list={[
+							"filter-btn rounded-full px-4 py-1.5 text-xs font-bold transition-colors",
+							i === 0 ? "bg-text text-[#191919]" : "border-border text-text-dim hover:border-brand hover:text-brand border",
+						]}
+					>
+						{f.label}
+					</button>
+				))
+			}
+		</div>
+
+		<div class="border-border-soft bg-bg-soft rounded-[14px] border">
+			<div id="log-list" class="divide-border-soft divide-y">
+				{
+					activity.map((event) => (
+						<div class="log-row flex items-start gap-3 px-4 py-3 text-[13px]" data-tone={event.tone}>
+							<span class="text-text-faint shrink-0 pt-0.5 tabular-nums">[{event.time}]</span>
+							<span class:list={["inline-flex shrink-0 items-center justify-center rounded-full border p-1.5", toneClass[event.tone]]}>
+								<i class={`bi ${event.icon} text-xs`} />
+							</span>
+							<span class="text-text-dim self-center leading-relaxed">{event.label}</span>
+						</div>
+					))
+				}
+			</div>
+			<div id="log-empty" class="hidden px-4 py-16 text-center">
+				<i class="bi bi-inbox text-text-faint mb-3 block text-3xl" />
+				<p class="text-text-dim text-sm">No hay eventos de este tipo todavía.</p>
+			</div>
+		</div>
+	</DashboardShell>
+</Layout>
+
+<script>
+	const filterButtons = document.querySelectorAll<HTMLButtonElement>(".filter-btn");
+	const rows = document.querySelectorAll<HTMLElement>(".log-row");
+	const empty = document.getElementById("log-empty");
+
+	filterButtons.forEach((btn) => {
+		btn.addEventListener("click", () => {
+			const filter = btn.dataset.filter || "all";
+			let visibleCount = 0;
+
+			rows.forEach((row) => {
+				const visible = filter === "all" || row.dataset.tone === filter;
+				row.classList.toggle("hidden", !visible);
+				if (visible) visibleCount++;
+			});
+
+			empty?.classList.toggle("hidden", visibleCount !== 0);
+
+			filterButtons.forEach((b) => {
+				const active = b === btn;
+				b.classList.toggle("bg-text", active);
+				b.classList.toggle("text-[#191919]", active);
+				b.classList.toggle("border", !active);
+				b.classList.toggle("border-border", !active);
+				b.classList.toggle("text-text-dim", !active);
+			});
+		});
+	});
+</script>

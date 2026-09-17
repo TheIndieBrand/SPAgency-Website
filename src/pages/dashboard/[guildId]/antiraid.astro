@@ -1,0 +1,132 @@
+---
+export const prerender = false;
+
+import Layout from "../../../layouts/Layout.astro";
+import DashboardShell from "../../../components/dashboard/DashboardShell.astro";
+import SettingCard from "../../../components/dashboard/SettingCard.astro";
+import Toggle from "../../../components/dashboard/Toggle.astro";
+import FieldRow from "../../../components/dashboard/FieldRow.astro";
+import { requireGuildAccess } from "../../../lib/dashboard-guard";
+import { getMockGuildConfig } from "../../../lib/mock-config";
+import { inputClass, selectClass, durationToParts } from "../../../lib/dashboard-ui";
+
+const result = await requireGuildAccess(Astro, Astro.params.guildId);
+if ("redirect" in result) return result.redirect;
+const { guild } = result;
+
+const { protection } = getMockGuildConfig();
+const selfbotAge = durationToParts(protection.selfbotMinAccountAge);
+const raidmodeDuration = durationToParts(protection.raidmodeTimeToDisable);
+---
+
+<Layout title={`Anti-Raid & Bots — ${guild.name}`}>
+	<DashboardShell
+		guild={guild}
+		active="antiraid"
+		title="Anti-Raid & Bots"
+		subtitle="Detección de raids, bots no verificados, selfbots y miembros maliciosos."
+		raidmodeActive={protection.raidmodeEnable}
+	>
+		<div class="flex flex-col gap-6">
+			<!-- Panic / Raidmode -->
+			<div class:list={["rounded-[14px] border p-5", protection.raidmodeEnable ? "border-[#ef4444]/40 bg-[#ef4444]/5" : "border-border-soft bg-card"]}>
+				<div class="mb-4 flex items-start gap-3">
+					<i class="bi bi-exclamation-octagon-fill mt-0.5 text-base text-[#ef4444]" />
+					<div>
+						<h2 class="text-text text-sm font-bold">Modo Pánico (Raidmode)</h2>
+						<p class="text-text-faint mt-0.5 text-xs">
+							Bloqueo total: cualquier acción sospechosa banea al instante, sin margen de error. Úsalo solo durante un
+							ataque activo.
+						</p>
+					</div>
+				</div>
+				<Toggle name="raidmodeEnable" label="Activar Modo Pánico" checked={protection.raidmodeEnable} danger />
+				<FieldRow label="Auto-desactivar tras" description="También determina cuánto dura el ban temporal a quien se une mientras está activo.">
+					<div class="flex items-center gap-2">
+						<input type="number" min="1" value={raidmodeDuration.amount} class={inputClass + " !w-20 sm:!w-20"} />
+						<select class={selectClass + " !w-24 sm:!w-24"}>
+							<option value="m" selected={raidmodeDuration.unit === "m"}>Minutos</option>
+							<option value="h" selected={raidmodeDuration.unit === "h"}>Horas</option>
+							<option value="d" selected={raidmodeDuration.unit === "d"}>Días</option>
+							<option value="w" selected={raidmodeDuration.unit === "w"}>Semanas</option>
+						</select>
+					</div>
+				</FieldRow>
+				{
+					protection.raidmodeActivatedAt && (
+						<p class="text-text-faint mt-3 text-xs">Activado el {protection.raidmodeActivatedAt}</p>
+					)
+				}
+			</div>
+
+			<SettingCard title="Anti-Raid" description="Detecta ráfagas de acciones destructivas (creación de canales/roles, bans, salidas masivas) y banea a quien las causa." icon="bi-shield-check">
+				<Toggle name="antiraidEnable" label="Activar protección Anti-Raid" description="Recomendado siempre activo. Se autodesactiva si el bot pierde permisos clave." checked={protection.antiraidEnable} />
+			</SettingCard>
+
+			<SettingCard title="Anti-Bots" description="Expulsa bots automáticamente al unirse, antes de que puedan actuar." icon="bi-robot">
+				<div class="divide-border-soft divide-y">
+					<Toggle name="antibotsEnable" label="Activar Anti-Bots" checked={protection.antibotsEnable} />
+					<FieldRow label="Alcance" description="A qué bots afecta la expulsión automática.">
+						<select class={selectClass} disabled={!protection.antibotsEnable}>
+							<option value="all" selected={protection.antibotsType === "all"}>Todos los bots</option>
+							<option value="onlyUnverified" selected={protection.antibotsType === "onlyUnverified"}>
+								Solo no verificados por Discord
+							</option>
+						</select>
+					</FieldRow>
+				</div>
+			</SettingCard>
+
+			<SettingCard title="Detección de Selfbots" description="Puntúa cuentas sospechosas al unirse (cuenta nueva, sin avatar, nombre sospechoso, ráfaga de entradas) y actúa si superan el umbral." icon="bi-person-badge">
+				<div class="divide-border-soft divide-y">
+					<FieldRow label="Acción al detectar" description="Ninguna acción envía solo el registro al log.">
+						<select class={selectClass}>
+							<option value="none" selected={protection.selfbotAction === "none"}>No hacer nada</option>
+							<option value="kick" selected={protection.selfbotAction === "kick"}>Expulsar</option>
+							<option value="ban" selected={protection.selfbotAction === "ban"}>Banear</option>
+						</select>
+					</FieldRow>
+					<FieldRow label="Antigüedad mínima de cuenta" description="Cuentas más nuevas que esto suman puntos de sospecha.">
+						<div class="flex items-center gap-2">
+							<input type="number" min="1" value={selfbotAge.amount} class={inputClass + " !w-20 sm:!w-20"} />
+							<select class={selectClass + " !w-24 sm:!w-24"}>
+								<option value="h" selected={selfbotAge.unit === "h"}>Horas</option>
+								<option value="d" selected={selfbotAge.unit === "d"}>Días</option>
+								<option value="w" selected={selfbotAge.unit === "w"}>Semanas</option>
+							</select>
+						</div>
+					</FieldRow>
+				</div>
+			</SettingCard>
+
+			<SettingCard title="Miembros maliciosos (UBFB)" description="Al unirse, comprueba la cuenta contra la lista global de usuarios maliciosos de UBFB." icon="bi-person-fill-x">
+				<FieldRow label="Acción al detectar" description="Los bots maliciosos siempre se banean, sin importar esta opción.">
+					<select class={selectClass}>
+						<option value="none" selected={protection.maliciousMemberAction === "none"}>No hacer nada</option>
+						<option value="mark" selected={protection.maliciousMemberAction === "mark"}>Marcar (avisar y cambiar apodo)</option>
+						<option value="ban" selected={protection.maliciousMemberAction === "ban"}>Banear</option>
+					</select>
+				</FieldRow>
+			</SettingCard>
+
+			<SettingCard title="Verificación" description="Los nuevos miembros deben completar una verificación web (OAuth2 + captcha) antes de recibir un rol." icon="bi-patch-check">
+				<div class="divide-border-soft divide-y">
+					<Toggle name="verificationEnable" label="Requerir verificación" checked={protection.verificationEnable} />
+					<FieldRow label="Rol al verificar" description="Rol que se concede tras completar la verificación.">
+						<input
+							type="text"
+							placeholder="ID o nombre del rol…"
+							value={protection.verificationRole ?? ""}
+							class={inputClass}
+							disabled={!protection.verificationEnable}
+						/>
+					</FieldRow>
+				</div>
+			</SettingCard>
+
+			<SettingCard title="SOS Inteligente" description="Avisa al equipo de SP Agency en tiempo real cuando Anti-Raid banea a un atacante en tu servidor." icon="bi-broadcast">
+				<Toggle name="intelligentSosEnable" label="Activar SOS Inteligente" checked={protection.intelligentSosEnable} />
+			</SettingCard>
+		</div>
+	</DashboardShell>
+</Layout>
