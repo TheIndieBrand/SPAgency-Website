@@ -1,0 +1,144 @@
+---
+import type { DiscordGuild } from "../../lib/discord";
+import { guildIconUrl } from "../../lib/discord";
+
+export type DashboardSection = "general" | "antiraid" | "automod" | "alerts" | "settings" | "logs";
+
+interface Props {
+	guild: DiscordGuild;
+	active: DashboardSection;
+	title: string;
+	subtitle?: string;
+	raidmodeActive?: boolean;
+}
+
+const { guild, active, title, subtitle, raidmodeActive = false } = Astro.props;
+const icon = guildIconUrl(guild);
+const base = `/dashboard/${guild.id}`;
+
+const panelNav = [{ key: "general" as const, label: "General", href: base, icon: "bi-grid" }];
+
+const logsNav = [{ key: "logs" as const, label: "Registros de actividad", href: `${base}/logs`, icon: "bi-journal-text" }];
+
+const configNav = [
+	{ key: "antiraid" as const, label: "Anti-Raid & Bots", href: `${base}/antiraid`, icon: "bi-shield-check" },
+	{ key: "automod" as const, label: "Automoderación", href: `${base}/automod`, icon: "bi-funnel" },
+	{ key: "alerts" as const, label: "Alertas y Canales", href: `${base}/alerts`, icon: "bi-bell" },
+	{ key: "settings" as const, label: "Ajustes", href: `${base}/settings`, icon: "bi-gear" },
+];
+---
+
+<div class="bg-bg min-h-screen">
+	<!-- ============ TOP BAR ============ -->
+	<header class="border-border-soft border-b">
+		<div class="mx-auto flex max-w-[1400px] items-center justify-between gap-4 px-8 py-3.5">
+			<a href="/dashboard" class="text-text-dim hover:text-brand flex items-center gap-2 text-sm font-semibold transition-colors">
+				<i class="bi bi-arrow-left" />
+				<span class="hidden sm:inline">Volver a mis servidores</span>
+			</a>
+
+			<div class="flex items-center gap-3">
+				{
+					icon ? (
+						<img src={icon} alt={guild.name} class="h-7 w-7 rounded-full object-cover" />
+					) : (
+						<div class="bg-bg-soft text-text-dim border-border flex h-7 w-7 items-center justify-center rounded-full border text-xs font-bold">
+							{guild.name.charAt(0).toUpperCase()}
+						</div>
+					)
+				}
+				<span class="text-text hidden text-sm font-bold sm:inline">{guild.name}</span>
+				{
+					raidmodeActive ? (
+						<span class="inline-flex items-center gap-1.5 rounded-full border border-[#ef4444]/40 bg-[#ef4444]/10 px-2.5 py-1 text-[10px] font-bold whitespace-nowrap text-[#ef4444]">
+							<span class="inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-[#ef4444]" />
+							Modo Pánico Activo
+						</span>
+					) : (
+						<span class="border-border bg-bg-soft text-text-dim inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10px] font-bold whitespace-nowrap">
+							<span class="bg-emerald animate-status-pulse inline-block h-1.5 w-1.5 rounded-full" />
+							Protección Activa
+						</span>
+					)
+				}
+			</div>
+		</div>
+	</header>
+
+	<div class="mx-auto flex max-w-[1400px] items-start">
+		<!-- ============ SIDEBAR ============ -->
+		<aside class="border-border-soft sticky top-0 hidden h-screen w-64 shrink-0 overflow-y-auto border-r px-4 py-6 md:block">
+			<div class="mb-6">
+				<div class="text-text-faint mb-2 px-3 text-[11px] font-bold tracking-[0.08em] uppercase">Panel</div>
+				<nav class="flex flex-col gap-1">
+					{
+						[...panelNav, ...logsNav].map((item) => (
+							<a
+								href={item.href}
+								class:list={[
+									"flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-semibold transition-colors",
+									active === item.key
+										? "bg-brand/10 border-brand/40 text-brand border"
+										: "text-text-dim hover:bg-bg-soft hover:text-text border border-transparent",
+								]}
+							>
+								<i class={`bi ${item.icon}`} />
+								{item.label}
+							</a>
+						))
+					}
+				</nav>
+			</div>
+
+			<div>
+				<div class="text-text-faint mb-2 px-3 text-[11px] font-bold tracking-[0.08em] uppercase">
+					Configuración
+				</div>
+				<nav class="flex flex-col gap-1">
+					{
+						configNav.map((item) => (
+							<a
+								href={item.href}
+								class:list={[
+									"flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-semibold transition-colors",
+									active === item.key
+										? "bg-brand/10 border-brand/40 text-brand border"
+										: "text-text-dim hover:bg-bg-soft hover:text-text border border-transparent",
+								]}
+							>
+								<i class={`bi ${item.icon}`} />
+								{item.label}
+							</a>
+						))
+					}
+				</nav>
+			</div>
+		</aside>
+
+		<!-- ============ MOBILE NAV ============ -->
+		<nav class="border-border-soft scrollbar-none flex w-full gap-2 overflow-x-auto border-b px-4 py-3 md:hidden">
+			{
+				[...panelNav, ...logsNav, ...configNav].map((item) => (
+					<a
+						href={item.href}
+						class:list={[
+							"shrink-0 rounded-full px-3 py-1.5 text-xs font-bold whitespace-nowrap transition-colors",
+							active === item.key ? "bg-brand text-white" : "border-border text-text-dim border",
+						]}
+					>
+						{item.label}
+					</a>
+				))
+			}
+		</nav>
+
+		<!-- ============ MAIN CONTENT ============ -->
+		<main class="min-w-0 flex-1 p-6">
+			<div class="mb-6">
+				<h1 class="font-display text-2xl font-bold tracking-tight">{title}</h1>
+				{subtitle && <p class="text-text-faint mt-1 text-sm">{subtitle}</p>}
+			</div>
+			<slot />
+		</main>
+	</div>
+</div>

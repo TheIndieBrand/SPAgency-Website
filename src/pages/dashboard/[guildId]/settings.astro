@@ -1,0 +1,72 @@
+---
+export const prerender = false;
+
+import Layout from "../../../layouts/Layout.astro";
+import DashboardShell from "../../../components/dashboard/DashboardShell.astro";
+import SettingCard from "../../../components/dashboard/SettingCard.astro";
+import FieldRow from "../../../components/dashboard/FieldRow.astro";
+import { requireGuildAccess } from "../../../lib/dashboard-guard";
+import { getMockGuildConfig } from "../../../lib/mock-config";
+import { inputClass, selectClass } from "../../../lib/dashboard-ui";
+
+const result = await requireGuildAccess(Astro, Astro.params.guildId);
+if ("redirect" in result) return result.redirect;
+const { guild } = result;
+
+const { core, protection } = getMockGuildConfig();
+---
+
+<Layout title={`Ajustes — ${guild.name}`}>
+	<DashboardShell guild={guild} active="settings" title="Ajustes" subtitle="Preferencias generales del bot y copias de seguridad del servidor." raidmodeActive={protection.raidmodeEnable}>
+		<div class="flex flex-col gap-6">
+			<SettingCard title="General" icon="bi-sliders">
+				<div class="divide-border-soft divide-y">
+					<FieldRow label="Prefijo de comandos" description="Prefijo para los comandos de texto del bot (los slash commands no lo necesitan).">
+						<input type="text" value={core.prefix} class={inputClass + " !w-24 sm:!w-24"} />
+					</FieldRow>
+					<FieldRow label="Idioma" description="Idioma de las respuestas y notificaciones del bot en este servidor.">
+						<select class={selectClass}>
+							<option value="es" selected={core.language === "es"}>Español</option>
+							<option value="en" selected={core.language === "en"}>English</option>
+						</select>
+					</FieldRow>
+				</div>
+			</SettingCard>
+
+			<SettingCard title="Copias de seguridad" description="Snapshot de canales, roles, bans, emojis y stickers. Se usa para restaurar el servidor tras un ataque." icon="bi-archive">
+				<div class="border-border-soft flex flex-col items-start justify-between gap-4 border-b pb-4 sm:flex-row sm:items-center">
+					<div>
+						<p class="text-text text-sm font-semibold">Último backup</p>
+						<p class="text-text-faint text-xs">Aún no se ha creado ninguna copia de seguridad para este servidor.</p>
+					</div>
+					<button type="button" class="bg-brand hover:bg-brand-hover shrink-0 rounded-lg px-4 py-2 text-sm font-bold whitespace-nowrap text-white transition-colors">
+						<i class="bi bi-camera mr-1.5" />
+						Crear backup ahora
+					</button>
+				</div>
+				<p class="text-text-faint pt-4 text-xs">
+					<i class="bi bi-info-circle mr-1" />
+					Solo se guarda una copia por servidor: crear una nueva sobrescribe la anterior.
+				</p>
+			</SettingCard>
+
+			<div class="rounded-[14px] border border-[#ef4444]/30 bg-[#ef4444]/5 p-5">
+				<div class="mb-4 flex items-start gap-3">
+					<i class="bi bi-exclamation-triangle-fill mt-0.5 text-base text-[#ef4444]" />
+					<div>
+						<h2 class="text-sm font-bold text-[#ef4444]">Zona de peligro</h2>
+						<p class="text-text-faint mt-0.5 text-xs">Estas acciones son irreversibles.</p>
+					</div>
+				</div>
+				<div class="flex flex-col gap-2 sm:flex-row">
+					<button type="button" class="rounded-lg border border-[#ef4444]/40 px-4 py-2 text-sm font-bold text-[#ef4444] transition-colors hover:bg-[#ef4444]/10">
+						Restablecer toda la configuración
+					</button>
+					<button type="button" class="rounded-lg border border-[#ef4444]/40 px-4 py-2 text-sm font-bold text-[#ef4444] transition-colors hover:bg-[#ef4444]/10">
+						Expulsar al bot de este servidor
+					</button>
+				</div>
+			</div>
+		</div>
+	</DashboardShell>
+</Layout>
