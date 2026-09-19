@@ -170,3 +170,10 @@ export const BLOOM_AT = LINE_CENTER_AT + 50.5; // …y se expande
 export const BLOOM_DUR = 2;
 export const CTA_AT = LINE_CENTER_AT + 51.5; // de él emerge la CTA
 export const CTA_DUR = 1.2;
+
+// Puntos del timeline a los que llevan los enlaces del navbar. Como sus destinos
+// viven DENTRO de la escena (no hay un ancla en el DOM a la que saltar), mount.ts
+// los registra como etiquetas del timeline con el mismo nombre que el href
+// ("#features", "#how"): anchors.ts lleva al scroll donde esa parte está en pantalla.
+export const ANCHOR_FEATURES_AT = SC + 5.5; // las seis tarjetas de "Funciones"
+export const ANCHOR_HOW_AT = LINE_CENTER_AT + 29.4; // el primer paso, subiendo hacia la punta

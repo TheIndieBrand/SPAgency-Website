@@ -4,7 +4,7 @@ import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { queryScene } from "./dom";
 import { prepareScene } from "./prepare";
-import { TL_UNITS_BASE, TL_VIEWPORTS_BASE, RUMBLE_START } from "./timing";
+import { ANCHOR_FEATURES_AT, ANCHOR_HOW_AT, TL_UNITS_BASE, TL_VIEWPORTS_BASE, RUMBLE_START } from "./timing";
 import { addHeroStatsAct } from "./acts/hero-stats";
 import { addLimitAct } from "./acts/limit";
 import { addBurstAct } from "./acts/burst";
@@ -82,6 +82,8 @@ export function mountScene() {
 		if (outro.clock.t < RUMBLE_START || !tl.scrollTrigger?.isActive) return;
 		outro.render(outro.clock.t);
 	});
+
+	tl.addLabel("features", ANCHOR_FEATURES_AT).addLabel("how", ANCHOR_HOW_AT);
 
 	// Con todos los actos añadidos, la duración ya es la real: recalcula el largo.
 	st.refresh();
