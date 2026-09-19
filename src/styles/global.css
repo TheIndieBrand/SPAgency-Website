@@ -209,6 +209,24 @@
   }
 }
 
+/* Testimonios de la versión simple con prefers-reduced-motion: sin marquee, las
+   tarjetas de cada fila se ajustan al ancho (si no, con la animación apagada, la
+   mayoría quedaba cortada fuera del contenedor y sin forma de verla). Va SIN
+   @layer a propósito, para ganar a `w-max` y `contents` de Tailwind. */
+@media (prefers-reduced-motion: reduce) {
+  .marquee-row {
+    width: auto;
+    flex-wrap: wrap;
+    justify-content: center;
+    padding-inline: 2rem;
+  }
+
+  .marquee-dup,
+  .marquee-fade {
+    display: none;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .animate-marquee-left,
   .animate-marquee-right,

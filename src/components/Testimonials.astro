@@ -6,7 +6,8 @@
 //
 // Las tarjetas corren en dos filas tipo marquee (fila 1 → izquierda, fila 2
 // → derecha). Se reparten automáticamente entre las dos filas, no hace falta
-// tocar nada más al agregar o quitar testimonios.
+// tocar nada más al agregar o quitar testimonios. Con prefers-reduced-motion no
+// hay marquee: las tarjetas se muestran todas, en filas que se ajustan al ancho.
 import TestimonialCard from "./TestimonialCard.astro";
 import { sections } from "../lib/home-content";
 import { testimonials } from "../lib/testimonials";
@@ -24,19 +25,26 @@ const row2 = testimonials.slice(half);
 	</div>
 
 	<div class="relative mx-auto max-w-7xl overflow-hidden">
-		<div class="from-bg pointer-events-none absolute top-0 left-0 z-10 h-full w-24 bg-gradient-to-r to-transparent">
+		<div class="marquee-fade from-bg pointer-events-none absolute top-0 left-0 z-10 h-full w-24 bg-gradient-to-r to-transparent">
 		</div>
-		<div class="from-bg pointer-events-none absolute top-0 right-0 z-10 h-full w-24 bg-gradient-to-l to-transparent">
-		</div>
-
-		<div class="animate-marquee-left group-hover:[animation-play-state:paused] mb-5 flex w-max gap-5">
-			{row1.map((t) => <TestimonialCard testimonial={t} />)}
-			{row1.map((t) => <TestimonialCard testimonial={t} />)}
+		<div class="marquee-fade from-bg pointer-events-none absolute top-0 right-0 z-10 h-full w-24 bg-gradient-to-l to-transparent">
 		</div>
 
-		<div class="animate-marquee-right group-hover:[animation-play-state:paused] flex w-max gap-5">
+		<!-- La segunda copia de cada fila solo existe para que el bucle sea continuo: va
+		     aria-hidden (si no, los lectores de pantalla leerían cada testimonio dos
+		     veces) y con prefers-reduced-motion se oculta (ver global.css). -->
+		<div class="marquee-row animate-marquee-left group-hover:[animation-play-state:paused] mb-5 flex w-max gap-5">
+			{row1.map((t) => <TestimonialCard testimonial={t} />)}
+			<div class="marquee-dup contents" aria-hidden="true">
+				{row1.map((t) => <TestimonialCard testimonial={t} />)}
+			</div>
+		</div>
+
+		<div class="marquee-row animate-marquee-right group-hover:[animation-play-state:paused] flex w-max gap-5">
 			{row2.map((t) => <TestimonialCard testimonial={t} />)}
-			{row2.map((t) => <TestimonialCard testimonial={t} />)}
+			<div class="marquee-dup contents" aria-hidden="true">
+				{row2.map((t) => <TestimonialCard testimonial={t} />)}
+			</div>
 		</div>
 	</div>
 </section>
