@@ -1,0 +1,84 @@
+---
+import { renderInline, slugify } from "../../lib/docs";
+import type { DocBlock } from "../../lib/docs";
+
+interface Props {
+	blocks: DocBlock[];
+}
+
+const { blocks } = Astro.props;
+
+const callout = {
+	info: { icon: "bi-info-circle-fill", box: "border-brand/30 bg-brand/[0.06]", accent: "text-brand" },
+	tip: { icon: "bi-lightbulb-fill", box: "border-emerald/30 bg-emerald/[0.06]", accent: "text-emerald" },
+	warning: { icon: "bi-exclamation-triangle-fill", box: "border-[#f59e0b]/30 bg-[#f59e0b]/[0.06]", accent: "text-[#f59e0b]" },
+};
+---
+
+<div class="flex flex-col gap-5">
+	{
+		blocks.map((block) => {
+			if (block.type === "h")
+				return (
+					<h2 id={slugify(block.text)} class="font-display text-text scroll-mt-24 pt-4 text-xl font-bold tracking-tight">
+						{block.text}
+					</h2>
+				);
+
+			if (block.type === "p")
+				return <p class="text-text-dim text-[15px] leading-[1.75]" set:html={renderInline(block.text)} />;
+
+			if (block.type === "list") {
+				const Tag = block.ordered ? "ol" : "ul";
+				return (
+					<Tag
+						class:list={[
+							"text-text-dim flex flex-col gap-2.5 pl-5 text-[15px] leading-[1.7] marker:text-text-faint",
+							block.ordered ? "list-decimal" : "list-disc",
+						]}
+					>
+						{block.items.map((item) => (
+							<li class="pl-1" set:html={renderInline(item)} />
+						))}
+					</Tag>
+				);
+			}
+
+			if (block.type === "callout") {
+				const c = callout[block.tone];
+				return (
+					<aside class={`flex gap-3 rounded-xl border p-4 ${c.box}`}>
+						<i class={`bi ${c.icon} mt-0.5 shrink-0 text-base ${c.accent}`} aria-hidden="true" />
+						<div class="min-w-0 text-[14.5px] leading-[1.7]">
+							{block.title && <p class={`mb-1 font-bold ${c.accent}`}>{block.title}</p>}
+							<p class="text-text-dim" set:html={renderInline(block.text)} />
+						</div>
+					</aside>
+				);
+			}
+
+			return (
+				<div class="border-border-soft overflow-x-auto rounded-xl border">
+					<table class="w-full min-w-[520px] border-collapse text-left text-[14px]">
+						<thead>
+							<tr class="border-border-soft bg-bg-soft border-b">
+								{block.head.map((cell) => (
+									<th class="text-text px-4 py-2.5 text-[12px] font-bold tracking-[0.04em] uppercase">{cell}</th>
+								))}
+							</tr>
+						</thead>
+						<tbody class="divide-border-soft divide-y">
+							{block.rows.map((row) => (
+								<tr>
+									{row.map((cell) => (
+										<td class="text-text-dim px-4 py-3 align-top leading-relaxed" set:html={renderInline(cell)} />
+									))}
+								</tr>
+							))}
+						</tbody>
+					</table>
+				</div>
+			);
+		})
+	}
+</div>

@@ -1,0 +1,44 @@
+---
+export const prerender = true;
+
+import DocsLayout from "../../layouts/DocsLayout.astro";
+import DocBlocks from "../../components/docs/DocBlocks.astro";
+import { docPages, getHeadings, getNeighbors } from "../../lib/docs";
+
+export function getStaticPaths() {
+	return docPages.map((page) => ({ params: { slug: page.slug }, props: { page } }));
+}
+
+const { page } = Astro.props;
+const { prev, next } = getNeighbors(page.slug);
+---
+
+<DocsLayout title={page.title} description={page.summary} activeSlug={page.slug} headings={getHeadings(page)}>
+	<header class="mb-8">
+		<h1 class="font-display text-3xl font-bold tracking-tight sm:text-4xl">{page.title}</h1>
+		<p class="text-text-dim mt-3 text-[16px] leading-relaxed">{page.summary}</p>
+	</header>
+
+	<DocBlocks blocks={page.blocks} />
+
+	<nav class="border-border-soft mt-14 grid gap-3 border-t pt-8 sm:grid-cols-2" aria-label="Páginas anterior y siguiente">
+		{
+			prev ? (
+				<a href={`/docs/${prev.slug}`} class="border-border-soft hover:border-brand/50 group rounded-xl border p-4 transition-colors">
+					<span class="text-text-faint block text-xs font-semibold">← Anterior</span>
+					<span class="text-text group-hover:text-brand mt-1 block text-sm font-bold transition-colors">{prev.title}</span>
+				</a>
+			) : (
+				<span />
+			)
+		}
+		{
+			next && (
+				<a href={`/docs/${next.slug}`} class="border-border-soft hover:border-brand/50 group rounded-xl border p-4 text-right transition-colors">
+					<span class="text-text-faint block text-xs font-semibold">Siguiente →</span>
+					<span class="text-text group-hover:text-brand mt-1 block text-sm font-bold transition-colors">{next.title}</span>
+				</a>
+			)
+		}
+	</nav>
+</DocsLayout>

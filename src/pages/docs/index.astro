@@ -1,0 +1,48 @@
+---
+export const prerender = true;
+
+import DocsLayout from "../../layouts/DocsLayout.astro";
+import { docGroups } from "../../lib/docs";
+---
+
+<DocsLayout title="Documentación" description="Aprende a configurar SP Agency: protección anti-raid, automoderación, comandos y recuperación de tu servidor de Discord.">
+	<header class="mb-10">
+		<h1 class="font-display text-4xl font-bold tracking-tight">Documentación</h1>
+		<p class="text-text-dim mt-3 max-w-[560px] text-[16px] leading-relaxed">
+			Todo lo que necesitas para proteger tu servidor de Discord con SP Agency: desde invitar al bot hasta recuperarte de un raid.
+		</p>
+		<a
+			href="/docs/primeros-pasos"
+			class="bg-brand hover:bg-brand-hover mt-6 inline-flex items-center gap-2 rounded-lg px-5 py-2.5 text-sm font-bold text-white transition-colors"
+		>
+			Empezar
+			<i class="bi bi-arrow-right" />
+		</a>
+	</header>
+
+	<div class="flex flex-col gap-10">
+		{
+			docGroups.map((group) => (
+				<section>
+					<h2 class="text-text-faint mb-4 text-[11px] font-bold tracking-[0.08em] uppercase">{group.title}</h2>
+					<div class="grid gap-3 sm:grid-cols-2">
+						{group.pages.map((page) => (
+							<a
+								href={`/docs/${page.slug}`}
+								class="border-border-soft bg-card hover:border-brand/50 hover:bg-card-hover group flex gap-4 rounded-[14px] border p-5 transition-colors"
+							>
+								<span class="bg-brand/10 text-brand flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-lg">
+									<i class={`bi ${page.icon}`} />
+								</span>
+								<span class="min-w-0">
+									<span class="text-text group-hover:text-brand block text-[15px] font-bold transition-colors">{page.title}</span>
+									<span class="text-text-dim mt-1 block text-[13.5px] leading-relaxed">{page.summary}</span>
+								</span>
+							</a>
+						))}
+					</div>
+				</section>
+			))
+		}
+	</div>
+</DocsLayout>

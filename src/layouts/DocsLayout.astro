@@ -1,0 +1,106 @@
+---
+import Layout from "./Layout.astro";
+import Navbar from "../components/Navbar.astro";
+import Footer from "../components/Footer.astro";
+import { docGroups } from "../lib/docs";
+
+interface Props {
+	title: string;
+	description?: string;
+	activeSlug?: string;
+	headings?: { id: string; text: string }[];
+}
+
+const { title, description, activeSlug, headings = [] } = Astro.props;
+
+const linkClass = (active: boolean) =>
+	active
+		? "bg-brand/10 border-brand/40 text-brand border"
+		: "text-text-dim hover:bg-bg-soft hover:text-text border border-transparent";
+---
+
+<Layout title={`${title} — Documentación de SP Agency`} description={description}>
+	<Navbar />
+
+	<div class="mx-auto flex max-w-[1180px] items-start gap-10 px-4 sm:px-8">
+		<!-- Barra lateral (desktop) -->
+		<aside class="border-border-soft sticky top-[73px] hidden h-[calc(100vh-73px)] w-60 shrink-0 overflow-y-auto border-r py-8 pr-4 [scrollbar-color:var(--color-border)_transparent] [scrollbar-width:thin] lg:block">
+			<a
+				href="/docs"
+				class:list={["mb-5 flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-semibold transition-colors", linkClass(!activeSlug)]}
+			>
+				<i class="bi bi-book" />
+				Documentación
+			</a>
+			{
+				docGroups.map((group) => (
+					<div class="mb-6">
+						<div class="text-text-faint mb-2 px-3 text-[11px] font-bold tracking-[0.08em] uppercase">{group.title}</div>
+						<nav class="flex flex-col gap-0.5">
+							{group.pages.map((page) => (
+								<a
+									href={`/docs/${page.slug}`}
+									aria-current={activeSlug === page.slug ? "page" : undefined}
+									class:list={["flex items-center gap-2.5 rounded-lg px-3 py-1.5 text-[13.5px] font-semibold transition-colors", linkClass(activeSlug === page.slug)]}
+								>
+									<i class={`bi ${page.icon} text-[13px]`} />
+									{page.title}
+								</a>
+							))}
+						</nav>
+					</div>
+				))
+			}
+		</aside>
+
+		<main class="min-w-0 flex-1 py-8 sm:py-10">
+			<!-- Índice (< lg): la barra lateral no cabe. <details> funciona sin JS. -->
+			<details class="border-border-soft bg-bg-soft mb-8 rounded-xl border lg:hidden">
+				<summary class="text-text flex cursor-pointer list-none items-center justify-between px-4 py-3 text-sm font-bold [&::-webkit-details-marker]:hidden">
+					<span class="flex items-center gap-2"><i class="bi bi-list-ul" />Contenido</span>
+					<i class="bi bi-chevron-down text-text-faint text-xs" />
+				</summary>
+				<div class="border-border-soft border-t px-2 py-3">
+					<a href="/docs" class="text-text-dim hover:text-brand block rounded-lg px-3 py-2 text-sm font-semibold transition-colors">Documentación</a>
+					{
+						docGroups.map((group) => (
+							<div class="mt-3">
+								<div class="text-text-faint mb-1 px-3 text-[11px] font-bold tracking-[0.08em] uppercase">{group.title}</div>
+								{group.pages.map((page) => (
+									<a
+										href={`/docs/${page.slug}`}
+										class:list={["block rounded-lg px-3 py-2 text-sm font-semibold transition-colors", activeSlug === page.slug ? "text-brand" : "text-text-dim hover:text-brand"]}
+									>
+										{page.title}
+									</a>
+								))}
+							</div>
+						))
+					}
+				</div>
+			</details>
+
+			<slot />
+		</main>
+
+		<!-- En esta página (xl) -->
+		<aside class="sticky top-[73px] hidden h-[calc(100vh-73px)] w-48 shrink-0 overflow-y-auto py-10 [scrollbar-color:var(--color-border)_transparent] [scrollbar-width:thin] xl:block">
+			{
+				headings.length > 0 && (
+					<>
+						<div class="text-text-faint mb-3 text-[11px] font-bold tracking-[0.08em] uppercase">En esta página</div>
+						<nav class="border-border-soft flex flex-col gap-2 border-l pl-4">
+							{headings.map((h) => (
+								<a href={`#${h.id}`} class="text-text-faint hover:text-brand text-[13px] leading-snug font-semibold transition-colors">
+									{h.text}
+								</a>
+							))}
+						</nav>
+					</>
+				)
+			}
+		</aside>
+	</div>
+
+	<Footer />
+</Layout>
