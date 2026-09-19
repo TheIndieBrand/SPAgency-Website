@@ -1,0 +1,104 @@
+---
+export const prerender = false;
+
+import Layout from "../../layouts/Layout.astro";
+import Navbar from "../../components/Navbar.astro";
+import Footer from "../../components/Footer.astro";
+import ChangelogEntry from "../../components/changelog/ChangelogEntry.astro";
+import { getChangelogBySlug, getChangelogNeighbors } from "../../lib/changelog";
+import { getSessionUser, isOwner } from "../../lib/changelog-auth";
+
+const entry = getChangelogBySlug(Astro.params.slug ?? "");
+
+// Un borrador solo lo ve el dueño (para revisarlo antes de publicar); para
+// cualquier otro es como si no existiera.
+const owner = entry && !entry.published ? isOwner(await getSessionUser(Astro.cookies)) : false;
+
+if (!entry || (!entry.published && !owner)) {
+	return new Response("Not found", { status: 404 });
+}
+
+const { newer, older, isLatest } = getChangelogNeighbors(entry.id);
+---
+
+<Layout title={`${entry.title} — Changelog — SP Agency`} description={`Novedades de SP Agency: ${entry.title}.`}>
+	<Navbar />
+
+	<main class="mx-auto max-w-[720px] px-4 pt-14 pb-28 sm:px-8">
+		<a
+			href="/changelog"
+			class="text-text-dim hover:text-brand mb-8 inline-flex items-center gap-2 text-sm font-semibold transition-colors"
+		>
+			<i class="bi bi-arrow-left" />
+			Todas las novedades
+		</a>
+
+		<ChangelogEntry
+			name={entry.name}
+			version={entry.version}
+			subtitle={entry.subtitle}
+			html={entry.html}
+			publishedAt={entry.publishedAt}
+			latest={isLatest}
+			draft={!entry.published}
+		/>
+
+		{
+			(older || newer) && (
+				<nav aria-label="Otras versiones" class="border-border-soft mt-20 grid gap-8 border-t pt-8 sm:grid-cols-2">
+					{older ? (
+						<a href={`/changelog/${older.slug}`} class="group block min-w-0">
+							<span class="text-text-faint text-[13px] font-semibold">
+								<i class="bi bi-arrow-left mr-1.5" />
+								Anterior
+							</span>
+							<span class="text-text group-hover:text-brand-hover font-display mt-1.5 block truncate text-lg font-bold transition-colors">
+								{older.version || older.name}
+							</span>
+							{older.version && older.name && (
+								<span class="text-text-dim block truncate text-sm">{older.name}</span>
+							)}
+						</a>
+					) : (
+						<span />
+					)}
+
+					{newer && (
+						<a href={`/changelog/${newer.slug}`} class="group block min-w-0 sm:text-right">
+							<span class="text-text-faint text-[13px] font-semibold">
+								Siguiente
+								<i class="bi bi-arrow-right ml-1.5" />
+							</span>
+							<span class="text-text group-hover:text-brand-hover font-display mt-1.5 block truncate text-lg font-bold transition-colors">
+								{newer.version || newer.name}
+							</span>
+							{newer.version && newer.name && (
+								<span class="text-text-dim block truncate text-sm">{newer.name}</span>
+							)}
+						</a>
+					)}
+				</nav>
+			)
+		}
+	</main>
+
+	<Footer />
+</Layout>
+
+<script>
+	// "Copiar enlace": copia la URL permanente de la entrada.
+	document.querySelectorAll<HTMLButtonElement>("[data-copy-link]").forEach((btn) => {
+		const label = btn.querySelector<HTMLElement>("[data-copy-label]");
+		btn.addEventListener("click", async () => {
+			try {
+				await navigator.clipboard.writeText(window.location.href);
+				if (label) label.textContent = "Copiado";
+			} catch {
+				if (label) label.textContent = "No se pudo copiar";
+			}
+			window.setTimeout(() => {
+				if (label) label.textContent = "Copiar enlace";
+			}, 1800);
+		});
+	});
+</script>

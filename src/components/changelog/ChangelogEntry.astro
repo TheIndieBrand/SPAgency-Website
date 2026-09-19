@@ -1,0 +1,127 @@
+---
+import { formatChangelogDate } from "../../lib/changelog";
+
+interface Props {
+	name: string;
+	version: string;
+	subtitle?: string;
+	html: string;
+	publishedAt: string;
+	// Si viene, es un nodo de la línea de tiempo de la lista (fecha a la izquierda,
+	// título enlazado); si no, es la página propia de la entrada (título como h1).
+	href?: string;
+	latest?: boolean;
+	draft?: boolean;
+}
+
+const { name, version, subtitle = "", html, publishedAt, href, latest = false, draft = false } = Astro.props;
+
+const inList = Boolean(href);
+const Heading = inList ? "h2" : "h1";
+const date = formatChangelogDate(publishedAt);
+
+// Con versión, la versión es la protagonista y el nombre pasa a ser secundario;
+// sin versión, el nombre hace de título grande.
+const versionClass = inList ? "text-[52px]" : "text-[56px] sm:text-[72px]";
+const soloNameClass = inList ? "text-[36px]" : "text-[40px] sm:text-[52px]";
+---
+
+{
+	inList ? (
+		<article class="cl-item md:grid md:grid-cols-[150px_minmax(0,1fr)] md:gap-x-10" data-latest={latest ? "" : undefined}>
+			<div class="hidden pt-4 md:block">
+				<time datetime={publishedAt} class="text-text-faint text-sm font-semibold md:sticky md:top-24">
+					{date}
+				</time>
+			</div>
+
+			<div class="cl-rail min-w-0 pb-20 pl-7 md:pl-10">
+				<span class="cl-node" aria-hidden="true" />
+
+				<time datetime={publishedAt} class="text-text-faint mb-3 block text-sm font-semibold md:hidden">
+					{date}
+				</time>
+
+				<Heading>
+					<a href={href} class="group block">
+						{version && (
+							<span class="text-text group-hover:text-brand-hover font-display block leading-none font-bold tracking-tight transition-colors">
+								<span class={versionClass}>{version}</span>
+								{latest && (
+									<span class="bg-brand-soft text-brand-hover ml-3 inline-block -translate-y-2 rounded-full px-2.5 py-1 align-middle font-sans text-xs font-bold tracking-normal">
+										Última
+									</span>
+								)}
+							</span>
+						)}
+						{name && (
+							<span
+								class:list={[
+									"block transition-colors",
+									version
+										? "text-text-dim group-hover:text-text mt-3 text-lg font-semibold"
+										: `text-text group-hover:text-brand-hover font-display leading-[1.1] font-bold tracking-tight ${soloNameClass}`,
+								]}
+							>
+								{name}
+							</span>
+						)}
+					</a>
+				</Heading>
+
+				{subtitle && <p class="changelog-subtitle mt-3" set:html={subtitle} />}
+				<div class="changelog-prose mt-9" set:html={html} />
+			</div>
+		</article>
+	) : (
+		<article class="min-w-0">
+			<div class="mb-8 flex flex-wrap items-center justify-between gap-x-4 gap-y-3">
+				<div class="flex items-center gap-3">
+					<time datetime={publishedAt} class="text-text-faint text-sm font-semibold">
+						{date}
+					</time>
+					{latest && (
+						<span class="bg-brand-soft text-brand-hover rounded-full px-2.5 py-1 text-xs font-bold">Última</span>
+					)}
+					{draft && (
+						<span class="border-border text-text-dim rounded-full border px-2.5 py-0.5 text-[11px] font-bold">
+							Borrador
+						</span>
+					)}
+				</div>
+
+				<button
+					type="button"
+					data-copy-link
+					class="text-text-dim hover:text-brand inline-flex items-center gap-1.5 text-sm font-semibold transition-colors"
+				>
+					<i class="bi bi-link-45deg text-base" />
+					<span data-copy-label>Copiar enlace</span>
+				</button>
+			</div>
+
+			<Heading>
+				{version && (
+					<span class={`text-text font-display block leading-none font-bold tracking-tight ${versionClass}`}>
+						{version}
+					</span>
+				)}
+				{name && (
+					<span
+						class:list={[
+							"block",
+							version
+								? "text-text-dim mt-4 text-xl font-semibold"
+								: `text-text font-display leading-[1.1] font-bold tracking-tight ${soloNameClass}`,
+						]}
+					>
+						{name}
+					</span>
+				)}
+			</Heading>
+
+			{subtitle && <p class="changelog-subtitle mt-4" set:html={subtitle} />}
+			<div class="changelog-prose mt-12" set:html={html} />
+		</article>
+	)
+}

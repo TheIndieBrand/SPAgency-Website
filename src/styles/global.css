@@ -240,3 +240,309 @@
     animation: none;
   }
 }
+
+/* Changelog: el markdown de cada entrada se pinta solo con este estilo (ver
+   src/lib/changelog-markdown.ts). Los `### Agregado / Modificado / Arreglado /
+   Eliminado` reciben una clase cl-* y con ella su color: una etiqueta tintada
+   sobre el título de la sección y viñetas del mismo tono. `-# texto` (la
+   sintaxis de subtexto de Discord) sale como texto pequeño y apagado. */
+.changelog-prose {
+  color: var(--color-text-dim);
+  font-size: 15.5px;
+  line-height: 1.7;
+  overflow-wrap: anywhere;
+}
+
+.changelog-prose > :first-child {
+  margin-top: 0;
+}
+
+.changelog-prose > * + * {
+  margin-top: 1rem;
+}
+
+.changelog-prose h2,
+.changelog-prose h4,
+.changelog-prose h5,
+.changelog-prose h6 {
+  font-family: var(--font-display);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  line-height: 1.3;
+  color: var(--color-text);
+}
+
+.changelog-prose h2 {
+  margin-top: 2.5rem;
+  font-size: 1.3rem;
+}
+
+.changelog-prose h3 {
+  --accent: var(--color-text-dim);
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  margin-top: 2.75rem;
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.4;
+  color: var(--color-text);
+}
+
+/* Glifo de la sección (en mono, con el color de acento) y un filete que se
+   apaga hacia la derecha. Encaja con los símbolos matemáticos del resto del sitio. */
+.changelog-prose h3::before {
+  content: "›";
+  flex: none;
+  width: 1.1ch;
+  text-align: center;
+  font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  font-size: 19px;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--accent);
+}
+
+.changelog-prose h3::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(to right, color-mix(in oklab, var(--accent) 38%, transparent), transparent);
+}
+
+.changelog-prose h3.cl-added::before {
+  content: "+";
+}
+.changelog-prose h3.cl-changed::before {
+  content: "~";
+}
+.changelog-prose h3.cl-fixed::before {
+  content: "✓";
+}
+.changelog-prose h3.cl-removed::before {
+  content: "−";
+}
+
+.changelog-prose h3.cl-added {
+  --accent: var(--color-brand-hover);
+}
+.changelog-prose h3.cl-changed {
+  --accent: #f5b301;
+}
+.changelog-prose h3.cl-fixed {
+  --accent: #34d399;
+}
+.changelog-prose h3.cl-removed {
+  --accent: #f87171;
+}
+
+.changelog-prose h3 + * {
+  margin-top: 1rem;
+}
+
+.changelog-prose ul,
+.changelog-prose ol {
+  padding-left: 0;
+}
+
+.changelog-prose ul {
+  list-style: none;
+}
+
+.changelog-prose ol {
+  list-style: decimal outside;
+  padding-left: 1.4rem;
+}
+
+.changelog-prose ol > li::marker {
+  color: var(--color-text-faint);
+}
+
+.changelog-prose li + li {
+  margin-top: 0.55rem;
+}
+
+.changelog-prose ul > li {
+  position: relative;
+  padding-left: 1.3rem;
+}
+
+.changelog-prose ul > li::before {
+  content: "";
+  position: absolute;
+  left: 0.2rem;
+  top: 0.78em;
+  width: 5px;
+  height: 5px;
+  border-radius: 999px;
+  background: var(--list-accent, var(--color-text-faint));
+  opacity: 0.75;
+}
+
+.changelog-prose ul ul,
+.changelog-prose ul ol {
+  margin-top: 0.55rem;
+}
+
+.changelog-prose h3.cl-added + ul {
+  --list-accent: var(--color-brand-hover);
+}
+.changelog-prose h3.cl-changed + ul {
+  --list-accent: #f5b301;
+}
+.changelog-prose h3.cl-fixed + ul {
+  --list-accent: #34d399;
+}
+.changelog-prose h3.cl-removed + ul {
+  --list-accent: #f87171;
+}
+
+.changelog-prose strong {
+  color: var(--color-text);
+  font-weight: 700;
+}
+
+.changelog-prose em {
+  color: var(--color-text);
+}
+
+.changelog-prose a {
+  color: var(--color-text);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-color: var(--color-text-faint);
+  transition:
+    color 0.15s,
+    text-decoration-color 0.15s;
+}
+
+.changelog-prose a:hover {
+  color: var(--color-brand-hover);
+  text-decoration-color: var(--color-brand-hover);
+}
+
+.changelog-prose code {
+  font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  font-size: 0.86em;
+  color: var(--color-text);
+  background: rgb(255 255 255 / 0.07);
+  border-radius: 5px;
+  padding: 0.12em 0.42em;
+}
+
+.changelog-prose pre {
+  overflow-x: auto;
+  padding: 1rem 1.25rem;
+  background: var(--color-bg-soft);
+  border: 1px solid var(--color-border-soft);
+  border-radius: 10px;
+  font-size: 13px;
+  line-height: 1.65;
+}
+
+.changelog-prose pre code {
+  padding: 0;
+  background: none;
+  font-size: inherit;
+}
+
+.changelog-prose blockquote {
+  padding-left: 1rem;
+  border-left: 2px solid var(--color-border);
+  color: var(--color-text-faint);
+}
+
+.changelog-prose hr {
+  border: 0;
+  border-top: 1px solid var(--color-border-soft);
+  margin-block: 2rem;
+}
+
+.changelog-prose table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.changelog-prose th,
+.changelog-prose td {
+  padding: 0.5rem 0.75rem;
+  text-align: left;
+  border-bottom: 1px solid var(--color-border-soft);
+}
+
+.changelog-prose th {
+  color: var(--color-text);
+  font-weight: 700;
+}
+
+.changelog-prose p.cl-sub {
+  font-size: 13px;
+  color: var(--color-text-faint);
+}
+
+/* Subtítulo bajo el título de la entrada (`-# **Actualízate**`). */
+.changelog-subtitle {
+  font-size: 1.05rem;
+  line-height: 1.5;
+  color: var(--color-text-dim);
+}
+
+.changelog-subtitle strong {
+  color: var(--color-brand-hover);
+  font-weight: 700;
+}
+
+.changelog-subtitle a {
+  color: var(--color-text);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* Línea de tiempo de /changelog: un carril vertical fino con un nodo por
+   entrada. El de la última versión va relleno en azul de marca. La línea nace
+   en el primer nodo y se apaga al final de la última entrada. */
+.cl-rail {
+  position: relative;
+}
+
+.cl-rail::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: var(--color-border);
+}
+
+.cl-item:first-child .cl-rail::before {
+  top: 1.7rem;
+}
+
+.cl-item:last-child .cl-rail::before {
+  background: linear-gradient(to bottom, var(--color-border), transparent);
+}
+
+.cl-node {
+  position: absolute;
+  left: -5.5px;
+  top: 1.35rem;
+  width: 11px;
+  height: 11px;
+  border-radius: 999px;
+  background: var(--color-bg);
+  border: 2px solid var(--color-text-faint);
+}
+
+.cl-item[data-latest] .cl-node {
+  background: var(--color-brand);
+  border-color: var(--color-brand);
+  box-shadow: 0 0 0 4px var(--color-brand-soft);
+}
+
+/* El ✓ cae en una fuente de respaldo y sale más grande que + ~ −. */
+.changelog-prose h3.cl-fixed::before {
+  font-size: 15px;
+}

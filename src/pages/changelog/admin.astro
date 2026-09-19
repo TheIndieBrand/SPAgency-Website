@@ -1,0 +1,272 @@
+---
+export const prerender = false;
+
+import Layout from "../../layouts/Layout.astro";
+import Navbar from "../../components/Navbar.astro";
+import { formatChangelogDate, getChangelogById, listChangelogs, todayIso } from "../../lib/changelog";
+import { getSessionUser, isOwner } from "../../lib/changelog-auth";
+
+const user = await getSessionUser(Astro.cookies);
+if (!user) return Astro.redirect("/auth/discord/login");
+if (!isOwner(user)) return Astro.redirect("/changelog");
+
+const entries = listChangelogs({ includeDrafts: true });
+
+const idParam = Number(Astro.url.searchParams.get("id"));
+const current = Number.isInteger(idParam) && idParam > 0 ? getChangelogById(idParam) : null;
+
+// Plantilla de una entrada nueva: la estructura que ya usas en tus changelogs.
+const TEMPLATE = `# SP Agency v1.0.0
+
+### Agregado
+-
+
+### Modificado
+-
+
+### Arreglado
+-
+`;
+
+const markdown = current?.markdown ?? TEMPLATE;
+const publishedAt = current?.publishedAt ?? todayIso();
+const published = current?.published ?? false;
+---
+
+<Layout title="Administrar changelog — SP Agency">
+	<Navbar />
+
+	<main class="mx-auto max-w-[1500px] px-4 pt-10 pb-24 sm:px-8">
+		<div class="mb-8 flex flex-wrap items-center justify-between gap-4">
+			<div>
+				<h1 class="font-display text-2xl font-bold tracking-tight">Administrar changelog</h1>
+				<p class="text-text-dim mt-1 text-sm">Escribe en markdown; el estilo se aplica solo.</p>
+			</div>
+			<a href="/changelog" class="text-text-dim hover:text-brand text-sm font-semibold transition-colors">
+				Ver página pública <i class="bi bi-arrow-up-right ml-1" />
+			</a>
+		</div>
+
+		<div class="grid gap-6 xl:grid-cols-[240px_minmax(0,1fr)_minmax(0,1fr)]">
+			<!-- ============ LISTA ============ -->
+			<aside class="flex flex-col gap-2">
+				<a
+					href="/changelog/admin"
+					class:list={[
+						"rounded-[10px] border px-4 py-2.5 text-center text-sm font-bold transition-colors",
+						current
+							? "border-border text-text-dim hover:border-brand hover:text-brand"
+							: "border-brand bg-brand-soft text-brand",
+					]}
+				>
+					<i class="bi bi-plus-lg mr-1.5"></i>Nueva entrada
+				</a>
+
+				{
+					entries.map((entry) => (
+						<a
+							href={`/changelog/admin?id=${entry.id}`}
+							class:list={[
+								"block rounded-[10px] border px-4 py-3 transition-colors",
+								current?.id === entry.id
+									? "border-brand bg-brand-soft"
+									: "border-border-soft bg-card hover:border-border",
+							]}
+						>
+							<span class="text-text block truncate text-sm font-bold">{entry.title}</span>
+							<span class="text-text-faint mt-1 flex items-center gap-2 text-xs">
+								<span
+									class:list={[
+										"inline-block h-1.5 w-1.5 rounded-full",
+										entry.published ? "bg-emerald" : "bg-text-faint",
+									]}
+								/>
+								{entry.published ? formatChangelogDate(entry.publishedAt) : "Borrador"}
+							</span>
+						</a>
+					))
+				}
+
+				{entries.length === 0 && <p class="text-text-faint px-1 pt-2 text-sm">Aún no hay entradas.</p>}
+			</aside>
+
+			<!-- ============ EDITOR ============ -->
+			<form id="editor" data-id={current?.id ?? ""} class="flex flex-col gap-4">
+				<label for="markdown" class="text-text-faint text-[13px] font-bold tracking-[0.08em] uppercase">
+					Markdown
+				</label>
+				<textarea
+					id="markdown"
+					spellcheck="false"
+					class="border-border bg-bg-soft text-text focus-visible:border-brand min-h-[460px] w-full resize-y rounded-[12px] border p-4 font-mono text-[13px] leading-relaxed outline-none transition-colors"
+					>{markdown}</textarea
+				>
+
+				<div class="flex flex-wrap items-center gap-x-6 gap-y-3">
+					<label class="text-text-dim flex items-center gap-2 text-sm font-semibold">
+						Fecha
+						<input
+							id="published-at"
+							type="date"
+							value={publishedAt}
+							class="border-border bg-bg-soft text-text focus-visible:border-brand rounded-lg border px-3 py-1.5 text-sm outline-none [color-scheme:dark]"
+						/>
+					</label>
+
+					<label class="text-text-dim flex cursor-pointer items-center gap-2 text-sm font-semibold">
+						<input id="published" type="checkbox" checked={published} class="accent-brand h-4 w-4" />
+						Publicada
+					</label>
+				</div>
+
+				<div class="flex flex-wrap items-center gap-3">
+					<button
+						type="submit"
+						class="bg-brand hover:bg-brand-hover rounded-lg px-5 py-2.5 text-sm font-bold text-white transition-colors"
+					>
+						{current ? "Guardar cambios" : "Crear entrada"}
+					</button>
+
+					{
+						current && (
+							<>
+								<a
+									href={`/changelog/${current.slug}`}
+									class="border-border text-text-dim hover:border-brand hover:text-brand rounded-lg border px-4 py-2.5 text-sm font-bold transition-colors"
+								>
+									Ver
+								</a>
+								<button
+									id="delete"
+									type="button"
+									class="border-border text-text-dim rounded-lg border px-4 py-2.5 text-sm font-bold transition-colors hover:border-red-500/60 hover:text-red-400"
+								>
+									Borrar
+								</button>
+							</>
+						)
+					}
+
+					<span id="status" role="status" class="text-text-faint text-sm"></span>
+				</div>
+			</form>
+
+			<!-- ============ VISTA PREVIA ============ -->
+			<section aria-label="Vista previa" class="flex min-w-0 flex-col gap-4">
+				<div class="text-text-faint text-[13px] font-bold tracking-[0.08em] uppercase">Vista previa</div>
+				<article class="border-border-soft min-w-0 xl:border-l xl:pl-8">
+						<time id="preview-date" class="text-text-faint mb-6 block text-sm font-semibold"></time>
+						<h2>
+							<span id="preview-version" class="text-text font-display block text-[56px] leading-none font-bold tracking-tight"></span>
+							<span id="preview-name" class="text-text-dim mt-4 block text-xl font-semibold"></span>
+						</h2>
+						<p id="preview-subtitle" class="changelog-subtitle mt-4"></p>
+						<div id="preview-body" class="changelog-prose mt-10"></div>
+					</article>
+			</section>
+		</div>
+	</main>
+</Layout>
+
+<script>
+	const form = document.getElementById("editor") as HTMLFormElement;
+	const markdown = document.getElementById("markdown") as HTMLTextAreaElement;
+	const publishedAt = document.getElementById("published-at") as HTMLInputElement;
+	const published = document.getElementById("published") as HTMLInputElement;
+	const status = document.getElementById("status") as HTMLElement;
+	const deleteBtn = document.getElementById("delete") as HTMLButtonElement | null;
+	const previewDate = document.getElementById("preview-date") as HTMLElement;
+	const previewVersion = document.getElementById("preview-version") as HTMLElement;
+	const previewName = document.getElementById("preview-name") as HTMLElement;
+	const previewSubtitle = document.getElementById("preview-subtitle") as HTMLElement;
+	const previewBody = document.getElementById("preview-body") as HTMLElement;
+
+	const id = form.dataset.id ? Number(form.dataset.id) : null;
+
+	function payload() {
+		return { markdown: markdown.value, publishedAt: publishedAt.value, published: published.checked };
+	}
+
+	async function request(url: string, method: string, body?: unknown) {
+		const res = await fetch(url, {
+			method,
+			headers: { "Content-Type": "application/json" },
+			body: body === undefined ? undefined : JSON.stringify(body),
+		});
+		const data = await res.json().catch(() => ({}));
+		return { ok: res.ok, data };
+	}
+
+	function say(text: string, error = false) {
+		status.textContent = text;
+		status.className = `text-sm ${error ? "text-red-400" : "text-text-faint"}`;
+	}
+
+	// Vista previa en vivo. El HTML lo devuelve el servidor ya saneado (mismo
+	// render que la página pública); las respuestas viejas se descartan.
+	let previewSeq = 0;
+	let previewTimer: number | undefined;
+
+	async function renderPreview() {
+		const seq = ++previewSeq;
+		const { ok, data } = await request("/api/changelog/preview", "POST", payload());
+		if (seq !== previewSeq) return;
+
+		if (!ok) {
+			previewBody.textContent = data.error ?? "No se pudo generar la vista previa";
+			return;
+		}
+		previewDate.textContent = data.date;
+		previewVersion.textContent = data.version;
+		previewVersion.hidden = !data.version;
+		// Sin versión, el nombre hace de título grande.
+		previewName.textContent = data.name;
+		previewName.className = data.version
+			? "text-text-dim mt-4 block text-xl font-semibold"
+			: "text-text font-display block text-[44px] leading-[1.1] font-bold tracking-tight";
+		previewSubtitle.innerHTML = data.subtitle;
+		previewSubtitle.hidden = !data.subtitle;
+		previewBody.innerHTML = data.html;
+	}
+
+	function schedulePreview() {
+		window.clearTimeout(previewTimer);
+		previewTimer = window.setTimeout(renderPreview, 250);
+	}
+
+	markdown.addEventListener("input", schedulePreview);
+	publishedAt.addEventListener("input", schedulePreview);
+
+	form.addEventListener("submit", async (event) => {
+		event.preventDefault();
+		say("Guardando…");
+
+		const { ok, data } = id
+			? await request(`/api/changelog/${id}`, "PUT", payload())
+			: await request("/api/changelog", "POST", payload());
+
+		if (!ok) return say(data.error ?? "No se pudo guardar", true);
+
+		say("Guardado");
+		window.location.href = `/changelog/admin?id=${data.id}`;
+	});
+
+	deleteBtn?.addEventListener("click", async () => {
+		if (!id || !window.confirm("¿Borrar esta entrada? No se puede deshacer.")) return;
+
+		const { ok, data } = await request(`/api/changelog/${id}`, "DELETE");
+		if (!ok) return say(data.error ?? "No se pudo borrar", true);
+
+		window.location.href = "/changelog/admin";
+	});
+
+	// Ctrl/Cmd + S guarda sin tocar el ratón.
+	window.addEventListener("keydown", (event) => {
+		if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "s") {
+			event.preventDefault();
+			form.requestSubmit();
+		}
+	});
+
+	renderPreview();
+</script>
