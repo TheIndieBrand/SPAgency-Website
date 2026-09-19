@@ -17,6 +17,6 @@ Así los dos repos no se desincronizan: si cambia una ruta o un error, se cambia
 
 | Funcionalidad | Documento | Contrato | Bot | Web |
 | :------------ | :-------- | :------- | :-- | :-- |
-| Soporte (tickets) | [`support.md`](support.md) | definido | pendiente | pendiente |
+| Soporte (tickets) | [`support.md`](support.md) | definido | pendiente | hecha |
 
 La verificación de usuarios (bot ↔ web) está documentada en el bot: `bots/SPAgency/docs/verification.md`.

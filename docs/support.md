@@ -2,7 +2,7 @@
 
 Un usuario abre un ticket desde la web; el ticket aparece como un canal en el servidor de Discord de SPAgency; el staff responde en Discord y lo que escribe se ve en la web; el usuario contesta desde la web y llega al canal. Al cerrar, queda un **transcript** que el usuario puede consultar desde la web y el ticket **no se puede retomar**.
 
-> **Estado:** contrato definido. Bot: pendiente. Web: pendiente. Ver [checklist del bot](#qué-tiene-que-implementar-el-bot).
+> **Estado:** contrato definido. Web: implementada. Bot: pendiente (ver [checklist del bot](#qué-tiene-que-implementar-el-bot)).
 
 ## Filosofía
 
@@ -123,7 +123,9 @@ Da igual quién cierre (staff o usuario), el proceso es el mismo:
    }
    ```
 
-   La web responde `200` o `201`. Es **idempotente por `ticketId`**: repetir el envío no duplica nada.
+   La web responde `200` (o `401` si la clave no coincide, `400` si el cuerpo no es válido, `413` si pesa más de 5 MB). Es **idempotente por `ticketId`**: repetir el envío no duplica nada. Un `4xx` no se reintenta: indica un fallo del bot, no de disponibilidad.
+
+   Esta ruta es solo para el bot: en el proxy inverso conviene restringir `/api/support/transcripts` a `127.0.0.1`.
 5. **Solo tras la confirmación de la web:** subir la copia del staff a `SUPPORT_TRANSCRIPTS_CHANNEL_ID`, mandar un DM al usuario (avisando de que puede verlo en la web; si tiene los DMs cerrados, se ignora sin más) y **borrar el canal**.
 6. **Si la web no confirma** (caída, error): reintentar con espera creciente (5 s, 30 s, 5 min…). El canal **se queda bloqueado y sin borrar**; si tras los reintentos sigue sin entregarse, se sube igualmente la copia del staff y se registra en `STAFF_LOGS_CHANNEL` para actuar a mano. Al arrancar, el bot retoma los canales marcados como cerrando.
 
@@ -150,6 +152,7 @@ Da igual quién cierre (staff o usuario), el proceso es el mismo:
 - `SUPPORT_BOT_URL` — API del bot (p. ej. `http://127.0.0.1:4501`).
 - `SUPPORT_API_KEY` — la misma que el bot espera.
 - `SUPPORT_WEB_API_KEY` — la misma que el bot envía al entregar transcripts.
+- `SUPPORT_DB_PATH` — opcional, archivo SQLite de los transcripts (por defecto `data/support.db`). En producción, en un disco que persista: los transcripts se guardan para siempre.
 
 Las tres claves son largas y aleatorias y nunca llegan al navegador.
 
@@ -166,10 +169,11 @@ Las tres claves son largas y aleatorias y nunca llegan al navegador.
 - [ ] Botón **Cerrar ticket** y `/ticket close`, solo para el staff.
 - [ ] Límites y cooldowns de la tabla anterior.
 
-## Qué hará la web (contexto)
+## Qué hace la web (contexto)
 
-- `/support`: información y acceso; con sesión, sus tickets abiertos, el historial y el botón de crear.
-- `/support/tickets/<id>`: la conversación, con consulta cada ~3 s y contenido saneado (mismo filtro que el changelog).
+- `/support`: información y acceso; con sesión, su ticket abierto (o el formulario para crear uno) y el historial. Sin sesión lleva al login de Discord y vuelve a `/support`.
+- `/support/tickets/<id>`: la conversación, con consulta cada ~3 s y contenido saneado. Si el bot responde `404` (ticket ya cerrado), lleva al transcript.
 - `/support/history/<id>`: transcript de solo lectura.
 - `POST /api/support/transcripts`: recibe lo que empuja el bot, valida la clave y guarda en su SQLite (`upsert` por `ticketId`).
+- `/api/support/tickets/*`: proxy autenticado hacia el bot para el navegador. La identidad sale de la sesión de Discord, nunca del cuerpo, y las claves no salen del servidor.
 - Si el bot no responde: aviso "soporte no disponible" con el enlace al Discord, sin encolar nada.
