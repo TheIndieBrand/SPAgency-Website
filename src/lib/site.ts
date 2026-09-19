@@ -9,16 +9,15 @@ export const site = {
 	inviteUrl: "#",
 	docsUrl: "#",
 	supportUrl: "#",
-	loginUrl: "/auth/discord/login",
+	changelogUrl: "#",
+	dashboardUrl: "/dashboard",
 };
 
-// "#features" y "#how" los intercepta intro-scene.ts (llevan al punto del scroll
-// donde esa parte de la escena está en pantalla); no cambiar sus href.
 export const navLinks = [
-	{ label: "Funciones", href: "#features" },
-	{ label: "Cómo funciona", href: "#how" },
 	{ label: "Documentación", href: site.docsUrl },
+	{ label: "Changelog", href: site.changelogUrl },
 	{ label: "Soporte", href: site.supportUrl },
+	{ label: "Dashboard", href: site.dashboardUrl },
 ];
 
 export const footerColumns = [
@@ -27,7 +26,7 @@ export const footerColumns = [
 		links: [
 			{ label: "Funciones", href: "#" },
 			{ label: "Comandos", href: "#" },
-			{ label: "Changelog", href: "#" },
+			{ label: "Changelog", href: site.changelogUrl },
 		],
 	},
 	{
