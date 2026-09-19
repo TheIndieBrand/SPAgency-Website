@@ -102,13 +102,14 @@ const travelCaption2 = document.getElementById("travel-caption-2");
 const asymptoteGlyphs = document.querySelectorAll<HTMLElement>(".asymptote-glyph");
 const burstDots = document.querySelectorAll<HTMLElement>(".limit-burst-dot");
 
-function setFinalStatValues() {
+// <Stats/> se renderiza con los valores finales (es lo que ve la versión simple);
+// con la escena animada arrancan en cero y se cuentan hasta su valor al entrar.
+function resetStatValues() {
 	statNumbers.forEach((el) => {
-		const target = parseFloat(el.dataset.target || "0");
 		const decimals = parseInt(el.dataset.decimals || "0", 10);
 		const prefix = el.dataset.prefix || "";
 		const suffix = el.dataset.suffix || "";
-		el.textContent = `${prefix}${target.toFixed(decimals)}${suffix}`;
+		el.textContent = `${prefix}${(0).toFixed(decimals)}${suffix}`;
 	});
 }
 
@@ -179,9 +180,11 @@ const hasAllPieces = Boolean(
 );
 
 if (hasAllPieces && !reduceMotion) {
-	// La escena animada termina en el negro del espacio: el CSS global del
-	// footer usa este atributo para ir también en negro (sin costura).
-	document.documentElement.dataset.scene = "on";
+	// data-scene="on" ya lo puso el script de <head> de index.astro (el CSS global
+	// alterna la escena y la versión simple con él, y el footer va en negro para
+	// enlazar sin costura con el espacio). Los stats se ponen a cero ANTES de
+	// medir nada: las medidas de más abajo se toman con esos textos.
+	resetStatValues();
 
 	// Estado inicial: stats fuera de escena (debajo del viewport), superpuestas
 	// en absoluto dentro de #intro-scene para que puedan compartir pantalla con
@@ -1735,24 +1738,11 @@ if (hasAllPieces && !reduceMotion) {
 		);
 	}
 
-	// (La sección <Features/> normal se quitó del index: "Funciones" vive ahora
-	// dentro de esta escena, en la fase C.)
+	// (La sección <Features/> normal se oculta con la escena: "Funciones" vive
+	// dentro de ella, en la fase C.)
 } else {
-	// Sin animación (accesibilidad, o si algo no cargó): mostrar el estado
-	// final directamente.
-	setFinalStatValues();
-
-	// Sin escena animada no hay carrusel de la comunidad: se muestra la sección
-	// estática de respaldo (ya accesible por sí misma) y se retira la versión
-	// solo-lectores para no duplicar el contenido.
-	document.getElementById("testimonials-static")?.classList.remove("hidden");
-	document.getElementById("testimonials-a11y")?.setAttribute("hidden", "");
-
-	// Igual con los tres pasos: sección estática de respaldo en lugar del camino.
-	document.getElementById("how-static")?.classList.remove("hidden");
-	document.getElementById("steps-a11y")?.setAttribute("hidden", "");
-
-	// Y con la CTA: la estática en lugar de la que emerge del agujero negro.
-	document.getElementById("cta-static")?.classList.remove("hidden");
-	document.getElementById("cta-scene")?.setAttribute("hidden", "");
+	// Faltan piezas del DOM (o hay reduced-motion): se abandona la escena y se
+	// vuelve a la versión simple. Quitar el atributo basta: el CSS global muestra
+	// las secciones static-only y oculta las scene-only.
+	delete document.documentElement.dataset.scene;
 }

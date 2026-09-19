@@ -2,13 +2,13 @@
 // Versión semántica (solo para lectores de pantalla) de los testimonios que se
 // ven en el carrusel de la escena de entrada. Esa escena entera es
 // aria-hidden (es presentación), así que sin esto el contenido real no le
-// llegaría a nadie que no vea la pantalla. intro-scene.ts la oculta si cae al
-// respaldo estático (que ya es accesible por sí mismo).
+// llegaría a nadie que no vea la pantalla. Solo existe con la escena animada
+// (scene-only, ver global.css); la versión simple ya es accesible por sí misma.
 import { sections } from "../lib/home-content";
 import { testimonials } from "../lib/testimonials";
 ---
 
-<section id="testimonials-a11y" class="sr-only" aria-labelledby="testimonials-a11y-title">
+<section id="testimonials-a11y" class="scene-only sr-only" aria-labelledby="testimonials-a11y-title">
 	<h2 id="testimonials-a11y-title">{sections.testimonials.title}</h2>
 	<ul>
 		{

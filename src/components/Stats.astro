@@ -1,8 +1,7 @@
 ---
-// Cada stat se cuenta desde 0 hasta `target` cuando entra en escena (ver
-// src/scripts/intro-scene.ts). El texto renderizado en el servidor ya
-// arranca en cero con el mismo formato final, para que no haya un salto
-// visual antes de que el script tome el control.
+// Se renderizan con su valor final, que es lo que ve la versión simple (móvil,
+// reduced-motion, sin JS). Con la escena animada, src/scripts/intro-scene.ts los
+// pone a cero al montarse y los cuenta desde 0 hasta `target` cuando entran.
 interface Stat {
 	target: number;
 	decimals: number;
@@ -33,7 +32,7 @@ const format = (n: number, decimals: number, prefix: string, suffix: string) => 
 						data-prefix={stat.prefix}
 						data-suffix={stat.suffix}
 					>
-						{format(0, stat.decimals, stat.prefix, stat.suffix)}
+						{format(stat.target, stat.decimals, stat.prefix, stat.suffix)}
 					</div>
 					<div class="text-text-faint mt-1.5 text-sm">{stat.label}</div>
 				</div>

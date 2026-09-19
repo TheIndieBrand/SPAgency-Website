@@ -7,7 +7,7 @@
 // texto, los botones y un recap de los tres pasos (ver renderOutro en
 // intro-scene.ts, que anima cada pieza en función del tiempo). Como está dentro
 // del elemento pineado, al soltarse el pin se va con la escena y detrás llega el
-// footer. Su contenido es el mismo que el de CtaSection (el respaldo estático).
+// footer. Su contenido es el mismo que el de CtaSection (la versión simple).
 import { cta, labels } from "../lib/home-content";
 import { site } from "../lib/site";
 import { steps } from "../lib/steps";
@@ -25,7 +25,7 @@ const wordClass = (i: number) => {
 
 <section
 	id="cta-scene"
-	class="pointer-events-none fixed inset-0 z-30 flex items-center justify-center px-6 opacity-0"
+	class="scene-only pointer-events-none fixed inset-0 z-30 flex items-center justify-center px-6 opacity-0"
 	aria-labelledby="cta-scene-title"
 >
 	<!-- Velo oscuro muy difuso: da contraste al texto sobre el resplandor. -->

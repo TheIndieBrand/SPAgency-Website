@@ -1,9 +1,8 @@
 ---
-// Sección estática de RESPALDO. Con animación, los testimonios se ven en el
-// carrusel final de la escena de entrada (AsymptoteScene.astro), así que esta
-// sección arranca oculta; intro-scene.ts la muestra solo cuando no hay escena
-// animada (prefers-reduced-motion o algo no cargó). Los datos viven en
-// src/lib/testimonials.ts.
+// Sección de la versión simple (móvil, reduced-motion, sin JS). Con la escena
+// animada, los testimonios se ven en el carrusel final de la escena de entrada
+// (AsymptoteScene.astro) y esta sección se oculta (static-only, ver global.css).
+// Los datos viven en src/lib/testimonials.ts.
 //
 // Las tarjetas corren en dos filas tipo marquee (fila 1 → izquierda, fila 2
 // → derecha). Se reparten automáticamente entre las dos filas, no hace falta
@@ -18,7 +17,7 @@ const row1 = testimonials.slice(0, half);
 const row2 = testimonials.slice(half);
 ---
 
-<section id="testimonials-static" class="group hidden pt-5 pb-[110px]">
+<section id="testimonials-static" class="static-only group pt-5 pb-[110px]">
 	<div class="mx-auto mb-14 max-w-[560px] px-8 text-center">
 		<div class="text-text-faint mb-3.5 text-[13px] font-bold tracking-[0.08em] uppercase">{copy.eyebrow}</div>
 		<h2 class="font-display text-[38px] font-bold tracking-tight">{copy.title}</h2>

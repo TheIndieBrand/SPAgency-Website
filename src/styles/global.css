@@ -42,6 +42,18 @@
   }
 }
 
+/* Home: la escena animada (desktop) y la versión simple (móvil, reduced-motion,
+   sin JS) se alternan con data-scene="on" en <html>. Lo pone el script inline
+   de <head> en index.astro antes del primer pintado. Va SIN @layer a propósito:
+   así gana a utilidades como `flex` o `hidden` de Tailwind sin usar !important. */
+:root:not([data-scene="on"]) .scene-only {
+  display: none;
+}
+
+:root[data-scene="on"] .static-only {
+  display: none;
+}
+
 @keyframes status-pulse {
   0%,
   100% {
