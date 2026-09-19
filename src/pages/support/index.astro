@@ -1,0 +1,192 @@
+---
+export const prerender = false;
+
+import Layout from "../../layouts/Layout.astro";
+import Navbar from "../../components/Navbar.astro";
+import Footer from "../../components/Footer.astro";
+import { formatChangelogDate } from "../../lib/changelog";
+import { getSessionUser } from "../../lib/session";
+import { listOpenTickets } from "../../lib/support-bot";
+import { listTranscripts } from "../../lib/support-transcripts";
+
+const user = await getSessionUser(Astro.cookies);
+
+// El ticket abierto vive en el bot (Discord es su almacén); los cerrados, en la
+// web. Si el bot no responde se avisa, pero el historial se sigue viendo.
+let openTicket: { ticketId: string; subject: string } | null = null;
+let botDown = false;
+
+if (user) {
+	const result = await listOpenTickets(user.id);
+	if (result.ok) openTicket = result.data.tickets[0] ?? null;
+	else botDown = true;
+}
+
+const transcripts = user ? listTranscripts(user.id) : [];
+---
+
+<Layout
+	title="Soporte — SP Agency"
+	description="Abre un ticket y nuestro equipo te responde sin salir de la web."
+>
+	<Navbar />
+
+	<main class="mx-auto max-w-[720px] px-4 pt-16 pb-28 sm:px-8">
+		<div class="mb-12">
+			<div class="text-text-faint mb-3.5 text-[13px] font-bold tracking-[0.08em] uppercase">Soporte</div>
+			<h1 class="font-display text-[38px] leading-tight font-bold tracking-tight">¿En qué te ayudamos?</h1>
+			<p class="text-text-dim mt-3.5 text-base leading-relaxed">
+				Abre un ticket y nuestro equipo te responde aquí mismo, sin que tengas que salir de la web.
+			</p>
+		</div>
+
+		{
+			!user ? (
+				<div class="border-border-soft border-t pt-10">
+					<p class="text-text-dim mb-6 text-base leading-relaxed">
+						Para abrir un ticket inicia sesión con Discord: así sabemos quién eres y puedes ver las respuestas
+						en cualquier momento.
+					</p>
+					<a
+						href="/auth/discord/login?next=/support"
+						class="bg-brand hover:bg-brand-hover inline-flex items-center rounded-lg px-5 py-2.5 text-sm font-bold text-white transition-colors"
+					>
+						<i class="bi bi-discord mr-2" />
+						Iniciar sesión con Discord
+					</a>
+				</div>
+			) : (
+				<>
+					{botDown && (
+						<p class="border-l-2 border-[#f5b301] py-1 pl-4 text-sm leading-relaxed text-[#f5b301]">
+							Soporte no está disponible ahora mismo. Inténtalo de nuevo en unos minutos; tu historial sigue
+							disponible más abajo.
+						</p>
+					)}
+
+					{openTicket && (
+						<div class="border-border-soft border-t pt-10">
+							<div class="text-text-faint mb-2 text-[13px] font-bold tracking-[0.08em] uppercase">
+								Ticket abierto
+							</div>
+							<a
+								href={`/support/tickets/${encodeURIComponent(openTicket.ticketId)}`}
+								class="group flex items-center justify-between gap-4"
+							>
+								<span class="font-display group-hover:text-brand-hover text-2xl font-bold tracking-tight transition-colors">
+									{openTicket.subject}
+								</span>
+								<span class="text-text-dim group-hover:text-brand-hover shrink-0 text-sm font-semibold transition-colors">
+									Ir al ticket <i class="bi bi-arrow-right ml-1" />
+								</span>
+							</a>
+						</div>
+					)}
+
+					{!openTicket && !botDown && (
+						<form id="new-ticket" class="border-border-soft flex flex-col gap-5 border-t pt-10">
+							<div class="text-text-faint text-[13px] font-bold tracking-[0.08em] uppercase">Nuevo ticket</div>
+
+							<label class="flex flex-col gap-2">
+								<span class="text-text-dim text-sm font-semibold">Asunto</span>
+								<input
+									name="subject"
+									type="text"
+									required
+									maxlength="100"
+									autocomplete="off"
+									class="border-border bg-bg-soft text-text focus-visible:border-brand rounded-lg border px-3.5 py-2.5 text-sm outline-none transition-colors"
+								/>
+							</label>
+
+							<label class="flex flex-col gap-2">
+								<span class="text-text-dim text-sm font-semibold">Cuéntanos qué pasa</span>
+								<textarea
+									name="message"
+									required
+									maxlength="2000"
+									rows="6"
+									class="border-border bg-bg-soft text-text focus-visible:border-brand resize-y rounded-lg border px-3.5 py-2.5 text-sm leading-relaxed outline-none transition-colors"
+								/>
+							</label>
+
+							<div class="flex flex-wrap items-center gap-4">
+								<button
+									type="submit"
+									class="bg-brand hover:bg-brand-hover rounded-lg px-5 py-2.5 text-sm font-bold text-white transition-colors disabled:opacity-60"
+								>
+									Abrir ticket
+								</button>
+								<span id="form-status" role="status" class="text-sm text-red-400" />
+							</div>
+						</form>
+					)}
+
+					<section class="border-border-soft mt-14 border-t pt-10">
+						<h2 class="text-text-faint mb-2 text-[13px] font-bold tracking-[0.08em] uppercase">
+							Tus tickets anteriores
+						</h2>
+
+						{transcripts.length === 0 ? (
+							<p class="text-text-faint py-4 text-sm">Aún no has cerrado ningún ticket.</p>
+						) : (
+							<ul class="divide-border-soft divide-y">
+								{transcripts.map((t) => (
+									<li>
+										<a
+											href={`/support/history/${encodeURIComponent(t.ticketId)}`}
+											class="group flex items-baseline justify-between gap-4 py-4"
+										>
+											<span class="text-text group-hover:text-brand-hover min-w-0 truncate text-base font-semibold transition-colors">
+												{t.subject}
+											</span>
+											<time datetime={t.closedAt} data-local="date" class="text-text-faint shrink-0 text-sm">
+												{formatChangelogDate(t.closedAt.slice(0, 10))}
+											</time>
+										</a>
+									</li>
+								))}
+							</ul>
+						)}
+					</section>
+				</>
+			)
+		}
+	</main>
+
+	<Footer />
+</Layout>
+
+<script>
+	import { localizeTimes } from "../../scripts/support-ui";
+
+	localizeTimes();
+
+	const form = document.getElementById("new-ticket") as HTMLFormElement | null;
+	const status = document.getElementById("form-status");
+
+	form?.addEventListener("submit", async (event) => {
+		event.preventDefault();
+		const data = new FormData(form);
+		const button = form.querySelector<HTMLButtonElement>("button[type=submit]")!;
+
+		button.disabled = true;
+		if (status) status.textContent = "";
+
+		try {
+			const res = await fetch("/api/support/tickets", {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({ subject: data.get("subject"), message: data.get("message") }),
+			});
+			const body = await res.json().catch(() => ({}));
+
+			if (res.ok) return void (window.location.href = `/support/tickets/${encodeURIComponent(body.ticketId)}`);
+			if (status) status.textContent = body.message ?? "No se pudo abrir el ticket.";
+		} catch {
+			if (status) status.textContent = "No se pudo conectar. Inténtalo de nuevo.";
+		}
+
+		button.disabled = false;
+	});
+</script>

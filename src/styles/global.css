@@ -546,3 +546,75 @@
 .changelog-prose h3.cl-fixed::before {
   font-size: 15px;
 }
+
+/* Soporte: contenido de un mensaje del chat (markdown de Discord ya saneado
+   por el servidor, ver src/lib/support-format.ts). */
+.msg-prose {
+  color: var(--color-text-dim);
+  font-size: 15px;
+  line-height: 1.65;
+  overflow-wrap: anywhere;
+}
+
+.msg-prose > * + * {
+  margin-top: 0.6rem;
+}
+
+.msg-prose strong {
+  color: var(--color-text);
+  font-weight: 700;
+}
+
+.msg-prose a {
+  color: var(--color-text);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-color: var(--color-text-faint);
+}
+
+.msg-prose a:hover {
+  color: var(--color-brand-hover);
+  text-decoration-color: var(--color-brand-hover);
+}
+
+.msg-prose code {
+  font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  font-size: 0.86em;
+  color: var(--color-text);
+  background: rgb(255 255 255 / 0.07);
+  border-radius: 5px;
+  padding: 0.12em 0.42em;
+}
+
+.msg-prose pre {
+  overflow-x: auto;
+  padding: 0.85rem 1rem;
+  background: var(--color-bg-soft);
+  border: 1px solid var(--color-border-soft);
+  border-radius: 8px;
+  font-size: 13px;
+}
+
+.msg-prose pre code {
+  padding: 0;
+  background: none;
+}
+
+.msg-prose blockquote {
+  padding-left: 0.9rem;
+  border-left: 2px solid var(--color-border);
+  color: var(--color-text-faint);
+}
+
+.msg-prose ul,
+.msg-prose ol {
+  padding-left: 1.3rem;
+}
+
+.msg-prose ul {
+  list-style: disc;
+}
+
+.msg-prose ol {
+  list-style: decimal;
+}

@@ -1,0 +1,42 @@
+---
+// Un mensaje del transcript. Mismo marcado que messageHtml() en
+// src/scripts/support-ui.ts (que pinta la conversación en vivo).
+interface Props {
+	author: "staff" | "user";
+	name: string;
+	avatar: string | null;
+	html: string;
+	at: string;
+}
+
+const { author, name, avatar, html, at } = Astro.props;
+const initial = (name.trim()[0] ?? "?").toUpperCase();
+---
+
+<div class="flex gap-3.5 py-3.5">
+	<div class="shrink-0">
+		{
+			avatar ? (
+				<img src={avatar} alt="" width="36" height="36" class="h-9 w-9 rounded-full object-cover" />
+			) : (
+				<div class="bg-bg-soft text-text-dim border-border flex h-9 w-9 items-center justify-center rounded-full border text-sm font-bold">
+					{initial}
+				</div>
+			)
+		}
+	</div>
+	<div class="min-w-0 flex-1">
+		<div class="flex flex-wrap items-baseline gap-x-2.5 gap-y-0.5">
+			<span class="text-text text-sm font-bold">{name}</span>
+			{
+				author === "staff" ? (
+					<span class="bg-brand-soft text-brand-hover rounded-full px-2 py-0.5 text-[11px] font-bold">Staff</span>
+				) : (
+					<span class="border-border text-text-dim rounded-full border px-2 py-0.5 text-[11px] font-bold">Tú</span>
+				)
+			}
+			<time class="text-text-faint text-xs" datetime={at} data-local>{at}</time>
+		</div>
+		<div class="msg-prose mt-1" set:html={html} />
+	</div>
+</div>

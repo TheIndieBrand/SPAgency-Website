@@ -1,0 +1,72 @@
+---
+export const prerender = false;
+
+import Layout from "../../../layouts/Layout.astro";
+import Navbar from "../../../components/Navbar.astro";
+import Footer from "../../../components/Footer.astro";
+import SupportMessage from "../../../components/support/SupportMessage.astro";
+import { formatChangelogDate } from "../../../lib/changelog";
+import { getSessionUser } from "../../../lib/session";
+import { renderMessageHtml } from "../../../lib/support-format";
+import { getTranscript } from "../../../lib/support-transcripts";
+
+const id = Astro.params.id ?? "";
+
+const user = await getSessionUser(Astro.cookies);
+if (!user) return Astro.redirect(`/auth/discord/login?next=${encodeURIComponent(Astro.url.pathname)}`);
+
+// Solo el dueño lo ve; el de otro usuario es como si no existiera.
+const transcript = getTranscript(id, user.id);
+if (!transcript) return Astro.redirect("/support");
+
+const messages = transcript.messages.map((m) => ({ ...m, html: renderMessageHtml(m.content) }));
+---
+
+<Layout title={`${transcript.subject} — Soporte — SP Agency`}>
+	<Navbar />
+
+	<main class="mx-auto max-w-[720px] px-4 pt-10 pb-28 sm:px-8">
+		<a
+			href="/support"
+			class="text-text-dim hover:text-brand mb-8 inline-flex items-center gap-2 text-sm font-semibold transition-colors"
+		>
+			<i class="bi bi-arrow-left" />
+			Soporte
+		</a>
+
+		<header class="border-border-soft mb-2 border-b pb-6">
+			<div class="text-text-faint mb-2 text-[13px] font-bold tracking-[0.08em] uppercase">
+				Ticket cerrado ·{" "}
+				<time datetime={transcript.closedAt} data-local="date">
+					{formatChangelogDate(transcript.closedAt.slice(0, 10))}
+				</time>
+			</div>
+			<h1 class="font-display text-[28px] leading-tight font-bold tracking-tight sm:text-[32px]">
+				{transcript.subject}
+			</h1>
+			<p class="text-text-faint mt-2.5 text-sm">
+				Cerrado por {transcript.closedBy === "staff" ? "el equipo de soporte" : "ti"}. Este ticket no se puede
+				reabrir; si necesitas más ayuda, abre uno nuevo.
+			</p>
+		</header>
+
+		{
+			messages.length === 0 ? (
+				<p class="text-text-faint py-10 text-center text-sm">Este ticket no tiene mensajes.</p>
+			) : (
+				<div>
+					{messages.map((m) => (
+						<SupportMessage author={m.author} name={m.name} avatar={m.avatar} html={m.html} at={m.at} />
+					))}
+				</div>
+			)
+		}
+	</main>
+
+	<Footer />
+</Layout>
+
+<script>
+	import { localizeTimes } from "../../../scripts/support-ui";
+	localizeTimes();
+</script>
