@@ -59,6 +59,17 @@ import Footer from "../components/Footer.astro";
 	</div>
 </Layout>
 
+<style is:global>
+	/* Sin barra de scroll en el home (se sigue pudiendo hacer scroll con rueda,
+	   teclado y táctil). El resto de páginas la conservan. */
+	html {
+		scrollbar-width: none;
+	}
+	html::-webkit-scrollbar {
+		display: none;
+	}
+</style>
+
 <script>
 	// La versión (escena o simple) se decide al cargar. Si después se cruza el
 	// umbral (girar una tablet, redimensionar la ventana, cambiar el ajuste de
