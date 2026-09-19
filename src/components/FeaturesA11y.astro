@@ -1,0 +1,21 @@
+---
+// Versión semántica (solo para lectores de pantalla) de las seis funciones que
+// se ven en las tarjetas del tramo espacio de la escena de entrada, que es
+// aria-hidden (presentación). Solo existe con la escena animada (scene-only,
+// ver global.css); la versión simple (Features) ya es accesible por sí misma.
+import { features, sections } from "../lib/home-content";
+---
+
+<section id="features-a11y" class="scene-only sr-only" aria-labelledby="features-a11y-title">
+	<h2 id="features-a11y-title">{sections.features.title}</h2>
+	<p>{sections.features.subtitle}</p>
+	<ul>
+		{
+			features.map((f) => (
+				<li>
+					<strong>{f.title}.</strong> {f.desc}
+				</li>
+			))
+		}
+	</ul>
+</section>
