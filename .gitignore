@@ -25,3 +25,5 @@ pnpm-debug.log*
 
 design
 .claude
+# changelog: base SQLite local
+data/
