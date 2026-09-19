@@ -10,6 +10,10 @@ import node from '@astrojs/node';
 export default defineConfig({
   output: 'server',
 
+  server: {
+    port: Number(process.env.PORT) || 4321
+  },
+
   vite: {
     plugins: [tailwindcss()]
   },

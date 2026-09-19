@@ -5,22 +5,61 @@ import Layout from "../layouts/Layout.astro";
 import Navbar from "../components/Navbar.astro";
 import Hero from "../components/Hero.astro";
 import Stats from "../components/Stats.astro";
-import Features from "../components/Features.astro";
+import AsymptoteScene from "../components/AsymptoteScene.astro";
 import Testimonials from "../components/Testimonials.astro";
+import TestimonialsA11y from "../components/TestimonialsA11y.astro";
+import StepsA11y from "../components/StepsA11y.astro";
 import HowItWorks from "../components/HowItWorks.astro";
 import CtaSection from "../components/CtaSection.astro";
+import SceneCta from "../components/SceneCta.astro";
 import Footer from "../components/Footer.astro";
 ---
 
 <Layout>
-	<div class="relative overflow-x-hidden">
+	<div class="relative">
 		<Navbar />
-		<Hero />
-		<Stats />
-		<Features />
+		<div id="intro-scene" class="relative z-0 min-h-screen overflow-clip">
+			<Hero />
+			<Stats />
+			<AsymptoteScene />
+			<SceneCta />
+		</div>
+		<!-- Los testimonios se ven en el carrusel final de la escena de arriba;
+		     esto es su versión para lectores de pantalla y el respaldo estático
+		     (oculto salvo sin animación — ver intro-scene.ts). -->
+		<TestimonialsA11y />
 		<Testimonials />
+		<noscript>
+			<style>
+				#testimonials-static {
+					display: block !important;
+				}
+				#how-static {
+					display: block !important;
+				}
+				#cta-static {
+					display: block !important;
+				}
+				#cta-scene {
+					display: none !important;
+				}
+				#testimonials-a11y {
+					display: none !important;
+				}
+				#steps-a11y {
+					display: none !important;
+				}
+			</style>
+		</noscript>
+		<!-- Igual que arriba: los tres pasos van animados dentro de la escena; esto es
+		     su versión para lectores de pantalla y el respaldo estático. -->
+		<StepsA11y />
 		<HowItWorks />
 		<CtaSection />
 		<Footer />
 	</div>
 </Layout>
+
+<script>
+	import "../scripts/intro-scene";
+</script>

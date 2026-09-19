@@ -1,38 +1,65 @@
 ---
-import SecurityConsole from "./SecurityConsole.astro";
+import RadarGrid from "./RadarGrid.astro";
+
+// Símbolos que aparecen y se desvanecen sobre todo el Hero (no solo el
+// radar), muy tenues, cada uno con su propio ciclo para que no parpadeen
+// a la vez. Puramente ambiental — decorativo, no interactivo.
+//
+// `delay` es la fracción del ciclo en la que arranca cada uno (0–1) y se
+// aplica como delay NEGATIVO: eso hace que el navegador arranque la
+// animación como si ya llevara un rato corriendo, así que al cargar la
+// página cada letra ya está en un punto distinto de su ciclo (algunas
+// visibles, otras no) en vez de que todas empiecen sincronizadas en 0.
+const ambientGlyphs = [
+	{ text: "λ", x: 4, y: 12, size: 22, tone: "brand", peak: 0.14, duration: 9, delay: 0.2 },
+	{ text: "O(1)", x: 92, y: 8, size: 13, tone: "text", peak: 0.12, duration: 11, delay: 0.5 },
+	{ text: "Σ", x: 8, y: 82, size: 24, tone: "brand", peak: 0.13, duration: 10, delay: 0.8 },
+	{ text: "∂/∂t", x: 88, y: 88, size: 13, tone: "text", peak: 0.11, duration: 8, delay: 0.35 },
+	{ text: "θ", x: 48, y: 6, size: 18, tone: "brand", peak: 0.1, duration: 12, delay: 0.65 },
+	{ text: "√n", x: 3, y: 46, size: 15, tone: "text", peak: 0.12, duration: 9.5, delay: 0.1 },
+	{ text: "∞", x: 95, y: 48, size: 20, tone: "brand", peak: 0.11, duration: 10.5, delay: 0.9 },
+	{ text: "Δt", x: 60, y: 92, size: 14, tone: "text", peak: 0.13, duration: 8.5, delay: 0.45 },
+	{ text: "π", x: 34, y: 4, size: 16, tone: "text", peak: 0.1, duration: 11.5, delay: 0.6 },
+];
 ---
 
-<section class="relative mx-auto max-w-[1180px] px-8 pt-24 pb-24">
+<section id="hero" class="relative mx-auto max-w-[1180px] px-8 pt-24 pb-24">
 	<div
 		class="pointer-events-none absolute inset-0 -z-10"
 		style="background: radial-gradient(60% 55% at 50% 35%, var(--color-navy-glow) 0%, transparent 70%); opacity: 0.08;"
 	>
 	</div>
 
-	<div class="grid grid-cols-1 items-center gap-16 lg:grid-cols-2">
-		<div class="text-left">
-			<div
-				class="border-border text-text-dim mb-7 inline-flex items-center gap-2 rounded-full border px-3.5 py-1.5 text-[13px] font-semibold"
-			>
-				<span class="bg-emerald inline-block h-1.5 w-1.5 rounded-full"></span>
-				Protección activa 24/7
-			</div>
+	<div class="pointer-events-none absolute inset-0 -z-10 font-mono select-none" aria-hidden="true">
+		{
+			ambientGlyphs.map((g) => (
+				<span
+					class="animate-glyph-appear absolute leading-none whitespace-nowrap"
+					style={`left:${g.x}%; top:${g.y}%; font-size:${g.size}px; color:${g.tone === "brand" ? "#0079bb" : "#eeeeee"}; --glyph-peak:${g.peak}; --glyph-duration:${g.duration}s; animation-delay:${-(g.delay * g.duration).toFixed(2)}s;`}
+				>
+					{g.text}
+				</span>
+			))
+		}
+	</div>
 
+	<div id="hero-content" class="grid grid-cols-1 items-center gap-16 lg:grid-cols-2">
+		<div class="text-left">
 			<h1 class="font-display mb-6 text-[46px] leading-[1.12] font-bold tracking-tight lg:text-[52px]">
 				Tu servidor, blindado contra raids en tiempo real.
 			</h1>
 
-			<p class="text-text-dim mb-10 max-w-[520px] text-[17px] leading-relaxed">
+			<p id="hero-subtitle" class="text-text-dim mb-10 max-w-[520px] text-[17px] leading-relaxed">
 				SP Agency detecta oleadas de bots, cuentas falsas y ataques coordinados en segundos, y responde
 				automáticamente antes de que tu comunidad lo note.
 			</p>
 
-			<div class="flex flex-wrap items-center gap-3.5">
+			<div id="hero-actions" class="flex flex-wrap items-center gap-3.5">
 				<a
 					href="#"
 					class="bg-brand hover:bg-brand-hover rounded-[8px] px-[24px] py-3 text-[15px] font-bold text-white transition-colors"
 				>
-					Añadir a Discord — gratis
+					Añadir a Discord
 				</a>
 				<a
 					href="#"
@@ -43,6 +70,6 @@ import SecurityConsole from "./SecurityConsole.astro";
 			</div>
 		</div>
 
-		<SecurityConsole />
+		<RadarGrid />
 	</div>
 </section>

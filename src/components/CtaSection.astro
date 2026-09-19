@@ -1,4 +1,11 @@
-<section class="mx-auto max-w-[1180px] px-8 pb-[110px]">
+---
+// Sección estática de RESPALDO. Con animación, la CTA vive al final de la
+// escena de entrada (SceneCta.astro): sale del negro tras la inmersión en el
+// agujero negro. Esta arranca oculta; intro-scene.ts la muestra solo cuando no
+// hay escena animada (prefers-reduced-motion o algo no cargó).
+---
+
+<section id="cta-static" class="mx-auto hidden max-w-[1180px] px-8 pb-[110px]">
 	<div class="border-border bg-bg-soft rounded-xl border px-10 py-16 text-center">
 		<h2 class="font-display mb-3.5 text-[34px] font-bold tracking-tight">
 			Empieza a proteger tu servidor hoy

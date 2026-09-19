@@ -1,0 +1,26 @@
+---
+// Página de PRUEBA aislada para el componente <BlackHole />. No está
+// enlazada desde ninguna parte del sitio ni forma parte del flujo normal —
+// es solo para ver el diseño del agujero negro sin scrollear toda la
+// escena de intro-scene.ts. Bórrala (o el componente) si al final no se usa.
+import Layout from "../layouts/Layout.astro";
+import BlackHole from "../components/BlackHole.astro";
+---
+
+<Layout title="Black hole — test">
+	<main class="flex min-h-screen flex-col items-center justify-center gap-10 bg-black py-24">
+		<BlackHole size={520} controls />
+
+		<p class="text-text-dim max-w-md px-6 text-center text-sm">
+			Vista de prueba de <code class="text-text">&lt;BlackHole /&gt;</code> — componente aislado, sin conectar
+			a la escena principal. El grande tiene <code class="text-text">controls</code>: arrástralo con el ratón
+			para orbitar la cámara; al soltar imprime <code class="text-text">yaw / pitch / dist</code> en la
+			consola. Esos valores se fijan luego en <code class="text-text">DEFAULT_*</code>.
+		</p>
+
+		<div class="flex flex-wrap items-center justify-center gap-16">
+			<BlackHole size={200} />
+			<BlackHole size={320} />
+		</div>
+	</main>
+</Layout>

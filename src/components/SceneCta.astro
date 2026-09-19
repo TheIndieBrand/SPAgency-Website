@@ -1,0 +1,174 @@
+---
+// CTA del FINAL de la escena de entrada. Va DENTRO de #intro-scene pero fuera del
+// contenedor aria-hidden de la escena: es contenido real (título, texto y
+// enlaces), no presentación. Empieza invisible; al final de la inmersión en el
+// agujero negro, del negro reaparece un punto de luz que se expande y sobre él
+// se compone esta CTA, sin caja: el título entra palabra a palabra, luego el
+// texto, los botones y un recap de los tres pasos (ver renderOutro en
+// intro-scene.ts, que anima cada pieza en función del tiempo). Como está dentro
+// del elemento pineado, al soltarse el pin se va con la escena y detrás llega el
+// footer. Su contenido es el mismo que el de CtaSection (el respaldo estático).
+const recap = ["Invita", "Configura", "Protegido"].map((label) => ({ label }));
+---
+
+<section
+	id="cta-scene"
+	class="pointer-events-none fixed inset-0 z-30 flex items-center justify-center px-6 opacity-0"
+	aria-labelledby="cta-scene-title"
+>
+	<!-- Velo oscuro muy difuso: da contraste al texto sobre el resplandor. -->
+	<div
+		id="cta-scene-scrim"
+		class="pointer-events-none absolute inset-0 opacity-0"
+		aria-hidden="true"
+		style="background: radial-gradient(ellipse 60% 48% at 50% 50%, rgba(0,0,0,0.72) 0%, rgba(0,0,0,0.45) 55%, rgba(0,0,0,0) 100%)"
+	>
+	</div>
+
+	<div id="cta-scene-card" class="relative flex w-full max-w-[860px] flex-col items-center text-center">
+		<h2
+			id="cta-scene-title"
+			class="font-display mb-6 text-[clamp(38px,6.4vw,68px)] leading-[1.04] font-bold tracking-tight text-white"
+		>
+			<span data-cta-word class="inline-block">Empieza</span>{" "}
+			<span data-cta-word class="inline-block">a</span>{" "}
+			<span data-cta-word class="inline-block">proteger</span>{" "}
+			<span data-cta-word class="inline-block">tu</span>{" "}
+			<span data-cta-word class="cta-grad-a inline-block">servidor</span>{" "}
+			<span data-cta-word class="cta-grad-b inline-block">hoy</span>
+		</h2>
+
+		<p data-cta-sub class="text-text-dim mb-10 max-w-[520px] text-[17px] leading-relaxed">
+			Configuración en menos de 5 minutos. Sin tarjeta de crédito.
+		</p>
+
+		<div data-cta-buttons class="flex flex-wrap items-center justify-center gap-4">
+			<a
+				id="cta-scene-link"
+				href="#"
+				tabindex="-1"
+				class="cta-primary group relative inline-flex items-center gap-2.5 rounded-[10px] px-8 py-4 text-[16px] font-bold text-white"
+			>
+				<svg class="h-[20px] w-[20px] shrink-0" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+					<path
+						d="M19.27 5.33A17.6 17.6 0 0 0 14.9 4l-.2.4a16.3 16.3 0 0 1 3.9 1.9 13.3 13.3 0 0 0-11.2 0 16.3 16.3 0 0 1 3.9-1.9L11.1 4a17.6 17.6 0 0 0-4.37 1.33C3.95 9.4 3.2 13.36 3.57 17.27A17.7 17.7 0 0 0 8.9 20l1.1-1.8a11.5 11.5 0 0 1-1.75-.85l.43-.34a12.7 12.7 0 0 0 10.6 0l.43.34c-.56.34-1.14.63-1.75.85l1.1 1.8a17.6 17.6 0 0 0 5.33-2.73c.44-4.53-.75-8.45-3.6-11.94ZM9.68 14.9c-1 0-1.82-.92-1.82-2.05s.8-2.06 1.82-2.06 1.83.93 1.82 2.06c0 1.13-.8 2.05-1.82 2.05Zm6.64 0c-1 0-1.82-.92-1.82-2.05s.8-2.06 1.82-2.06 1.83.93 1.82 2.06c0 1.13-.8 2.05-1.82 2.05Z"
+					></path>
+				</svg>
+				Añadir a Discord — gratis
+				<svg
+					class="h-4 w-4 shrink-0 transition-transform duration-200 group-hover:translate-x-1"
+					viewBox="0 0 24 24"
+					fill="none"
+					stroke="currentColor"
+					stroke-width="2.4"
+					stroke-linecap="round"
+					stroke-linejoin="round"
+					aria-hidden="true"
+				>
+					<path d="M5 12h14M13 6l6 6-6 6"></path>
+				</svg>
+			</a>
+			<a
+				href="#"
+				tabindex="-1"
+				class="rounded-[10px] border border-white/15 bg-white/[0.04] px-7 py-4 text-[16px] font-bold text-white/85 backdrop-blur-sm transition-colors hover:border-brand-hover hover:text-white"
+			>
+				Ver documentación
+			</a>
+		</div>
+
+		<!-- Recap decorativo de los tres pasos (los textos reales están en la lista
+		     accesible de StepsA11y): tres anillos que se completan. -->
+		<div data-cta-recap class="mt-14 flex items-center justify-center gap-3 sm:gap-4" aria-hidden="true">
+			{
+				recap.map((r, i) => (
+					<>
+						<div data-cta-recap-item class="flex items-center gap-2.5">
+							<svg class="h-[26px] w-[26px] shrink-0" viewBox="0 0 26 26" fill="none">
+								<circle cx="13" cy="13" r="10" stroke="rgba(255,255,255,0.14)" stroke-width="2" />
+								<circle
+									data-cta-ring
+									cx="13"
+									cy="13"
+									r="10"
+									stroke="#0093e4"
+									stroke-width="2"
+									stroke-linecap="round"
+									stroke-dasharray="62.83"
+									stroke-dashoffset="62.83"
+									transform="rotate(-90 13 13)"
+								/>
+								<path
+									data-cta-check
+									d="M8.4 13.4l3.3 3.2 5.9-6.6"
+									stroke="#fff"
+									stroke-width="2"
+									stroke-linecap="round"
+									stroke-linejoin="round"
+									opacity="0"
+								/>
+							</svg>
+							<span class="text-text-dim text-[13px] font-medium sm:text-sm">{r.label}</span>
+						</div>
+						{i < recap.length - 1 && (
+							<span data-cta-recap-line class="h-px w-6 origin-left bg-white/20 sm:w-12" />
+						)}
+					</>
+				))
+			}
+		</div>
+	</div>
+</section>
+
+<style>
+	/* Palabras clave del título: degradado blanco → azul de marca, continuo entre
+	   las dos palabras (cada una lleva su tramo; un degradado compartido no es
+	   posible porque cada palabra se anima por separado). */
+	.cta-grad-a,
+	.cta-grad-b {
+		-webkit-background-clip: text;
+		background-clip: text;
+		color: transparent;
+		padding-bottom: 0.1em;
+	}
+	.cta-grad-a {
+		background-image: linear-gradient(100deg, #ffffff 0%, #a9dcff 100%);
+	}
+	.cta-grad-b {
+		background-image: linear-gradient(100deg, #8fd0ff 0%, #0093e4 100%);
+	}
+
+	/* Botón principal: degradado de marca, brillo superior y halo que respira. */
+	.cta-primary {
+		background: linear-gradient(180deg, #14a0f2 0%, #0079bb 100%);
+		box-shadow:
+			inset 0 1px 0 rgba(255, 255, 255, 0.35),
+			inset 0 -1px 0 rgba(0, 0, 0, 0.2),
+			0 8px 30px -6px rgba(0, 147, 228, 0.65);
+		animation: cta-halo 3.2s ease-in-out infinite;
+		transition: filter 0.2s ease;
+	}
+	.cta-primary:hover {
+		filter: brightness(1.1);
+	}
+	@keyframes cta-halo {
+		0%,
+		100% {
+			box-shadow:
+				inset 0 1px 0 rgba(255, 255, 255, 0.35),
+				inset 0 -1px 0 rgba(0, 0, 0, 0.2),
+				0 8px 30px -6px rgba(0, 147, 228, 0.55);
+		}
+		50% {
+			box-shadow:
+				inset 0 1px 0 rgba(255, 255, 255, 0.35),
+				inset 0 -1px 0 rgba(0, 0, 0, 0.2),
+				0 10px 46px -2px rgba(0, 147, 228, 0.95);
+		}
+	}
+	@media (prefers-reduced-motion: reduce) {
+		.cta-primary {
+			animation: none;
+		}
+	}
+</style>

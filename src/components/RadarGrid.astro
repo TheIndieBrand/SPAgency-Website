@@ -1,0 +1,172 @@
+---
+// Rejilla de radar minimalista en perspectiva 2.5D.
+const blips = [
+    { x: 68, y: 32, type: "verified" },
+    { x: 30, y: 60, type: "verified" },
+    { x: 74, y: 68, type: "verified" },
+    { x: 40, y: 26, type: "threat" },
+    { x: 22, y: 40, type: "verified" },
+];
+
+const struts = [
+    { x: 50, y: 2.5 },
+    { x: 97.5, y: 50 },
+    { x: 50, y: 97.5 },
+    { x: 2.5, y: 50 },
+];
+
+const mathGlyphs = [
+    { text: "Σ", x: 6, y: 8, size: 26, tone: "brand", opacity: 0.12, rotate: -8 },
+    { text: "O(1)", x: 74, y: 6, size: 13, tone: "text", opacity: 0.09, rotate: 6 },
+    { text: "Δt < 1ms", x: 2, y: 26, size: 11, tone: "brand", opacity: 0.13, rotate: -4 },
+    { text: "∫", x: 42, y: 2, size: 20, tone: "brand", opacity: 0.1, rotate: 3 },
+    { text: "π", x: 97, y: 12, size: 18, tone: "text", opacity: 0.08, rotate: -10 },
+    { text: "λ(t)", x: 0, y: 46, size: 13, tone: "brand", opacity: 0.11, rotate: 5 },
+    { text: "P(x) = 1 − e", x: 4, y: 76, size: 11, tone: "text", opacity: 0.08, rotate: -6 },
+    { text: "O(n log n)", x: 22, y: 10, size: 12, tone: "text", opacity: 0.07, rotate: 8 },
+    { text: "θ", x: 97, y: 92, size: 22, tone: "brand", opacity: 0.11, rotate: 10 },
+    { text: "Σ wᵢxᵢ", x: 18, y: 97, size: 12, tone: "brand", opacity: 0.12, rotate: -3 },
+    { text: "∞", x: 99, y: 68, size: 18, tone: "text", opacity: 0.08, rotate: -7 },
+    { text: "√n", x: 10, y: 92, size: 12, tone: "text", opacity: 0.07, rotate: 4 },
+    { text: "∂/∂t", x: 78, y: 2, size: 12, tone: "brand", opacity: 0.1, rotate: -5 },
+    { text: "0.18ms", x: 99, y: 27, size: 11, tone: "text", opacity: 0.08, rotate: 9 },
+];
+
+const ringsSvg = `
+    <circle cx="100" cy="100" r="95" stroke="#0079bb" stroke-opacity="0.22" stroke-width="1"></circle>
+    <circle cx="100" cy="100" r="70" stroke="#0079bb" stroke-opacity="0.2" stroke-width="1"></circle>
+    <circle cx="100" cy="100" r="45" stroke="#0079bb" stroke-opacity="0.18" stroke-width="1"></circle>
+    <circle cx="100" cy="100" r="20" stroke="#0079bb" stroke-opacity="0.16" stroke-width="1"></circle>
+    <line x1="5" y1="100" x2="195" y2="100" stroke="#0079bb" stroke-opacity="0.15" stroke-width="1"></line>
+    <line x1="100" y1="5" x2="100" y2="195" stroke="#0079bb" stroke-opacity="0.15" stroke-width="1"></line>
+    <line x1="32.8" y1="32.8" x2="167.2" y2="167.2" stroke="#0079bb" stroke-opacity="0.1" stroke-width="1"></line>
+    <line x1="167.2" y1="32.8" x2="32.8" y2="167.2" stroke="#0079bb" stroke-opacity="0.1" stroke-width="1"></line>
+`;
+---
+
+<div id="radar-wrapper" class="relative mx-auto w-full max-w-[480px] py-16">
+    <div class="pointer-events-none absolute inset-0 font-mono select-none" aria-hidden="true">
+        {
+            mathGlyphs.map((g, i) => (
+                <span
+                    class="animate-glyph-float absolute leading-none whitespace-nowrap"
+                    style={`left:${g.x}%; top:${g.y}%; font-size:${g.size}px; opacity:${g.opacity}; color:${g.tone === "brand" ? "#0079bb" : "#eeeeee"}; --glyph-rotate:${g.rotate}deg; --glyph-duration:${5 + (i % 4)}s; animation-delay:${(i % 5) * 0.6}s;`}
+                >
+                    {g.text}
+                </span>
+            ))
+        }
+    </div>
+
+    <div
+        class="relative mx-auto w-full max-w-[420px]"
+        style="perspective: 1000px; filter: drop-shadow(0px 10px 20px rgba(59, 130, 246, 0.3));"
+    >
+        <div
+            class="radar-plane relative aspect-square rounded-full"
+            style="transform: rotateZ(-30deg) rotateX(60deg); transform-style: preserve-3d; box-shadow: 0 0 50px -10px rgba(0, 121, 187, 0.10);"
+        >
+            <!-- Capa superior SVG (z=0) -->
+            <svg class="absolute inset-0 h-full w-full" viewBox="0 0 200 200" fill="none" set:html={ringsSvg} />
+
+            <!-- Capa inferior SVG (z=-20px) -->
+            <div class="absolute inset-0" style="transform: translateZ(-20px);">
+                <svg class="h-full w-full opacity-60" viewBox="0 0 200 200" fill="none" set:html={ringsSvg} />
+            </div>
+
+            <!-- Puntales verticales en Z -->
+            {
+                struts.map((s) => (
+                    <span
+                        class="bg-brand/40 absolute h-[20px] w-px"
+                        style={`left:${s.x}%; top:${s.y}%; transform-origin: top center; transform: translate(-50%, 0) rotateX(-90deg);`}
+                    />
+                ))
+            }
+
+            <!-- Barrido giratorio (delimitado exactamente a r=95%) -->
+            <div class="animate-radar-spin absolute inset-[2.5%] overflow-hidden rounded-full" style="transform-style: preserve-3d;">
+                <div
+                    class="h-full w-full"
+                    style={`
+                        background: radial-gradient(circle at 50% 50%, color-mix(in oklab, var(--color-brand) 90%, transparent) 0%, color-mix(in oklab, var(--color-brand) 35%, transparent) 55%, transparent 100%);
+                        -webkit-mask-image: conic-gradient(from 0deg, transparent 0deg, transparent 300deg, black 336deg, black 358deg, transparent 360deg);
+                        mask-image: conic-gradient(from 0deg, transparent 0deg, transparent 300deg, black 336deg, black 358deg, transparent 360deg);
+                    `}
+                >
+                </div>
+
+                <!-- Aguja en Z: se extiende desde el centro (top: 50%) hasta el borde superior dentro del radio -->
+                <div
+                    class="bg-brand absolute left-1/2 w-px"
+                    style="top: 0; height: 50%; transform-origin: bottom center; transform: translateX(-50%) rotateY(90deg); background: linear-gradient(to top, var(--color-brand), transparent);"
+                >
+                </div>
+            </div>
+
+            <!-- Blips -->
+            {
+                blips.map((b) => (
+                    <span
+                        class="radar-blip absolute h-1.5 w-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full transition-all duration-300"
+                        data-type={b.type}
+                        style={`left:${b.x}%; top:${b.y}%; background:${b.type === "threat" ? "#ef4444" : "#0079bb"};`}
+                    />
+                ))
+            }
+
+            <!-- Centro del radar -->
+            <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
+                <span class="border-brand/50 animate-radar-ping absolute top-1/2 left-1/2 h-3 w-3 -translate-x-1/2 -translate-y-1/2 rounded-full border">
+                </span>
+                <span class="bg-brand relative block h-2 w-2 rounded-full"></span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .radar-blip {
+        opacity: 0.12;
+    }
+    .radar-blip.lit {
+        opacity: 1;
+        box-shadow: 0 0 8px 3px currentColor;
+    }
+    .radar-blip[data-type="verified"] {
+        color: #0079bb;
+    }
+    .radar-blip[data-type="threat"] {
+        color: #ef4444;
+    }
+</style>
+
+<script>
+    const SWEEP_SECONDS = 4;
+    const blips = document.querySelectorAll<HTMLSpanElement>(".radar-blip");
+
+    const blipAngles = Array.from(blips).map((el) => {
+        const x = parseFloat(el.style.left);
+        const y = parseFloat(el.style.top);
+        let angle = (Math.atan2(y - 50, x - 50) * 180) / Math.PI + 90;
+        if (angle < 0) angle += 360;
+        return { el, angle };
+    });
+
+    function tick() {
+        const t = (performance.now() / 1000) % SWEEP_SECONDS;
+        const sweepAngle = (t / SWEEP_SECONDS) * 360;
+
+        for (const { el, angle } of blipAngles) {
+            let diff = Math.abs(sweepAngle - angle);
+            if (diff > 180) diff = 360 - diff;
+            el.classList.toggle("lit", diff < 14);
+        }
+
+        requestAnimationFrame(tick);
+    }
+
+    if (!window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+        requestAnimationFrame(tick);
+    }
+</script>

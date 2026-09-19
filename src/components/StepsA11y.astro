@@ -1,0 +1,20 @@
+---
+// Versión semántica (solo para lectores de pantalla) de los tres pasos que se
+// ven dentro de la escena de entrada, que es aria-hidden (presentación).
+// intro-scene.ts la oculta si cae al respaldo estático (HowItWorks), que ya es
+// accesible por sí mismo.
+import { steps } from "../lib/steps";
+---
+
+<section id="steps-a11y" class="sr-only" aria-labelledby="steps-a11y-title">
+	<h2 id="steps-a11y-title">Cómo funciona: configurado en tres pasos</h2>
+	<ol>
+		{
+			steps.map((s) => (
+				<li>
+					<strong>{s.title}.</strong> {s.desc}
+				</li>
+			))
+		}
+	</ol>
+</section>

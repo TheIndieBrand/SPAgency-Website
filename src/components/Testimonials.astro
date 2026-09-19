@@ -1,95 +1,22 @@
 ---
-// Lista de testimonios: agregá o quitá objetos acá para actualizar la sección.
-// `avatar` apunta a un archivo dentro de public/avatars/ — solo hace falta
-// colocar la imagen ahí con ese nombre para que se muestre.
-//
-// `decoration` es opcional: si el usuario tiene un "avatar decoration" de
-// Discord, apuntá al PNG transparente del aro (sin componerlo con el avatar
-// a mano) y se superpone en su propia capa, más grande, sin recortar. Con
-// decoration, el avatar base no lleva el borde azul para que no choquen.
+// Sección estática de RESPALDO. Con animación, los testimonios se ven en el
+// carrusel final de la escena de entrada (AsymptoteScene.astro), así que esta
+// sección arranca oculta; intro-scene.ts la muestra solo cuando no hay escena
+// animada (prefers-reduced-motion o algo no cargó). Los datos viven en
+// src/lib/testimonials.ts.
 //
 // Las tarjetas corren en dos filas tipo marquee (fila 1 → izquierda, fila 2
 // → derecha). Se reparten automáticamente entre las dos filas, no hace falta
 // tocar nada más al agregar o quitar testimonios.
 import TestimonialCard from "./TestimonialCard.astro";
-
-interface Testimonial {
-	username: string;
-	role: string;
-	avatar: string;
-	decoration?: string;
-	comment: string;
-}
-
-const testimonials: Testimonial[] = [
-	{
-		username: "ether",
-		role: "Founder @ SPA",
-		avatar: "/avatars/ether.png",
-		comment: "spa en seyfert es god",
-	},
-	{
-		username: "Rensga",
-		role: "CEO @ The Indie Brand",
-		avatar: "/avatars/rensga.png",
-		decoration: "/avatars/rensga-decoration.png",
-		comment: "SPA va a ser potencia mundial ahora que no está en discord.jzzzz",
-	},
-	{
-		username: "Zaguspro",
-		role: "Admin @ Kigo",
-		avatar: "/avatars/zaguspro.png",
-		comment: "Este es un bot con muchas nuevas funciones que ayuda a protegerte a ti y a tus usuarios",
-	},
-	{
-		username: "🍁Eastๅ͟𝓦𝖗𝖎𝖙𝖊𝖗ᴿᶻ",
-		role: "Owner @ RZ",
-		avatar: "/avatars/east.png",
-		decoration: "/avatars/east-decoration.png",
-		comment: "Único para la comunidad.",
-	},
-	{
-		username: "_zPro",
-		role: "CEO @ The Indie Brand",
-		avatar: "/avatars/zpro.png",
-		comment: "Más rápido y renovado que nunca",
-	},
-	{
-		username: "JustEvil",
-		role: "Owner @ Ganyu Studios",
-		avatar: "/avatars/justevil.png",
-		decoration: "/avatars/justevil-decoration.png",
-		comment: "Que chingue su madre el que no use seyfert",
-	},
-	{
-		username: "VirtualOx",
-		role: "CEO @ The Indie Brand",
-		avatar: "/avatars/virtualox.png",
-		decoration: "/avatars/virtualox-decoration.png",
-		comment:
-			"SP Agency no es solo un bot, es un kit completo de protección dentro de su servidor donde ayudara a evitar futuras afectaciones y dolores de cabeza.",
-	},
-	{
-		username: "Doctor",
-		role: "Admin @ Korex Hosting",
-		avatar: "/avatars/doctor.png",
-		comment: "SPA me cambió la vida, ahora soy millonario",
-	},
-	{
-		username: "Aitor",
-		role: "Founder @ Navigo Bot",
-		avatar: "/avatars/aitor.png",
-		comment:
-			"Es un bot con mucha historia y experiencia detrás. El saber hacer y gestionar, SP lo lleva dentro. Lo recomiendo.",
-	},
-];
+import { testimonials } from "../lib/testimonials";
 
 const half = Math.ceil(testimonials.length / 2);
 const row1 = testimonials.slice(0, half);
 const row2 = testimonials.slice(half);
 ---
 
-<section class="group pt-5 pb-[110px]">
+<section id="testimonials-static" class="group hidden pt-5 pb-[110px]">
 	<div class="mx-auto mb-14 max-w-[560px] px-8 text-center">
 		<div class="text-text-faint mb-3.5 text-[13px] font-bold tracking-[0.08em] uppercase">Testimonios</div>
 		<h2 class="font-display text-[38px] font-bold tracking-tight">Lo que dice la comunidad</h2>

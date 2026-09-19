@@ -1,0 +1,454 @@
+---
+// Agujero negro por WEBGL (fragment shader, ray-marching con deflexión
+// gravitacional). El CSS no puede hacer lente gravitacional; esto sí.
+//
+// El disco de acreción usa ruido fBm en un marco polar con cizalla
+// kepleriana (el gas interior gira más rápido) y capas aditivas — idea
+// tomada de brunosimon/webgl-black-hole (allí es un mesh con textura de
+// perlin en 3 capas que hacen scroll; aquí se calcula procedural en el
+// shader, sin dependencia de three.js).
+//
+// Cámara: se orbita con `u_yaw` / `u_pitch`. Con la prop `controls` se
+// puede arrastrar con el ratón para buscar el ángulo (lo imprime en consola
+// al soltar); sin ella, la cámara está FIJA y el usuario no la puede mover.
+//
+// Un solo <canvas>: la escena GSAP lo anima como cualquier elemento. Se
+// pausa fuera de pantalla y respeta prefers-reduced-motion.
+interface Props {
+	size?: number; // px, lado del canvas (CSS). Resolución interna = size * DPR (cap 1.5).
+	controls?: boolean; // arrastrar para orbitar la cámara (solo para elegir ángulo)
+}
+
+const { size = 480, controls = false } = Astro.props;
+---
+
+<div class="black-hole" style={`--bh-size:${size}px`}>
+	<div class="bh-glow"></div>
+	<canvas
+		class="bh-canvas"
+		data-blackhole
+		data-controls={controls ? "1" : null}
+		width={size}
+		height={size}></canvas>
+
+	{
+		controls && (
+			<div class="bh-debug">
+				<label>
+					yaw <input type="range" data-k="yaw" min="-3.15" max="3.15" step="0.01" />
+				</label>
+				<label>
+					pitch <input type="range" data-k="pitch" min="-1.45" max="1.45" step="0.01" />
+				</label>
+				<label>
+					dist <input type="range" data-k="dist" min="6" max="30" step="0.1" />
+				</label>
+				<code class="bh-debug-out" />
+			</div>
+		)
+	}
+</div>
+
+<style>
+	.black-hole {
+		position: relative;
+		width: var(--bh-size);
+		height: var(--bh-size);
+	}
+	.bh-glow {
+		position: absolute;
+		inset: -14%;
+		border-radius: 50%;
+		background: radial-gradient(circle closest-side, rgba(255, 140, 60, 0.22) 0%, rgba(255, 100, 30, 0.05) 55%, transparent 74%);
+		filter: blur(24px);
+	}
+	.bh-canvas {
+		position: relative;
+		display: block;
+		width: 100%;
+		height: 100%;
+	}
+	.bh-canvas[data-controls] {
+		cursor: grab;
+	}
+	.bh-canvas[data-controls]:active {
+		cursor: grabbing;
+	}
+
+	/* Panel de depuración (solo con la prop `controls`). */
+	.bh-debug {
+		position: absolute;
+		top: 8px;
+		left: 8px;
+		z-index: 5;
+		display: flex;
+		flex-direction: column;
+		gap: 6px;
+		padding: 10px 12px;
+		border-radius: 8px;
+		background: rgba(0, 0, 0, 0.55);
+		backdrop-filter: blur(4px);
+		font: 11px/1.4 ui-monospace, monospace;
+		color: #eee;
+	}
+	.bh-debug label {
+		display: flex;
+		align-items: center;
+		gap: 8px;
+		white-space: nowrap;
+	}
+	.bh-debug input[type="range"] {
+		width: 130px;
+		accent-color: #ff8a3d;
+	}
+	.bh-debug-out {
+		margin-top: 2px;
+		color: #ff8a3d;
+		user-select: all;
+	}
+</style>
+
+<script>
+	const VERT = `
+		attribute vec2 a_pos;
+		void main() { gl_Position = vec4(a_pos, 0.0, 1.0); }
+	`;
+
+	const FRAG = `
+		precision highp float;
+		uniform vec2 u_res;
+		uniform float u_time;
+		uniform float u_yaw;
+		uniform float u_pitch;
+		uniform float u_dist;
+
+		float hash12(vec2 p) {
+			p = fract(p * vec2(123.34, 456.21));
+			p += dot(p, p + 45.32);
+			return fract(p.x * p.y);
+		}
+		float hash13(vec3 p) {
+			p = fract(p * 0.1031);
+			p += dot(p, p.zyx + 31.32);
+			return fract((p.x + p.y) * p.z);
+		}
+
+		// ruido de valor 3D + fBm (para el gas del disco)
+		float vnoise(vec3 p) {
+			vec3 i = floor(p);
+			vec3 f = fract(p);
+			f = f * f * (3.0 - 2.0 * f);
+			return mix(
+				mix(mix(hash13(i + vec3(0,0,0)), hash13(i + vec3(1,0,0)), f.x),
+					mix(hash13(i + vec3(0,1,0)), hash13(i + vec3(1,1,0)), f.x), f.y),
+				mix(mix(hash13(i + vec3(0,0,1)), hash13(i + vec3(1,0,1)), f.x),
+					mix(hash13(i + vec3(0,1,1)), hash13(i + vec3(1,1,1)), f.x), f.y),
+				f.z);
+		}
+		float fbm(vec3 p) {
+			float s = 0.0, a = 0.5;
+			for (int i = 0; i < 4; i++) {
+				s += a * vnoise(p);
+				p *= 2.03;
+				a *= 0.5;
+			}
+			return s;
+		}
+
+		float stars(vec3 dir) {
+			vec3 a = abs(dir);
+			vec2 uv;
+			if (a.x >= a.y && a.x >= a.z) uv = dir.zy / a.x;
+			else if (a.y >= a.z) uv = dir.xz / a.y;
+			else uv = dir.xy / a.z;
+			uv *= 90.0;
+			float h = hash12(floor(uv));
+			float s = 0.0;
+			if (h > 0.982) {
+				float d = length(fract(uv) - 0.5);
+				s = smoothstep(0.45, 0.0, d) * (h - 0.982) * 55.0;
+			}
+			return s;
+		}
+
+		void main() {
+			vec2 uv = (gl_FragCoord.xy - 0.5 * u_res) / u_res.y;
+
+			// cámara en órbita alrededor del origen (yaw/pitch fijados por JS)
+			vec3 ro = u_dist * vec3(
+				sin(u_yaw) * cos(u_pitch),
+				sin(u_pitch),
+				cos(u_yaw) * cos(u_pitch)
+			);
+			vec3 f = normalize(-ro);
+			vec3 rgt = normalize(cross(vec3(0.0, 1.0, 0.0), f));
+			vec3 up = cross(f, rgt);
+			vec3 rd = normalize(uv.x * rgt + uv.y * up + 1.7 * f);
+
+			vec3 pos = ro;
+			const float GM = 0.95;
+			const float horizon = 1.05;
+			const float diskIn = 2.4;
+			const float diskOut = 8.6;
+
+			vec3 col = vec3(0.0);
+			float transmit = 1.0;
+			bool hitHorizon = false;
+			float dt = 0.26;
+			float minR = 1e9;
+
+			for (int i = 0; i < 220; i++) {
+				float r2 = dot(pos, pos);
+				float rr = sqrt(r2);
+				minR = min(minR, rr);
+				if (rr < horizon) { hitHorizon = true; break; }
+				if (rr > 36.0) break;
+
+				vec3 grav = -pos / (r2 * rr);
+				rd = normalize(rd + grav * GM * dt);
+				vec3 npos = pos + rd * dt;
+
+				// cruce del plano ecuatorial (y = 0)
+				if (pos.y * npos.y < 0.0) {
+					float t = pos.y / (pos.y - npos.y);
+					vec3 hp = mix(pos, npos, t);
+					float rd2 = length(hp.xz);
+					if (rd2 > diskIn && rd2 < diskOut) {
+						float rn = clamp((rd2 - diskIn) / (diskOut - diskIn), 0.0, 1.0);
+						float ang = atan(hp.z, hp.x);
+
+						// cizalla kepleriana: el gas interior gira más rápido
+						float omega = 2.6 / pow(rd2, 1.35);
+						float a2 = ang + u_time * omega;
+						vec2 sp = vec2(cos(a2), sin(a2)) * rd2;
+
+						// gas: dos octavas fBm aditivas
+						float n1 = fbm(vec3(sp * 0.52, u_time * 0.05));
+						float n2 = fbm(vec3(sp * 1.7 + 17.0, u_time * 0.13));
+						float dens = n1 * 0.7 + n2 * 0.55;
+						dens = pow(clamp(dens, 0.0, 1.0), 1.75);
+						dens *= 0.72 + 0.28 * sin(rd2 * 2.7 - u_time * 0.5);
+
+						// bordes suaves + más brillo hacia dentro
+						float edges = smoothstep(0.0, 0.09, rn) * smoothstep(1.0, 0.62, rn);
+						dens *= edges * mix(1.7, 0.32, rn);
+
+						// Doppler beaming: el lado que se acerca brilla mucho más
+						vec3 orbitVel = normalize(vec3(-hp.z, 0.0, hp.x));
+						float dop = dot(orbitVel, normalize(ro - hp));
+						float beam = pow(clamp(0.5 + 0.9 * dop, 0.0, 2.0), 3.5);
+
+						// color: blanco incandescente dentro → naranja → rojo oscuro fuera
+						vec3 dcol = mix(vec3(1.0, 0.52, 0.14), vec3(0.5, 0.12, 0.03), rn);
+						dcol = mix(vec3(1.0, 0.95, 0.85), dcol, smoothstep(0.0, 0.22, rn));
+
+						col += transmit * dcol * dens * beam * 1.5;
+						transmit *= clamp(1.0 - dens * 0.72, 0.14, 1.0);
+					}
+				}
+
+				pos = npos;
+				dt *= 1.007;
+			}
+
+			// anillo de fotones: solo rayos que ROZAN el horizonte sin caer dentro
+			if (!hitHorizon) {
+				float ring = exp(-max(minR - horizon, 0.0) * 7.0);
+				col += ring * vec3(1.0, 0.6, 0.26) * 0.95;
+				col += transmit * vec3(stars(rd)) * vec3(1.0, 0.94, 0.86);
+			}
+
+			col *= 1.28;
+			col = col / (col + vec3(1.0));
+			col = pow(col, vec3(1.0 / 2.2));
+
+			// Viñeta: apaga el color según se acerca al borde del canvas, para
+			// que estrellas/anillo se fundan a negro en vez de cortarse en seco
+			// justo en la arista cuadrada (muy visible desde que la cámara
+			// orbita en yaw — las estrellas cruzan las esquinas todo el rato).
+			float edgeDist = 0.5 - max(abs(uv.x), abs(uv.y));
+			float vignette = smoothstep(0.0, 0.14, edgeDist);
+			col *= vignette;
+
+			gl_FragColor = vec4(col, 1.0);
+		}
+	`;
+
+	// Ángulos por defecto de la cámara (los usa la escena en producción).
+	const DEFAULT_YAW = 2.94;
+	const DEFAULT_PITCH = -0.004;
+	const DEFAULT_DIST = 30.0;
+
+	function compile(gl: WebGLRenderingContext, type: number, src: string) {
+		const sh = gl.createShader(type)!;
+		gl.shaderSource(sh, src);
+		gl.compileShader(sh);
+		if (!gl.getShaderParameter(sh, gl.COMPILE_STATUS)) {
+			console.error("BlackHole shader:", gl.getShaderInfoLog(sh));
+		}
+		return sh;
+	}
+
+	function initCanvas(canvas: HTMLCanvasElement) {
+		const glCtx = canvas.getContext("webgl", { antialias: false, alpha: false });
+		if (!glCtx) {
+			console.warn("BlackHole: WebGL no disponible");
+			return;
+		}
+		const gl: WebGLRenderingContext = glCtx;
+
+		const prog = gl.createProgram()!;
+		gl.attachShader(prog, compile(gl, gl.VERTEX_SHADER, VERT));
+		gl.attachShader(prog, compile(gl, gl.FRAGMENT_SHADER, FRAG));
+		gl.linkProgram(prog);
+		gl.useProgram(prog);
+
+		const buf = gl.createBuffer();
+		gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+		gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
+		const loc = gl.getAttribLocation(prog, "a_pos");
+		gl.enableVertexAttribArray(loc);
+		gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
+
+		const uRes = gl.getUniformLocation(prog, "u_res");
+		const uTime = gl.getUniformLocation(prog, "u_time");
+		const uYaw = gl.getUniformLocation(prog, "u_yaw");
+		const uPitch = gl.getUniformLocation(prog, "u_pitch");
+		const uDist = gl.getUniformLocation(prog, "u_dist");
+
+		let yaw = DEFAULT_YAW;
+		let pitch = DEFAULT_PITCH;
+		let dist = DEFAULT_DIST;
+
+		const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
+		function resize() {
+			const w = Math.max(1, Math.round(canvas.clientWidth * dpr));
+			const h = Math.max(1, Math.round(canvas.clientHeight * dpr));
+			if (canvas.width !== w || canvas.height !== h) {
+				canvas.width = w;
+				canvas.height = h;
+			}
+			gl.viewport(0, 0, canvas.width, canvas.height);
+			gl.uniform2f(uRes, canvas.width, canvas.height);
+		}
+		resize();
+		window.addEventListener("resize", resize);
+
+		// Orbitación programática: cualquiera puede animar yaw/pitch/dist desde
+		// fuera (p.ej. GSAP en intro-scene.ts) disparando este evento en el
+		// propio <canvas>, sin necesidad de la prop `controls` (esa es solo para
+		// arrastrar con el ratón y elegir un ángulo a mano).
+		canvas.addEventListener("blackhole:orbit", (e) => {
+			const { yaw: y, pitch: p, dist: d } = (e as CustomEvent<{ yaw?: number; pitch?: number; dist?: number }>).detail;
+			if (y !== undefined) yaw = y;
+			if (p !== undefined) pitch = p;
+			if (d !== undefined) dist = d;
+		});
+
+		// Panel de depuración + arrastre, SOLO con la prop `controls`.
+		if (canvas.dataset.controls) {
+			const panel = canvas.closest(".black-hole")?.querySelector<HTMLElement>(".bh-debug");
+			const out = panel?.querySelector<HTMLElement>(".bh-debug-out") ?? null;
+			const sliders = panel
+				? Array.from(panel.querySelectorAll<HTMLInputElement>("input[data-k]"))
+				: [];
+
+			const syncOut = () => {
+				if (out) {
+					out.textContent = `yaw=${yaw.toFixed(3)} pitch=${pitch.toFixed(3)} dist=${dist.toFixed(1)}`;
+				}
+			};
+			const syncSliders = () => {
+				for (const s of sliders) {
+					s.value = String(s.dataset.k === "yaw" ? yaw : s.dataset.k === "pitch" ? pitch : dist);
+				}
+			};
+			syncSliders();
+			syncOut();
+
+			for (const s of sliders) {
+				s.addEventListener("input", () => {
+					const v = parseFloat(s.value);
+					if (s.dataset.k === "yaw") yaw = v;
+					else if (s.dataset.k === "pitch") pitch = v;
+					else dist = v;
+					syncOut();
+				});
+			}
+
+			// arrastre sobre el canvas (mueve yaw/pitch, además de los sliders)
+			let dragging = false;
+			let lx = 0;
+			let ly = 0;
+			canvas.addEventListener("pointerdown", (e) => {
+				dragging = true;
+				lx = e.clientX;
+				ly = e.clientY;
+				canvas.setPointerCapture(e.pointerId);
+			});
+			canvas.addEventListener("pointermove", (e) => {
+				if (!dragging) return;
+				yaw += (e.clientX - lx) * 0.006;
+				pitch = Math.max(-1.45, Math.min(1.45, pitch - (e.clientY - ly) * 0.006));
+				lx = e.clientX;
+				ly = e.clientY;
+				syncSliders();
+				syncOut();
+			});
+			const end = () => {
+				dragging = false;
+			};
+			canvas.addEventListener("pointerup", end);
+			canvas.addEventListener("pointercancel", end);
+		}
+
+		const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+		function draw(tMs: number) {
+			gl.uniform1f(uTime, tMs / 1000);
+			gl.uniform1f(uYaw, yaw);
+			gl.uniform1f(uPitch, pitch);
+			gl.uniform1f(uDist, dist);
+			gl.drawArrays(gl.TRIANGLES, 0, 3);
+		}
+
+		let raf = 0;
+		let running = false;
+		function loop(t: number) {
+			draw(t);
+			raf = requestAnimationFrame(loop);
+		}
+		function start() {
+			if (running || reduce) return;
+			running = true;
+			raf = requestAnimationFrame(loop);
+		}
+		function stop() {
+			running = false;
+			cancelAnimationFrame(raf);
+		}
+
+		const io = new IntersectionObserver(
+			(entries) => {
+				for (const e of entries) {
+					if (e.isIntersecting) start();
+					else stop();
+				}
+			},
+			{ threshold: 0.01 },
+		);
+		io.observe(canvas);
+
+		requestAnimationFrame(draw); // primer frame siempre
+	}
+
+	function boot() {
+		document.querySelectorAll<HTMLCanvasElement>("canvas[data-blackhole]").forEach(initCanvas);
+	}
+
+	if (document.readyState === "loading") {
+		document.addEventListener("DOMContentLoaded", boot);
+	} else {
+		boot();
+	}
+</script>

@@ -1,18 +1,40 @@
 ---
-const stats = [
-	{ value: "12.4K+", label: "Servidores protegidos" },
-	{ value: "89K+", label: "Raids bloqueados" },
-	{ value: "<100ms", label: "Tiempo de respuesta" },
-	{ value: "99.9%", label: "Uptime" },
+// Cada stat se cuenta desde 0 hasta `target` cuando entra en escena (ver
+// src/scripts/intro-scene.ts). El texto renderizado en el servidor ya
+// arranca en cero con el mismo formato final, para que no haya un salto
+// visual antes de que el script tome el control.
+interface Stat {
+	target: number;
+	decimals: number;
+	prefix: string;
+	suffix: string;
+	label: string;
+}
+
+const stats: Stat[] = [
+	{ target: 12.4, decimals: 1, prefix: "", suffix: "K+", label: "Servidores protegidos" },
+	{ target: 89, decimals: 0, prefix: "", suffix: "K+", label: "Raids bloqueados" },
+	{ target: 100, decimals: 0, prefix: "<", suffix: "ms", label: "Tiempo de respuesta" },
+	{ target: 99.9, decimals: 1, prefix: "", suffix: "%", label: "Uptime" },
 ];
+
+const format = (n: number, decimals: number, prefix: string, suffix: string) => `${prefix}${n.toFixed(decimals)}${suffix}`;
 ---
 
-<section class="mx-auto max-w-[1180px] px-8 pb-[100px]">
+<section id="stats" class="mx-auto max-w-[1180px] px-8 pb-[100px]">
 	<div class="border-border-soft bg-border-soft grid grid-cols-2 gap-px overflow-hidden rounded-2xl border md:grid-cols-4">
 		{
 			stats.map((stat) => (
 				<div class="bg-bg-soft px-6 py-8 text-center">
-					<div class="font-display text-[34px] font-bold tracking-tight">{stat.value}</div>
+					<div
+						class="stat-number font-display text-[34px] font-bold tracking-tight"
+						data-target={stat.target}
+						data-decimals={stat.decimals}
+						data-prefix={stat.prefix}
+						data-suffix={stat.suffix}
+					>
+						{format(0, stat.decimals, stat.prefix, stat.suffix)}
+					</div>
 					<div class="text-text-faint mt-1.5 text-sm">{stat.label}</div>
 				</div>
 			))
