@@ -1,0 +1,15 @@
+<!-- ============ Inmersión: caída al agujero negro ============ -->
+<!-- Capas del final (las mueve el script, ver renderOutro en intro-scene.ts).
+     Van por encima del agujero negro, los pasos y la asíntota:
+       · #dive-vignette: oscurece los bordes según nos acercamos.
+       · #dive-black: negro total cuando estamos dentro.
+       · #dive-spark / #dive-bloom: del negro reaparece un punto de luz (la
+         estrella de la punta) que se expande hasta dar paso a la CTA (que es
+         un elemento real fuera de esta escena aria-hidden: SceneCta.astro). -->
+<div id="dive-vignette" class="pointer-events-none fixed inset-0 opacity-0" aria-hidden="true"
+	style="background: radial-gradient(ellipse at center, rgba(0,0,0,0) 30%, rgba(0,0,0,0.55) 68%, #000 100%)"></div>
+<div id="dive-black" class="pointer-events-none fixed inset-0 bg-black opacity-0" aria-hidden="true"></div>
+<div id="dive-bloom" class="pointer-events-none fixed top-1/2 left-1/2 h-[64px] w-[64px] -translate-x-1/2 -translate-y-1/2 rounded-full opacity-0" aria-hidden="true"
+	style="background: radial-gradient(circle, rgba(255,255,255,0.95) 0%, rgba(120,190,255,0.55) 22%, rgba(0,121,187,0.28) 48%, rgba(0,121,187,0) 72%)"></div>
+<div id="dive-spark" class="pointer-events-none fixed top-1/2 left-1/2 h-[10px] w-[10px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-white opacity-0" aria-hidden="true"
+	style="box-shadow: 0 0 18px 6px rgba(190,225,255,0.85), 0 0 60px 18px rgba(0,147,228,0.45)"></div>

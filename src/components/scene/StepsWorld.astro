@@ -1,0 +1,135 @@
+---
+import { steps } from "../../lib/steps";
+---
+
+<!-- ============ Acto de los pasos: "Configurado en tres pasos" ============ -->
+<!-- Cada paso es un NODO del camino que sigue la asíntota: nace como un aro
+     punteado que sube desde abajo por el eje central; cuando la punta lo toca
+     se completa (relleno, aro continuo, onda expansiva, chispas) y salen sus
+     textos con un shake cada vez más fuerte. El script (steps-act.ts) coloca
+     los nodos en coordenadas del mundo y dispara los efectos. Los textos se
+     alternan a derecha e izquierda del eje. Datos en src/lib/steps.ts. -->
+<div id="steps-world" class="pointer-events-none fixed inset-0" aria-hidden="true">
+	<svg width="0" height="0" class="absolute">
+		<defs>
+			<radialGradient id="step-fill-grad" gradientUnits="userSpaceOnUse" cx="36" cy="36" r="33">
+				<stop offset="0" stop-color="#4db3f4"></stop>
+				<stop offset="1" stop-color="#0079bb"></stop>
+			</radialGradient>
+		</defs>
+	</svg>
+	{
+		steps.map((s, i) => (
+			<div class="step-node absolute top-0 left-0" data-step={i} data-side={i % 2 === 0 ? "right" : "left"} style="visibility:hidden">
+				<div class="step-glow absolute top-[-62px] left-[-62px] h-[124px] w-[124px] rounded-full opacity-0"></div>
+				<div class="step-shock absolute top-[-36px] left-[-36px] h-[72px] w-[72px] rounded-full opacity-0"></div>
+				<div class="step-shock absolute top-[-36px] left-[-36px] h-[72px] w-[72px] rounded-full opacity-0"></div>
+				<svg viewBox="0 0 72 72" class="step-svg absolute top-[-36px] left-[-36px] h-[72px] w-[72px] overflow-visible">
+					<circle cx="36" cy="36" r="33" fill="#000"></circle>
+					<circle
+						class="ring-dash"
+						cx="36"
+						cy="36"
+						r="33"
+						fill="none"
+						stroke="#6e6e6e"
+						stroke-width="2.2"
+						stroke-linecap="round"
+						stroke-dasharray="0.01 7.4"
+					></circle>
+					<circle
+						class="ring-fill"
+						cx="36"
+						cy="36"
+						r="16.5"
+						fill="none"
+						stroke="url(#step-fill-grad)"
+						stroke-width="33"
+						pathLength="1"
+						stroke-dasharray="1"
+						stroke-dashoffset="1"
+						transform="rotate(-90 36 36)"
+					></circle>
+					<circle
+						class="ring-solid"
+						cx="36"
+						cy="36"
+						r="33"
+						fill="none"
+						stroke="#59baf5"
+						stroke-width="2.6"
+						stroke-linecap="round"
+						pathLength="1"
+						stroke-dasharray="1"
+						stroke-dashoffset="1"
+						transform="rotate(-90 36 36)"
+					></circle>
+					<text
+						class="ring-num font-display"
+						x="36"
+						y="37"
+						text-anchor="middle"
+						dominant-baseline="central"
+						fill="#9b9b9b"
+						font-size="28"
+						font-weight="700"
+					>
+						{s.n}
+					</text>
+				</svg>
+				{Array.from({ length: 14 }, () => <span class="step-spark absolute top-[-2px] left-[-2px] h-1 w-1 rounded-full opacity-0" />)}
+				<div
+					class:list={[
+						"step-text absolute top-0 w-[320px] -translate-y-1/2 opacity-0",
+						i % 2 === 0 ? "left-[62px] text-left" : "right-[62px] text-right",
+					]}
+				>
+					<div class="step-text-inner">
+						<h3 class="font-display text-[24px] leading-tight font-bold text-white">{s.title}</h3>
+						<p class="text-text-dim mt-2 text-[15px] leading-relaxed">{s.desc}</p>
+					</div>
+				</div>
+			</div>
+		))
+	}
+</div>
+
+
+<style>
+	/* Nodos de los pasos (ver steps-act.ts). El aro punteado gira despacio
+	   mientras el paso está pendiente; al completarse lo apaga el script. */
+	.step-node {
+		will-change: transform;
+	}
+
+	.step-glow {
+		background: radial-gradient(
+			circle,
+			rgba(0, 147, 228, 0.55) 0%,
+			rgba(0, 121, 187, 0.18) 45%,
+			rgba(0, 121, 187, 0) 70%
+		);
+	}
+
+	.step-shock {
+		border: 2px solid #4db3f4;
+	}
+
+	.ring-dash {
+		transform-box: fill-box;
+		transform-origin: center;
+		animation: ring-spin 42s linear infinite;
+	}
+
+	@keyframes ring-spin {
+		to {
+			transform: rotate(360deg);
+		}
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.ring-dash {
+			animation: none;
+		}
+	}
+</style>

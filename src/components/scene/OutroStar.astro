@@ -1,0 +1,18 @@
+<!-- La estrellita = la PUNTA de la asíntota; el script la coloca en el
+     extremo dibujado del trazo cada frame. Va en su PROPIA capa, por encima
+     de los pasos: al tocar el primero se "absorbe" dentro del círculo y tiene
+     que verse sobre él. -->
+<div id="outro-star-layer" class="pointer-events-none fixed inset-0 opacity-0" aria-hidden="true">
+	<!-- Misma estrellita (y mismo tamaño) que la punta de la curva del plano:
+	     viewBox centrado en (0,0) y con 1 unidad = vw/1000, igual que la
+	     escala X del SVG del plano → el trazo ±8 rinde a 16·vw/1000 px, como
+	     el original en cualquier ancho de pantalla. -->
+	<svg id="outro-line-star" class="absolute top-0 left-0 h-[2.4vw] w-[2.4vw] overflow-visible" viewBox="-12 -12 24 24" fill="none">
+		<circle r="8" fill="#eeeeee" opacity="0.1"></circle>
+		<path
+			fill="#eeeeee"
+			opacity="0.85"
+			d="M 0 -8 Q 1.5 -1.5 8 0 Q 1.5 1.5 0 8 Q -1.5 1.5 -8 0 Q -1.5 -1.5 0 -8 Z"
+		></path>
+	</svg>
+</div>

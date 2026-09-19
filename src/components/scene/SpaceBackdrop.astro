@@ -1,0 +1,9 @@
+<!-- Tramo "espacio" (fase B): overlay negro que tapa el gris de la página y
+     capa de estrellas de fondo. Ambos arrancan invisibles. -->
+<div id="space-bg" class="absolute inset-0 bg-black opacity-0"></div>
+<!-- Estrellas de fondo (tramo "espacio"). Se dibujan en un <canvas> como campo
+     INFINITO (ver star-field.ts): la cámara del acto final puede ir tan lejos
+     como haga falta. #space-stars es solo el controlador de estado que ya
+     animaban los tweens (opacidad y bajada del ascenso); el canvas lo lee. -->
+<div id="space-stars" class="hidden opacity-0" aria-hidden="true"></div>
+<canvas id="space-stars-canvas" class="absolute inset-0 h-full w-full"></canvas>

@@ -1,0 +1,38 @@
+<!-- Asíntota del cuadro final. En el outro, la curva del plano (dentro del
+     SVG deformado por preserveAspectRatio="none") se marcha hacia abajo y
+     ESTA la sustituye. Contenedor a pantalla completa. Es UN solo trazo SVG
+     (en píxeles, sin viewBox) que el script construye a la medida del
+     viewport (intro-scene.ts, layoutOutro): recta horizontal que nace fuera
+     de pantalla por la izquierda, un arco hacia abajo (la atracción del
+     agujero negro) y una recta vertical larga. Se DIBUJA con
+     stroke-dashoffset (no escala → no se estira) hasta la punta.
+     Todo va dentro de #outro-world, un grupo en coordenadas del MUNDO al que
+     el script aplica la cámara:
+       · #route-dots: el camino punteado que une los pasos ("lo que falta").
+       · #outro-path: el trazo de la asíntota. Blanco hasta el primer paso y
+         azul de marca a partir de ahí (degradado #route-grad): es el camino
+         que se va completando sobre el punteado. -->
+<div id="outro-line" class="pointer-events-none fixed inset-0 opacity-0" aria-hidden="true">
+	<svg
+		class="absolute inset-0 h-full w-full overflow-visible"
+		style="filter: drop-shadow(0 0 5px rgba(180, 215, 255, 0.4))"
+		fill="none"
+	>
+		<defs>
+			<linearGradient id="route-grad" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="0" y2="1">
+				<stop offset="0" stop-color="#eeeeee"></stop>
+				<stop offset="1" stop-color="#2aa4f0"></stop>
+			</linearGradient>
+		</defs>
+		<g id="outro-world">
+			<path
+				id="route-dots"
+				stroke="#6e6e6e"
+				stroke-width="3"
+				stroke-linecap="round"
+				stroke-dasharray="0.1 11"
+				fill="none"></path>
+			<path id="outro-path" stroke="url(#route-grad)" stroke-linecap="butt" stroke-linejoin="round" fill="none"></path>
+		</g>
+	</svg>
+</div>

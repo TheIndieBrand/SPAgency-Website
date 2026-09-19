@@ -1,0 +1,40 @@
+---
+// Símbolos que aparecen repartidos por toda la pantalla durante el Acto 2
+// (los revela el script con un stagger). Puramente ambientales.
+const extraGlyphs = [
+	{ text: "∫", x: 12, y: 16, size: 30, tone: "brand" },
+	{ text: "∂x", x: 78, y: 10, size: 15, tone: "text" },
+	{ text: "Σⁿ", x: 6, y: 62, size: 20, tone: "brand" },
+	{ text: "√n", x: 90, y: 30, size: 16, tone: "text" },
+	{ text: "π", x: 40, y: 6, size: 22, tone: "text" },
+	{ text: "∇·F", x: 66, y: 84, size: 14, tone: "brand" },
+	{ text: "e^x", x: 20, y: 88, size: 15, tone: "text" },
+	{ text: "≈", x: 52, y: 40, size: 26, tone: "brand" },
+	{ text: "dx", x: 84, y: 54, size: 14, tone: "text" },
+	{ text: "λ", x: 4, y: 34, size: 24, tone: "brand" },
+	{ text: "n!", x: 30, y: 70, size: 15, tone: "text" },
+	{ text: "∮", x: 94, y: 74, size: 20, tone: "brand" },
+	{ text: "θ", x: 58, y: 18, size: 18, tone: "text" },
+	{ text: "f(x)", x: 14, y: 48, size: 14, tone: "text" },
+	{ text: "→0", x: 46, y: 92, size: 14, tone: "brand" },
+	{ text: "⌊x⌋", x: 72, y: 40, size: 14, tone: "text" },
+	{ text: "Δt", x: 34, y: 30, size: 16, tone: "brand" },
+	{ text: "∞", x: 88, y: 90, size: 22, tone: "brand" },
+];
+---
+
+<!-- Capa de símbolos extra repartidos por toda la pantalla. Arrancan
+     invisibles; el script los revela con un stagger durante el Acto 2 y la
+     desplaza (con parallax) al mover la cámara por el plano. -->
+<div id="asymptote-glyph-layer" class="pointer-events-none absolute inset-0 font-mono select-none" aria-hidden="true">
+	{
+		extraGlyphs.map((g) => (
+			<span
+				class="asymptote-glyph absolute leading-none whitespace-nowrap opacity-0"
+				style={`left:${g.x}%; top:${g.y}%; font-size:${g.size}px; color:${g.tone === "brand" ? "#0079bb" : "#eeeeee"};`}
+			>
+				{g.text}
+			</span>
+		))
+	}
+</div>

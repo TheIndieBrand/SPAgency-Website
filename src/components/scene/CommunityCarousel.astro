@@ -1,0 +1,29 @@
+---
+import TestimonialCard from "../TestimonialCard.astro";
+import { sections } from "../../lib/home-content";
+import { testimonials } from "../../lib/testimonials";
+---
+
+<!-- ============ Acto final: la comunidad ============ -->
+<!-- Cuando el agujero negro ya se ha ido por la izquierda, suben desde abajo,
+     en carrusel, los testimonios — centrados en la pantalla, con la
+     asíntota cayendo a su derecha; el fondo y la asíntota siguen su
+     movimiento (la cámara baja con ella). Encabezado fijo arriba y
+     centrado; las tarjetas suben por una ventana con máscara (se funden bajo
+     el encabezado en vez de pisarlo). Los 9 testimonios de
+     src/lib/testimonials.ts. -->
+<div id="community" class="pointer-events-none fixed inset-0 opacity-0" aria-hidden="true">
+	<div id="community-heading" class="absolute top-[9vh] left-1/2 w-[min(90vw,520px)] -translate-x-1/2 text-center">
+		<div class="text-text-faint mb-3.5 text-[13px] font-bold tracking-[0.08em] uppercase">{sections.testimonials.eyebrow}</div>
+		<h2 class="font-display text-text text-[38px] leading-[1.12] font-bold tracking-tight">{sections.testimonials.title}</h2>
+	</div>
+	<div
+		id="community-window"
+		class="absolute top-[27vh] bottom-0 left-1/2 w-[420px] -translate-x-1/2 overflow-hidden"
+		style="-webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 16%); mask-image: linear-gradient(to bottom, transparent 0, #000 16%)"
+	>
+		<div id="community-track" class="flex flex-col items-center gap-5">
+			{testimonials.map((t) => <TestimonialCard testimonial={t} />)}
+		</div>
+	</div>
+</div>

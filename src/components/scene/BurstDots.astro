@@ -1,0 +1,30 @@
+---
+// Partículas del estallido: el script las reparte entre el ∞, el radar y el
+// bloque del límite y las dispara hacia fuera. Azules y blancas alternadas,
+// tamaños variados.
+const burstDots = Array.from({ length: 26 }, (_, i) => ({
+	size: 4 + (i % 4) * 2,
+	blue: i % 2 === 0,
+}));
+---
+
+<!-- Partículas del estallido del ∞ (desenlace). El script las coloca sobre
+     el ∞ y las dispara hacia los bordes; arrancan invisibles. -->
+<div id="limit-burst" class="pointer-events-none fixed inset-0" aria-hidden="true">
+	{
+		burstDots.map((d) => (
+			<span
+				class="limit-burst-dot absolute opacity-0"
+				style={`width:${d.size}px; height:${d.size}px; background:${d.blue ? "#0079bb" : "#eeeeee"};`}
+			/>
+		))
+	}
+</div>
+
+
+<style>
+	.limit-burst-dot {
+		border-radius: 9999px;
+		will-change: transform, opacity;
+	}
+</style>

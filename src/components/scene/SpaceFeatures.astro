@@ -1,0 +1,67 @@
+---
+import { features, sections } from "../../lib/home-content";
+import Moon from "./Moon.astro";
+---
+
+<!-- ============ Tramo ESPACIO → sección Funciones ============ -->
+<!-- Aparece sobre el fondo negro estrellado mientras la exponencial sigue
+     creciendo a la izquierda. El script lo maneja dentro del pin. -->
+<div id="space-features" class="pointer-events-none fixed inset-0 opacity-0" aria-hidden="true">
+<Moon />
+
+	<!-- Título + subtítulo, centrados. El subtítulo se va y el título sube. -->
+	<div id="space-features-heading" class="absolute top-[36%] left-1/2 w-[680px] max-w-[88vw] -translate-x-1/2 text-center opacity-0">
+		<div class="text-text-faint mb-4 text-[13px] font-bold tracking-[0.1em] uppercase">{sections.features.eyebrow}</div>
+		<h2 class="font-display text-text text-[46px] leading-[1.12] font-bold tracking-tight">
+			{sections.features.title}
+		</h2>
+		<p id="space-features-sub" class="text-text-dim mx-auto mt-5 max-w-[520px] text-[17px] leading-relaxed">
+			{sections.features.subtitle}
+		</p>
+	</div>
+
+	<!-- Los 6 cards: rejilla centrada bajo el título. Oscuros y translúcidos
+	     para asentarse sobre el fondo estrellado; flotan suavemente. -->
+	<div id="space-features-cards" class="absolute top-[43%] left-1/2 grid w-[900px] max-w-[92vw] -translate-x-1/2 grid-cols-1 gap-4 opacity-0 sm:grid-cols-2 lg:grid-cols-3">
+		{
+			features.map((f, i) => (
+				<div
+					class="space-card rounded-2xl border border-white/[0.09] bg-white/[0.035] p-5 shadow-[0_16px_50px_-16px_rgba(0,0,0,0.7)] backdrop-blur-[2px]"
+					style={`animation-delay:${(i * 0.55).toFixed(2)}s`}
+				>
+					<div class="mb-4 flex h-10 w-10 items-center justify-center rounded-[10px] border border-white/15 text-lg text-white/80">
+						<i class={`bi ${f.icon}`} />
+					</div>
+					<h3 class="text-text mb-1.5 text-[16px] font-bold">{f.title}</h3>
+					<p class="text-text-dim text-[13.5px] leading-relaxed">{f.desc}</p>
+				</div>
+			))
+		}
+	</div>
+</div>
+
+
+<style>
+	/* Flotación suave de los cards de Funciones (el desfase lo da el
+	   animation-delay inline de cada card). La entrada la anima el script sobre
+	   el contenedor, así que no colisiona con este transform. */
+	.space-card {
+		animation: space-card-float 5s ease-in-out infinite;
+	}
+
+	@keyframes space-card-float {
+		0%,
+		100% {
+			transform: translateY(-5px);
+		}
+		50% {
+			transform: translateY(5px);
+		}
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.space-card {
+			animation: none;
+		}
+	}
+</style>
