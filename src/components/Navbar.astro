@@ -4,10 +4,10 @@ import { navLinks, site } from "../lib/site";
 ---
 
 <header id="navbar" class="bg-bg/70 border-border-soft sticky top-0 z-40 border-b backdrop-blur-xl">
-	<div class="mx-auto flex max-w-[1180px] items-center justify-between px-8 py-4">
+	<div class="mx-auto flex max-w-[1180px] items-center justify-between px-4 py-4 sm:px-8">
 		<div class="flex items-center gap-2.5">
 			<img src="/logo.png" alt={site.name} width="30" height="30" class="h-[30px] w-[30px] rounded-[25%]" />
-			<span class="font-display text-lg font-bold tracking-tight">{site.name}</span>
+			<span class="font-display text-lg font-bold tracking-tight whitespace-nowrap max-[359px]:hidden">{site.name}</span>
 		</div>
 
 		<nav class="hidden items-center gap-8 md:flex">
@@ -20,7 +20,7 @@ import { navLinks, site } from "../lib/site";
 			}
 		</nav>
 
-		<div class="flex items-center gap-3">
+		<div class="flex items-center gap-2 sm:gap-3">
 			<a
 				href={site.loginUrl}
 				class="text-text-dim hover:text-brand hidden px-3 py-2 text-sm font-semibold transition-colors sm:inline-block"
@@ -28,10 +28,60 @@ import { navLinks, site } from "../lib/site";
 			>
 			<a
 				href={site.inviteUrl}
-				class="bg-brand hover:bg-brand-hover inline-flex items-center rounded-lg px-[18px] py-[9px] text-sm font-bold text-white transition-colors"
+				class="bg-brand hover:bg-brand-hover inline-flex items-center rounded-lg px-3 py-[9px] text-sm font-bold whitespace-nowrap text-white transition-colors sm:px-[18px]"
 			>
 				{labels.invite}
 			</a>
+
+			<!-- Menú de móvil (< md): los enlaces de arriba no caben. <details> funciona
+			     sin JS; el script de abajo solo lo cierra al elegir un enlace, con Escape
+			     o al pulsar fuera. -->
+			<details class="nav-menu relative md:hidden">
+				<summary
+					aria-label="Menú"
+					class="text-text-dim hover:text-brand flex h-[38px] w-10 cursor-pointer list-none items-center justify-center rounded-lg transition-colors [&::-webkit-details-marker]:hidden"
+				>
+					<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+						<path d="M4 7h16M4 12h16M4 17h16"></path>
+					</svg>
+				</summary>
+				<div class="bg-bg-soft border-border absolute top-full right-0 mt-3 w-56 rounded-xl border p-2 shadow-[0_16px_40px_-12px_rgba(0,0,0,0.7)]">
+					{
+						navLinks.map((link) => (
+							<a
+								href={link.href}
+								class="text-text-dim hover:bg-card-hover hover:text-brand block rounded-lg px-3 py-2.5 text-sm font-semibold transition-colors"
+							>
+								{link.label}
+							</a>
+						))
+					}
+					<a
+						href={site.loginUrl}
+						class="text-text-dim hover:bg-card-hover hover:text-brand border-border-soft mt-1 block rounded-lg border-t px-3 py-2.5 text-sm font-semibold transition-colors"
+					>
+						Iniciar sesión
+					</a>
+				</div>
+			</details>
 		</div>
 	</div>
 </header>
+
+<script>
+	const menu = document.querySelector<HTMLDetailsElement>("#navbar details.nav-menu");
+	if (menu) {
+		const close = () => {
+			menu.open = false;
+		};
+		menu.addEventListener("click", (event) => {
+			if ((event.target as Element).closest("a")) close();
+		});
+		document.addEventListener("click", (event) => {
+			if (!menu.contains(event.target as Node)) close();
+		});
+		document.addEventListener("keydown", (event) => {
+			if (event.key === "Escape") close();
+		});
+	}
+</script>
