@@ -2,6 +2,7 @@
 import BlackHole from "./BlackHole.astro";
 import TestimonialCard from "./TestimonialCard.astro";
 import { testimonials } from "../lib/testimonials";
+import { features, sections } from "../lib/home-content";
 import { steps } from "../lib/steps";
 
 // Segundo acto de la escena de scroll (ver src/scripts/intro-scene.ts):
@@ -56,40 +57,9 @@ const burstDots = Array.from({ length: 26 }, (_, i) => ({
 	blue: i % 2 === 0,
 }));
 
-// Tarjetas de "Funciones" que suben apiladas en el tramo espacio. (Mismo
-// contenido que <Features/>; de momento duplicado.)
-const spaceCards = [
-	{
-		icon: "bi-broadcast-pin",
-		title: "Detección de raids en tiempo real",
-		desc: "Analiza patrones de entrada y bloquea oleadas de cuentas antes de que actúen.",
-	},
-	{
-		icon: "bi-patch-check",
-		title: "Verificación de cuentas",
-		desc: "Filtra cuentas nuevas, sin avatar o sospechosas con reglas configurables.",
-	},
-	{
-		icon: "bi-funnel",
-		title: "Anti-spam inteligente",
-		desc: "Detecta mensajes masivos, menciones y enlaces maliciosos al instante.",
-	},
-	{
-		icon: "bi-file-earmark-text",
-		title: "Registros de seguridad",
-		desc: "Historial detallado de cada acción para auditar lo que pasó y cuándo.",
-	},
-	{
-		icon: "bi-cpu",
-		title: "Auto-moderación con IA",
-		desc: "Modelos entrenados para distinguir tráfico legítimo de ataques coordinados.",
-	},
-	{
-		icon: "bi-speedometer2",
-		title: "Panel de control web",
-		desc: "Configura umbrales, whitelist y alertas sin tocar comandos.",
-	},
-];
+// Tarjetas de "Funciones" que suben apiladas en el tramo espacio: las mismas
+// que el respaldo estático (Features), definidas en src/lib/home-content.ts.
+const spaceCards = features;
 ---
 
 <div id="asymptote-scene" class="pointer-events-none absolute inset-0 z-10 overflow-hidden opacity-0" aria-hidden="true">
@@ -335,8 +305,8 @@ const spaceCards = [
 	     src/lib/testimonials.ts. -->
 	<div id="community" class="pointer-events-none fixed inset-0 opacity-0" aria-hidden="true">
 		<div id="community-heading" class="absolute top-[9vh] left-1/2 w-[min(90vw,520px)] -translate-x-1/2 text-center">
-			<div class="text-text-faint mb-3.5 text-[13px] font-bold tracking-[0.08em] uppercase">Testimonios</div>
-			<h2 class="font-display text-text text-[38px] leading-[1.12] font-bold tracking-tight">Lo que dice la comunidad</h2>
+			<div class="text-text-faint mb-3.5 text-[13px] font-bold tracking-[0.08em] uppercase">{sections.testimonials.eyebrow}</div>
+			<h2 class="font-display text-text text-[38px] leading-[1.12] font-bold tracking-tight">{sections.testimonials.title}</h2>
 		</div>
 		<div
 			id="community-window"
@@ -527,12 +497,12 @@ const spaceCards = [
 
 		<!-- Título + subtítulo, centrados. El subtítulo se va y el título sube. -->
 		<div id="space-features-heading" class="absolute top-[36%] left-1/2 w-[680px] max-w-[88vw] -translate-x-1/2 text-center opacity-0">
-			<div class="text-text-faint mb-4 text-[13px] font-bold tracking-[0.1em] uppercase">Funciones</div>
+			<div class="text-text-faint mb-4 text-[13px] font-bold tracking-[0.1em] uppercase">{sections.features.eyebrow}</div>
 			<h2 class="font-display text-text text-[46px] leading-[1.12] font-bold tracking-tight">
-				Todo lo que necesitas para dormir tranquilo
+				{sections.features.title}
 			</h2>
 			<p id="space-features-sub" class="text-text-dim mx-auto mt-5 max-w-[520px] text-[17px] leading-relaxed">
-				Un sistema de defensa completo, configurable en minutos y sin tocar código.
+				{sections.features.subtitle}
 			</p>
 		</div>
 

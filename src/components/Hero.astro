@@ -1,4 +1,6 @@
 ---
+import { hero, labels } from "../lib/home-content";
+import { site } from "../lib/site";
 import RadarGrid from "./RadarGrid.astro";
 
 // Símbolos que aparecen y se desvanecen sobre todo el Hero (no solo el
@@ -46,26 +48,25 @@ const ambientGlyphs = [
 	<div id="hero-content" class="grid grid-cols-1 items-center gap-16 lg:grid-cols-2">
 		<div class="text-left">
 			<h1 class="font-display mb-6 text-[46px] leading-[1.12] font-bold tracking-tight lg:text-[52px]">
-				Tu servidor, blindado contra raids en tiempo real.
+				{hero.title}
 			</h1>
 
 			<p id="hero-subtitle" class="text-text-dim mb-10 max-w-[520px] text-[17px] leading-relaxed">
-				SP Agency detecta oleadas de bots, cuentas falsas y ataques coordinados en segundos, y responde
-				automáticamente antes de que tu comunidad lo note.
+				{hero.subtitle}
 			</p>
 
 			<div id="hero-actions" class="flex flex-wrap items-center gap-3.5">
 				<a
-					href="#"
+					href={site.inviteUrl}
 					class="bg-brand hover:bg-brand-hover rounded-[8px] px-[24px] py-3 text-[15px] font-bold text-white transition-colors"
 				>
-					Añadir a Discord
+					{labels.invite}
 				</a>
 				<a
-					href="#"
+					href={site.docsUrl}
 					class="border-border hover:border-brand hover:text-brand rounded-[8px] border px-[24px] py-3 text-[15px] font-bold transition-colors"
 				>
-					Ver documentación
+					{labels.docs}
 				</a>
 			</div>
 		</div>

@@ -9,8 +9,10 @@
 // → derecha). Se reparten automáticamente entre las dos filas, no hace falta
 // tocar nada más al agregar o quitar testimonios.
 import TestimonialCard from "./TestimonialCard.astro";
+import { sections } from "../lib/home-content";
 import { testimonials } from "../lib/testimonials";
 
+const copy = sections.testimonials;
 const half = Math.ceil(testimonials.length / 2);
 const row1 = testimonials.slice(0, half);
 const row2 = testimonials.slice(half);
@@ -18,8 +20,8 @@ const row2 = testimonials.slice(half);
 
 <section id="testimonials-static" class="group hidden pt-5 pb-[110px]">
 	<div class="mx-auto mb-14 max-w-[560px] px-8 text-center">
-		<div class="text-text-faint mb-3.5 text-[13px] font-bold tracking-[0.08em] uppercase">Testimonios</div>
-		<h2 class="font-display text-[38px] font-bold tracking-tight">Lo que dice la comunidad</h2>
+		<div class="text-text-faint mb-3.5 text-[13px] font-bold tracking-[0.08em] uppercase">{copy.eyebrow}</div>
+		<h2 class="font-display text-[38px] font-bold tracking-tight">{copy.title}</h2>
 	</div>
 
 	<div class="relative mx-auto max-w-7xl overflow-hidden">

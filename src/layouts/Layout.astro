@@ -1,5 +1,6 @@
 ---
 import "../styles/global.css";
+import { site } from "../lib/site";
 
 interface Props {
 	title?: string;
@@ -7,8 +8,8 @@ interface Props {
 }
 
 const {
-	title = "SP Agency — Seguridad anti-raid para Discord",
-	description = "SP Agency detecta y bloquea raids, spam y cuentas falsas en tu servidor de Discord en tiempo real.",
+	title = site.title,
+	description = site.description,
 } = Astro.props;
 ---
 

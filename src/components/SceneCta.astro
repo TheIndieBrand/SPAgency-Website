@@ -8,7 +8,19 @@
 // intro-scene.ts, que anima cada pieza en función del tiempo). Como está dentro
 // del elemento pineado, al soltarse el pin se va con la escena y detrás llega el
 // footer. Su contenido es el mismo que el de CtaSection (el respaldo estático).
-const recap = ["Invita", "Configura", "Protegido"].map((label) => ({ label }));
+import { cta, labels } from "../lib/home-content";
+import { site } from "../lib/site";
+import { steps } from "../lib/steps";
+
+const recap = steps.map((step) => ({ label: step.short }));
+
+// El título entra palabra a palabra; las dos últimas llevan el degradado de marca.
+const titleWords = cta.title.split(" ");
+const gradientClasses = ["cta-grad-a", "cta-grad-b"];
+const wordClass = (i: number) => {
+	const g = gradientClasses[i - (titleWords.length - gradientClasses.length)];
+	return g ? `${g} inline-block` : "inline-block";
+};
 ---
 
 <section
@@ -30,22 +42,24 @@ const recap = ["Invita", "Configura", "Protegido"].map((label) => ({ label }));
 			id="cta-scene-title"
 			class="font-display mb-6 text-[clamp(38px,6.4vw,68px)] leading-[1.04] font-bold tracking-tight text-white"
 		>
-			<span data-cta-word class="inline-block">Empieza</span>{" "}
-			<span data-cta-word class="inline-block">a</span>{" "}
-			<span data-cta-word class="inline-block">proteger</span>{" "}
-			<span data-cta-word class="inline-block">tu</span>{" "}
-			<span data-cta-word class="cta-grad-a inline-block">servidor</span>{" "}
-			<span data-cta-word class="cta-grad-b inline-block">hoy</span>
+			{
+				titleWords.map((word, i) => (
+					<>
+						<span data-cta-word class={wordClass(i)}>{word}</span>
+						{i < titleWords.length - 1 && " "}
+					</>
+				))
+			}
 		</h2>
 
 		<p data-cta-sub class="text-text-dim mb-10 max-w-[520px] text-[17px] leading-relaxed">
-			Configuración en menos de 5 minutos. Sin tarjeta de crédito.
+			{cta.subtitle}
 		</p>
 
 		<div data-cta-buttons class="flex flex-wrap items-center justify-center gap-4">
 			<a
 				id="cta-scene-link"
-				href="#"
+				href={site.inviteUrl}
 				tabindex="-1"
 				class="cta-primary group relative inline-flex items-center gap-2.5 rounded-[10px] px-8 py-4 text-[16px] font-bold text-white"
 			>
@@ -54,7 +68,7 @@ const recap = ["Invita", "Configura", "Protegido"].map((label) => ({ label }));
 						d="M19.27 5.33A17.6 17.6 0 0 0 14.9 4l-.2.4a16.3 16.3 0 0 1 3.9 1.9 13.3 13.3 0 0 0-11.2 0 16.3 16.3 0 0 1 3.9-1.9L11.1 4a17.6 17.6 0 0 0-4.37 1.33C3.95 9.4 3.2 13.36 3.57 17.27A17.7 17.7 0 0 0 8.9 20l1.1-1.8a11.5 11.5 0 0 1-1.75-.85l.43-.34a12.7 12.7 0 0 0 10.6 0l.43.34c-.56.34-1.14.63-1.75.85l1.1 1.8a17.6 17.6 0 0 0 5.33-2.73c.44-4.53-.75-8.45-3.6-11.94ZM9.68 14.9c-1 0-1.82-.92-1.82-2.05s.8-2.06 1.82-2.06 1.83.93 1.82 2.06c0 1.13-.8 2.05-1.82 2.05Zm6.64 0c-1 0-1.82-.92-1.82-2.05s.8-2.06 1.82-2.06 1.83.93 1.82 2.06c0 1.13-.8 2.05-1.82 2.05Z"
 					></path>
 				</svg>
-				Añadir a Discord — gratis
+				{labels.inviteFree}
 				<svg
 					class="h-4 w-4 shrink-0 transition-transform duration-200 group-hover:translate-x-1"
 					viewBox="0 0 24 24"
@@ -69,11 +83,11 @@ const recap = ["Invita", "Configura", "Protegido"].map((label) => ({ label }));
 				</svg>
 			</a>
 			<a
-				href="#"
+				href={site.docsUrl}
 				tabindex="-1"
 				class="rounded-[10px] border border-white/15 bg-white/[0.04] px-7 py-4 text-[16px] font-bold text-white/85 backdrop-blur-sm transition-colors hover:border-brand-hover hover:text-white"
 			>
-				Ver documentación
+				{labels.docs}
 			</a>
 		</div>
 

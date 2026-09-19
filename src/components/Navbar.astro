@@ -1,37 +1,36 @@
 ---
+import { labels } from "../lib/home-content";
+import { navLinks, site } from "../lib/site";
 ---
 
 <header id="navbar" class="bg-bg/70 border-border-soft sticky top-0 z-40 border-b backdrop-blur-xl">
 	<div class="mx-auto flex max-w-[1180px] items-center justify-between px-8 py-4">
 		<div class="flex items-center gap-2.5">
-			<img src="/logo.png" alt="SP Agency" width="30" height="30" class="h-[30px] w-[30px] rounded-[25%]" />
-			<span class="font-display text-lg font-bold tracking-tight">SP Agency</span>
+			<img src="/logo.png" alt={site.name} width="30" height="30" class="h-[30px] w-[30px] rounded-[25%]" />
+			<span class="font-display text-lg font-bold tracking-tight">{site.name}</span>
 		</div>
 
 		<nav class="hidden items-center gap-8 md:flex">
-			<a href="#features" class="text-text-dim hover:text-brand text-sm font-semibold transition-colors"
-				>Funciones</a
-			>
-			<a href="#how" class="text-text-dim hover:text-brand text-sm font-semibold transition-colors"
-				>Cómo funciona</a
-			>
-			<a href="#" class="text-text-dim hover:text-brand text-sm font-semibold transition-colors"
-				>Documentación</a
-			>
-			<a href="#" class="text-text-dim hover:text-brand text-sm font-semibold transition-colors">Soporte</a>
+			{
+				navLinks.map((link) => (
+					<a href={link.href} class="text-text-dim hover:text-brand text-sm font-semibold transition-colors">
+						{link.label}
+					</a>
+				))
+			}
 		</nav>
 
 		<div class="flex items-center gap-3">
 			<a
-				href="/auth/discord/login"
+				href={site.loginUrl}
 				class="text-text-dim hover:text-brand hidden px-3 py-2 text-sm font-semibold transition-colors sm:inline-block"
 				>Iniciar sesión</a
 			>
 			<a
-				href="#"
+				href={site.inviteUrl}
 				class="bg-brand hover:bg-brand-hover inline-flex items-center rounded-lg px-[18px] py-[9px] text-sm font-bold text-white transition-colors"
 			>
-				Añadir a Discord
+				{labels.invite}
 			</a>
 		</div>
 	</div>

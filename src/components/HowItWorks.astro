@@ -4,13 +4,16 @@
 // la asíntota; esta sección arranca oculta y intro-scene.ts la muestra solo
 // cuando no hay escena animada (prefers-reduced-motion o algo no cargó). Los
 // datos viven en src/lib/steps.ts.
+import { sections } from "../lib/home-content";
 import { steps } from "../lib/steps";
+
+const copy = sections.how;
 ---
 
 <section id="how-static" class="mx-auto hidden max-w-[1180px] px-8 pt-5 pb-[110px]">
 	<div class="mx-auto mb-16 max-w-[560px] text-center">
-		<div class="text-text-faint mb-3.5 text-[13px] font-bold tracking-[0.08em] uppercase">Cómo funciona</div>
-		<h2 class="font-display text-[38px] font-bold tracking-tight">Configurado en tres pasos</h2>
+		<div class="text-text-faint mb-3.5 text-[13px] font-bold tracking-[0.08em] uppercase">{copy.eyebrow}</div>
+		<h2 class="font-display text-[38px] font-bold tracking-tight">{copy.title}</h2>
 	</div>
 
 	<div class="relative grid grid-cols-1 gap-8 md:grid-cols-3">

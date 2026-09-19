@@ -3,19 +3,21 @@
 // escena de entrada (SceneCta.astro): sale del negro tras la inmersión en el
 // agujero negro. Esta arranca oculta; intro-scene.ts la muestra solo cuando no
 // hay escena animada (prefers-reduced-motion o algo no cargó).
+import { cta, labels } from "../lib/home-content";
+import { site } from "../lib/site";
 ---
 
 <section id="cta-static" class="mx-auto hidden max-w-[1180px] px-8 pb-[110px]">
 	<div class="border-border bg-bg-soft rounded-xl border px-10 py-16 text-center">
 		<h2 class="font-display mb-3.5 text-[34px] font-bold tracking-tight">
-			Empieza a proteger tu servidor hoy
+			{cta.title}
 		</h2>
-		<p class="text-text-dim mb-8 text-base">Configuración en menos de 5 minutos. Sin tarjeta de crédito.</p>
+		<p class="text-text-dim mb-8 text-base">{cta.subtitle}</p>
 		<a
-			href="#"
+			href={site.inviteUrl}
 			class="bg-brand hover:bg-brand-hover inline-block rounded-[8px] px-[30px] py-[15px] text-[15px] font-bold text-white transition-colors"
 		>
-			Añadir a Discord — gratis
+			{labels.inviteFree}
 		</a>
 	</div>
 </section>

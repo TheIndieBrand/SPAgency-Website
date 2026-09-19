@@ -4,11 +4,12 @@
 // aria-hidden (es presentación), así que sin esto el contenido real no le
 // llegaría a nadie que no vea la pantalla. intro-scene.ts la oculta si cae al
 // respaldo estático (que ya es accesible por sí mismo).
+import { sections } from "../lib/home-content";
 import { testimonials } from "../lib/testimonials";
 ---
 
 <section id="testimonials-a11y" class="sr-only" aria-labelledby="testimonials-a11y-title">
-	<h2 id="testimonials-a11y-title">Lo que dice la comunidad</h2>
+	<h2 id="testimonials-a11y-title">{sections.testimonials.title}</h2>
 	<ul>
 		{
 			testimonials.map((t) => (
