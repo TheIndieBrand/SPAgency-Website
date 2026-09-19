@@ -24,7 +24,7 @@ export const footerColumns = [
 	{
 		title: "Producto",
 		links: [
-			{ label: "Funciones", href: "#" },
+			{ label: "Dashboard", href: site.dashboardUrl },
 			{ label: "Comandos", href: "#" },
 			{ label: "Changelog", href: site.changelogUrl },
 		],
