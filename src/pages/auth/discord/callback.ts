@@ -1,5 +1,6 @@
 import type { APIRoute } from "astro";
 import { exchangeCodeForToken } from "../../../lib/discord";
+import { safeNextPath } from "../../../lib/session";
 
 export const prerender = false;
 
@@ -27,5 +28,9 @@ export const GET: APIRoute = async ({ url, redirect, cookies }) => {
 		},
 	);
 
-	return redirect("/dashboard");
+	// Si el login venía de otra página (p. ej. /support), se vuelve a ella.
+	const next = safeNextPath(cookies.get("spa_next")?.value);
+	cookies.delete("spa_next", { path: "/" });
+
+	return redirect(next ?? "/dashboard");
 };
