@@ -4,7 +4,7 @@ import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { queryScene } from "./dom";
 import { prepareScene } from "./prepare";
-import { TL_UNITS, TL_UNITS_BASE, TL_VIEWPORTS_BASE, RUMBLE_START } from "./timing";
+import { TL_UNITS_BASE, TL_VIEWPORTS_BASE, RUMBLE_START } from "./timing";
 import { addHeroStatsAct } from "./acts/hero-stats";
 import { addLimitAct } from "./acts/limit";
 import { addBurstAct } from "./acts/burst";
@@ -34,19 +34,29 @@ export function mountScene() {
 	const { introScene } = refs;
 	const m = prepareScene(refs);
 
-	const tl = gsap.timeline({
-		scrollTrigger: {
-			trigger: introScene,
-			start: "top top",
-			// Distancia fija (acto 1 + acto 2 + desenlace) en vez de "+=100%":
-			// ese porcentaje se mide sobre el alto del propio elemento pineado,
-			// que aquí no es una referencia estable y llegó a generar un spacer
-			// de más de 12000px.
-			end: () => `+=${window.innerHeight * TL_VIEWPORTS_BASE * (TL_UNITS / TL_UNITS_BASE)}`,
-			scrub: 1,
-			pin: true,
-			invalidateOnRefresh: true,
-		},
+	// El pin se crea ANTES de construir los actos, como siempre: al pinear,
+	// ScrollTrigger le pone a #intro-scene un transform y una altura fija, y eso lo
+	// convierte en el bloque contenedor de los elementos `fixed` de la escena. Las
+	// medidas de layoutOutro (al construir el acto final) dependen de ello, así que
+	// crear el pin después cambiaría la geometría del outro.
+	//
+	// Su largo, en cambio, es proporcional a la duración REAL del timeline: `end`
+	// se evalúa de forma perezosa (invalidateOnRefresh) y un refresh al terminar de
+	// construir lo recalcula con todos los actos ya añadidos. Se redondea a la
+	// décima para que un retoque mínimo de un acto no cambie el ritmo del scroll.
+	// Distancia fija en vez de "+=100%": ese porcentaje se mide sobre el alto del
+	// propio elemento pineado, que aquí no es una referencia estable y llegó a
+	// generar un spacer de más de 12000px.
+	const tl = gsap.timeline({ paused: true });
+	const sceneUnits = () => (tl.duration() > 0 ? Math.round(tl.duration() * 10) / 10 : TL_UNITS_BASE);
+	const st = ScrollTrigger.create({
+		animation: tl,
+		trigger: introScene,
+		start: "top top",
+		end: () => `+=${window.innerHeight * TL_VIEWPORTS_BASE * (sceneUnits() / TL_UNITS_BASE)}`,
+		scrub: 1,
+		pin: true,
+		invalidateOnRefresh: true,
 	});
 
 	addHeroStatsAct(tl, refs, m);
@@ -73,10 +83,8 @@ export function mountScene() {
 		outro.render(outro.clock.t);
 	});
 
+	// Con todos los actos añadidos, la duración ya es la real: recalcula el largo.
+	st.refresh();
+
 	bindNavAnchors(tl);
-	if (Math.abs(tl.duration() - TL_UNITS) > 0.05) {
-		console.warn(
-			`intro-scene: la duración real del timeline (${tl.duration().toFixed(2)}) no coincide con TL_UNITS (${TL_UNITS}); ajusta TL_UNITS o el ritmo del pin saldrá distinto.`,
-		);
-	}
 }

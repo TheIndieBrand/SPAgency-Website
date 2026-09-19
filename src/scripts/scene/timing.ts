@@ -1,16 +1,12 @@
 // Tiempos (en unidades del timeline) y constantes de ritmo de la escena. Todo lo
 // que otros módulos necesitan saber sobre CUÁNDO pasa cada cosa vive aquí.
 
-// Duración total del timeline en unidades. Con scrub, el scroll se reparte
-// proporcional a ella, así que al alargar la escena hay que alargar el pin
-// en la misma proporción o todos los actos anteriores irían más rápido por
-// píxel. TL_UNITS_BASE es la duración con la que se ajustó el ritmo original
-// (12.6 alturas de viewport); TL_UNITS es la actual (acto final de la
-// comunidad incluido) y se comprueba contra tl.duration() al final del
-// montaje. Ambas son literales porque el ScrollTrigger evalúa `end` al
-// crearse, antes de que existan las constantes de tiempo de más abajo.
+// Ritmo del scroll: con scrub, el scroll se reparte proporcional a la duración
+// del timeline, así que la longitud del pin se calcula con ella (mount.ts, a
+// partir de tl.duration() una vez construidos todos los actos). El ritmo con el
+// que se ajustó la escena original es de 12.6 alturas de viewport por cada 54.3
+// unidades de timeline.
 export const TL_UNITS_BASE = 54.3;
-export const TL_UNITS = 95.6;
 export const TL_VIEWPORTS_BASE = 12.6;
 
 export const BURST_POS = 10.0;
