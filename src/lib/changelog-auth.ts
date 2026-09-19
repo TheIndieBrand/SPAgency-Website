@@ -1,35 +1,12 @@
 import type { AstroCookies } from "astro";
-import { getCurrentUser, type DiscordUser } from "./discord";
-
-// Reutiliza la sesión del login con Discord (cookie con el access_token). No
-// borra la cookie si algo falla: estas comprobaciones también se usan en
-// páginas públicas, donde no tener sesión es lo normal.
-export async function getSessionUser(cookies: AstroCookies): Promise<DiscordUser | null> {
-	const raw = cookies.get(process.env.SESSION_COOKIE_NAME || "spa_session")?.value;
-	if (!raw) return null;
-
-	let accessToken: string | undefined;
-	try {
-		accessToken = JSON.parse(raw)?.access_token;
-	} catch {
-		return null;
-	}
-
-	return accessToken ? getCurrentUser(accessToken) : null;
-}
+import type { DiscordUser } from "./discord";
+import { getSessionUser, json } from "./session";
 
 // Solo la cuenta de Discord cuyo ID está en CHANGELOG_OWNER_ID puede escribir.
 // Si la variable no está definida nadie es dueño (falla cerrado).
 export function isOwner(user: DiscordUser | null): boolean {
 	const ownerId = process.env.CHANGELOG_OWNER_ID;
 	return Boolean(user && ownerId && user.id === ownerId);
-}
-
-export function json(data: unknown, status = 200): Response {
-	return new Response(JSON.stringify(data), {
-		status,
-		headers: { "Content-Type": "application/json" },
-	});
 }
 
 // Guardia de todos los endpoints de escritura. Se comprueba en el servidor en

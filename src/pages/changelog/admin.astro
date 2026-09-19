@@ -4,7 +4,8 @@ export const prerender = false;
 import Layout from "../../layouts/Layout.astro";
 import Navbar from "../../components/Navbar.astro";
 import { formatChangelogDate, getChangelogById, listChangelogs, todayIso } from "../../lib/changelog";
-import { getSessionUser, isOwner } from "../../lib/changelog-auth";
+import { isOwner } from "../../lib/changelog-auth";
+import { getSessionUser } from "../../lib/session";
 
 const user = await getSessionUser(Astro.cookies);
 if (!user) return Astro.redirect("/auth/discord/login");

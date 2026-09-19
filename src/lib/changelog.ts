@@ -1,6 +1,5 @@
-import { DatabaseSync } from "node:sqlite";
-import { mkdirSync } from "node:fs";
-import { dirname, resolve } from "node:path";
+import type { DatabaseSync } from "node:sqlite";
+import { openDatabase } from "./sqlite";
 import { renderMarkdown } from "./changelog-markdown";
 
 // Slugs que chocarían con rutas reales bajo /changelog/.
@@ -42,10 +41,7 @@ let db: DatabaseSync | null = null;
 function getDb(): DatabaseSync {
 	if (db) return db;
 
-	const file = resolve(process.env.CHANGELOG_DB_PATH || "data/changelog.db");
-	mkdirSync(dirname(file), { recursive: true });
-
-	db = new DatabaseSync(file);
+	db = openDatabase("CHANGELOG_DB_PATH", "data/changelog.db");
 	db.exec(`
 		CREATE TABLE IF NOT EXISTS changelog (
 			id INTEGER PRIMARY KEY AUTOINCREMENT,

@@ -1,6 +1,7 @@
 import type { APIRoute } from "astro";
 import { deleteChangelog, updateChangelog } from "../../../lib/changelog";
-import { json, parseChangelogInput, requireOwner } from "../../../lib/changelog-auth";
+import { parseChangelogInput, requireOwner } from "../../../lib/changelog-auth";
+import { json } from "../../../lib/session";
 
 export const prerender = false;
 
