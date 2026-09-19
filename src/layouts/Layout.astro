@@ -1,15 +1,20 @@
 ---
 import "../styles/global.css";
+import ScrollbarOverlay from "../components/ScrollbarOverlay.astro";
 import { site } from "../lib/site";
 
 interface Props {
 	title?: string;
 	description?: string;
+	// Scrollbar propia que aparece al hacer scroll o acercar el ratón al borde. El
+	// home la desactiva: allí no hay ninguna (ver index.astro).
+	customScrollbar?: boolean;
 }
 
 const {
 	title = site.title,
 	description = site.description,
+	customScrollbar = true,
 } = Astro.props;
 ---
 
@@ -21,6 +26,13 @@ const {
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
 		<meta name="generator" content={Astro.generator} />
 		<slot name="head" />
+		{
+			customScrollbar && (
+				<script is:inline>
+					if (matchMedia("(hover: hover) and (pointer: fine)").matches) document.documentElement.setAttribute("data-overlay-scroll", "");
+				</script>
+			)
+		}
 		<meta name="description" content={description} />
 		<meta name="theme-color" content="#191919" />
 		<meta property="og:type" content="website" />
@@ -39,5 +51,6 @@ const {
 	</head>
 	<body class="bg-bg text-text font-sans antialiased overflow-x-hidden">
 		<slot />
+		{customScrollbar && <ScrollbarOverlay />}
 	</body>
 </html>

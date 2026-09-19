@@ -1,0 +1,211 @@
+---
+// Scrollbar propia para todas las páginas menos el home (que no lleva ninguna).
+// Se oculta la nativa y se dibuja esta encima: aparece al hacer scroll, al acercar
+// el ratón al borde derecho o al arrastrarla, y se desvanece sola pasado un rato.
+// Rueda, teclado y táctil siguen siendo el scroll nativo del documento; esto solo
+// dibuja y permite arrastrar. El atributo data-overlay-scroll lo pone Layout antes
+// del primer pintado (solo con ratón: en táctil se queda la nativa, que ya es
+// superpuesta), para que no haya salto de layout al quitarla.
+---
+
+<div id="scrollbar-overlay" class="sb-track" aria-hidden="true">
+	<div class="sb-thumb"></div>
+</div>
+
+<style is:global>
+	html[data-overlay-scroll] {
+		scrollbar-width: none;
+	}
+	html[data-overlay-scroll]::-webkit-scrollbar {
+		display: none;
+	}
+
+	/* Franja del borde derecho: invisible y sin capturar clics hasta que se muestra. */
+	.sb-track {
+		position: fixed;
+		top: 0;
+		right: 0;
+		bottom: 0;
+		width: 16px;
+		z-index: 60;
+		opacity: 0;
+		pointer-events: none;
+		transition:
+			opacity 0.28s ease,
+			background-color 0.2s ease;
+	}
+	.sb-track[data-visible] {
+		opacity: 1;
+		pointer-events: auto;
+	}
+	.sb-track[data-none] {
+		display: none;
+	}
+	.sb-track[data-hover],
+	.sb-track[data-drag] {
+		background-color: rgba(255, 255, 255, 0.035);
+	}
+
+	/* Pulgar: gris discreto; azul de marca al acercar el ratón, más vivo al arrastrar. */
+	.sb-thumb {
+		position: absolute;
+		top: 0;
+		right: 3px;
+		width: 6px;
+		border-radius: 999px;
+		background-color: #3d3d3d;
+		will-change: transform;
+		transition:
+			width 0.15s ease,
+			background-color 0.15s ease;
+	}
+	.sb-track[data-hover] .sb-thumb {
+		width: 9px;
+		background-color: #0079bb;
+	}
+	.sb-track[data-drag] .sb-thumb {
+		width: 9px;
+		background-color: #0093e4;
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.sb-track,
+		.sb-thumb {
+			transition: none;
+		}
+	}
+</style>
+
+<script>
+	const root = document.documentElement;
+	const track = document.getElementById("scrollbar-overlay");
+	const thumb = track?.querySelector<HTMLElement>(".sb-thumb");
+
+	if (track && thumb && root.hasAttribute("data-overlay-scroll")) {
+		const HIDE_DELAY = 900; // ms visible tras la última señal
+		const EDGE = 28; // px del borde derecho que cuentan como "pegado"
+		const MIN_THUMB = 40;
+
+		let hideTimer = 0;
+		let frame = 0;
+		let hovering = false;
+		let nearEdge = false;
+		let dragging = false;
+
+		const scroller = () => document.scrollingElement ?? root;
+
+		const metrics = () => {
+			const el = scroller();
+			const view = el.clientHeight;
+			const max = el.scrollHeight - view;
+			const size = Math.max(MIN_THUMB, (view / el.scrollHeight) * view);
+			return { el, max, size, free: view - size, view };
+		};
+
+		const update = () => {
+			frame = 0;
+			const m = metrics();
+			const scrollable = m.max > 1;
+			track.toggleAttribute("data-none", !scrollable);
+			if (!scrollable) return;
+			thumb.style.height = `${m.size}px`;
+			thumb.style.transform = `translateY(${(m.el.scrollTop / m.max) * m.free}px)`;
+		};
+		const requestUpdate = () => {
+			if (!frame) frame = requestAnimationFrame(update);
+		};
+
+		const show = () => {
+			window.clearTimeout(hideTimer);
+			track.setAttribute("data-visible", "");
+		};
+		const scheduleHide = () => {
+			window.clearTimeout(hideTimer);
+			hideTimer = window.setTimeout(() => {
+				if (!dragging && !hovering && !nearEdge) track.removeAttribute("data-visible");
+			}, HIDE_DELAY);
+		};
+
+		window.addEventListener(
+			"scroll",
+			() => {
+				requestUpdate();
+				show();
+				scheduleHide();
+			},
+			{ passive: true },
+		);
+
+		// Ratón pegado al borde derecho: aparece; al alejarlo, se desvanece.
+		document.addEventListener(
+			"mousemove",
+			(event) => {
+				const near = event.clientX >= window.innerWidth - EDGE;
+				if (near === nearEdge) return;
+				nearEdge = near;
+				if (near) {
+					update();
+					show();
+				} else {
+					scheduleHide();
+				}
+			},
+			{ passive: true },
+		);
+		document.documentElement.addEventListener("mouseleave", () => {
+			nearEdge = false;
+			scheduleHide();
+		});
+
+		track.addEventListener("pointerenter", () => {
+			hovering = true;
+			track.setAttribute("data-hover", "");
+			show();
+		});
+		track.addEventListener("pointerleave", () => {
+			hovering = false;
+			track.removeAttribute("data-hover");
+			scheduleHide();
+		});
+
+		// Arrastrar el pulgar.
+		let startY = 0;
+		let startScroll = 0;
+		thumb.addEventListener("pointerdown", (event) => {
+			event.preventDefault();
+			dragging = true;
+			startY = event.clientY;
+			startScroll = scroller().scrollTop;
+			thumb.setPointerCapture(event.pointerId);
+			track.setAttribute("data-drag", "");
+			document.body.style.userSelect = "none";
+		});
+		thumb.addEventListener("pointermove", (event) => {
+			if (!dragging) return;
+			const m = metrics();
+			if (m.free <= 0) return;
+			m.el.scrollTop = startScroll + ((event.clientY - startY) / m.free) * m.max;
+		});
+		const endDrag = () => {
+			if (!dragging) return;
+			dragging = false;
+			track.removeAttribute("data-drag");
+			document.body.style.userSelect = "";
+			scheduleHide();
+		};
+		thumb.addEventListener("pointerup", endDrag);
+		thumb.addEventListener("pointercancel", endDrag);
+
+		// Clic en el hueco: salta una página hacia allí, como la nativa.
+		track.addEventListener("pointerdown", (event) => {
+			if (event.target !== track) return;
+			const m = metrics();
+			const above = event.clientY < thumb.getBoundingClientRect().top;
+			m.el.scrollBy({ top: (above ? -1 : 1) * m.view * 0.9 });
+		});
+
+		window.addEventListener("resize", requestUpdate);
+		new ResizeObserver(requestUpdate).observe(document.body);
+		requestUpdate();
+	}
+</script>

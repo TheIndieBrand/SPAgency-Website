@@ -17,7 +17,7 @@ import TestimonialsA11y from "../components/TestimonialsA11y.astro";
 import Footer from "../components/Footer.astro";
 ---
 
-<Layout>
+<Layout customScrollbar={false}>
 	<!-- Decide, antes del primer pintado, si se ve la escena animada o la versión
 	     simple. La escena solo con ancho >= 1024px y sin prefers-reduced-motion;
 	     en cualquier otro caso (móvil, tablet, reduced-motion, sin JS) queda la
