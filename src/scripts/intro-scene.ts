@@ -18,6 +18,7 @@
 //
 // Es la primera pieza de GSAP del sitio — pensada para irse ampliando
 // (más escenas, más secciones) sin tocar esta base.
-import { mountScene } from "./scene/mount";
-
-mountScene();
+//
+// Este módulo solo exporta mountScene(): la página (index.astro) lo descarga en
+// paralelo con las fuentes y lo monta cuando ya están cargadas.
+export { mountScene } from "./scene/mount";

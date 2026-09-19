@@ -63,8 +63,28 @@ import Footer from "../components/Footer.astro";
 	// La escena (gsap + ScrollTrigger + script) solo se descarga y monta cuando
 	// el script de <head> la habilitó. Si no carga, se vuelve a la versión simple.
 	if (document.documentElement.dataset.scene === "on") {
-		import("../scripts/intro-scene").catch(() => {
-			delete document.documentElement.dataset.scene;
-		});
+		// La escena mide el layout al montarse (posición del título, ancho de los
+		// números...) y esas medidas dependen de las fuentes reales: se espera a que
+		// carguen para no medir con la fuente de respaldo en una primera visita sin
+		// caché. Con un tope de 3 s por si la red va lenta. El script de la escena se
+		// descarga en paralelo, no después.
+		const fontFaces = [
+			"400 16px Manrope",
+			"500 16px Manrope",
+			"600 16px Manrope",
+			"700 16px Manrope",
+			'500 16px "Space Grotesk"',
+			'600 16px "Space Grotesk"',
+			'700 16px "Space Grotesk"',
+		];
+		const fontsReady = Promise.race([
+			Promise.all(fontFaces.map((face) => document.fonts.load(face))).catch(() => {}),
+			new Promise((resolve) => setTimeout(resolve, 3000)),
+		]);
+		Promise.all([import("../scripts/intro-scene"), fontsReady])
+			.then(([scene]) => scene.mountScene())
+			.catch(() => {
+				delete document.documentElement.dataset.scene;
+			});
 	}
 </script>
