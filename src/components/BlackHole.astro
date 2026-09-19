@@ -443,7 +443,12 @@ const { size = 480, controls = false } = Astro.props;
 	}
 
 	function boot() {
-		document.querySelectorAll<HTMLCanvasElement>("canvas[data-blackhole]").forEach(initCanvas);
+		document.querySelectorAll<HTMLCanvasElement>("canvas[data-blackhole]").forEach((canvas) => {
+			// Sin caja (p.ej. la versión simple de la home, donde la escena está con
+			// display:none) no se crea el contexto WebGL ni se compila el shader.
+			if (canvas.getClientRects().length === 0) return;
+			initCanvas(canvas);
+		});
 	}
 
 	if (document.readyState === "loading") {
