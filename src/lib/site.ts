@@ -8,7 +8,7 @@ export const site = {
 		"SP Agency detecta y bloquea raids, spam y cuentas falsas en tu servidor de Discord en tiempo real.",
 	inviteUrl: "#",
 	docsUrl: "/docs",
-	supportUrl: "#",
+	supportUrl: "/support",
 	changelogUrl: "/changelog",
 	dashboardUrl: "/dashboard",
 };
