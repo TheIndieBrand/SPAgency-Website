@@ -9,7 +9,7 @@ export const site = {
 	inviteUrl: "#",
 	docsUrl: "/docs",
 	supportUrl: "#",
-	changelogUrl: "#",
+	changelogUrl: "/changelog",
 	dashboardUrl: "/dashboard",
 };
 
