@@ -3,6 +3,10 @@
 // enlazada desde ninguna parte del sitio ni forma parte del flujo normal —
 // es solo para ver el diseño del agujero negro sin scrollear toda la
 // escena de intro-scene.ts. Bórrala (o el componente) si al final no se usa.
+//
+// Solo existe en desarrollo: en producción responde 404.
+if (!import.meta.env.DEV) return new Response(null, { status: 404 });
+
 import Layout from "../layouts/Layout.astro";
 import BlackHole from "../components/BlackHole.astro";
 ---
