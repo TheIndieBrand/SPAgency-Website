@@ -1,5 +1,50 @@
 import type { AstroCookies } from "astro";
+import { createHash } from "node:crypto";
 import { getCurrentUser, type DiscordUser } from "./discord";
+
+// La cookie de sesión solo guarda los tokens de Discord, así que saber quién es
+// el usuario cuesta una llamada a /users/@me. El chat de soporte consulta cada
+// pocos segundos: sin caché, cada consulta sería también una llamada a Discord
+// (con su latencia y sus límites). Se recuerda la identidad un rato, por token.
+//
+// Solo en memoria del proceso, y con la clave hasheada. Coste: un token
+// revocado en Discord puede seguir valiendo hasta USER_TTL_MS. Los fallos
+// (token inválido) se recuerdan menos, para no martillear a Discord con un
+// token malo y a la vez recuperarse pronto.
+const USER_TTL_MS = 60_000;
+const MISS_TTL_MS = 10_000;
+const MAX_ENTRIES = 500;
+
+const identityCache = new Map<string, { user: DiscordUser | null; expires: number }>();
+const inFlight = new Map<string, Promise<DiscordUser | null>>();
+
+function lookupUser(accessToken: string): Promise<DiscordUser | null> {
+	const key = createHash("sha256").update(accessToken).digest("hex");
+
+	const cached = identityCache.get(key);
+	if (cached && cached.expires > Date.now()) return Promise.resolve(cached.user);
+
+	// Varias peticiones a la vez del mismo usuario comparten una sola llamada.
+	const pending = inFlight.get(key);
+	if (pending) return pending;
+
+	const request = getCurrentUser(accessToken)
+		.then((user) => {
+			if (identityCache.size >= MAX_ENTRIES) {
+				const now = Date.now();
+				for (const [k, v] of identityCache) if (v.expires <= now) identityCache.delete(k);
+				if (identityCache.size >= MAX_ENTRIES) identityCache.clear();
+			}
+			identityCache.set(key, { user, expires: Date.now() + (user ? USER_TTL_MS : MISS_TTL_MS) });
+			return user;
+		})
+		// Un fallo de red no es una respuesta de Discord: no se cachea.
+		.catch(() => null)
+		.finally(() => inFlight.delete(key));
+
+	inFlight.set(key, request);
+	return request;
+}
 
 // Reutiliza la sesión del login con Discord (cookie con el access_token). No
 // borra la cookie si algo falla: estas comprobaciones también se usan en
@@ -15,7 +60,7 @@ export async function getSessionUser(cookies: AstroCookies): Promise<DiscordUser
 		return null;
 	}
 
-	return accessToken ? getCurrentUser(accessToken) : null;
+	return accessToken ? lookupUser(accessToken) : null;
 }
 
 export function json(data: unknown, status = 200): Response {
