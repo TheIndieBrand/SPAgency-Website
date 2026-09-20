@@ -11,18 +11,20 @@ import { listTranscripts } from "../../lib/support-transcripts";
 
 const user = await getSessionUser(Astro.cookies);
 
+// Sin sesión no hay nada que ver: se salta directo al OAuth de Discord, que al
+// terminar devuelve a esta misma página (?next=).
+if (!user) return Astro.redirect("/auth/discord/login?next=/support");
+
 // El ticket abierto vive en el bot (Discord es su almacén); los cerrados, en la
 // web. Si el bot no responde se avisa, pero el historial se sigue viendo.
 let openTicket: { ticketId: string; subject: string } | null = null;
 let botDown = false;
 
-if (user) {
-	const result = await listOpenTickets(user.id);
-	if (result.ok) openTicket = result.data.tickets[0] ?? null;
-	else botDown = true;
-}
+const result = await listOpenTickets(user.id);
+if (result.ok) openTicket = result.data.tickets[0] ?? null;
+else botDown = true;
 
-const transcripts = user ? listTranscripts(user.id) : [];
+const transcripts = listTranscripts(user.id);
 ---
 
 <Layout
@@ -40,23 +42,7 @@ const transcripts = user ? listTranscripts(user.id) : [];
 			</p>
 		</div>
 
-		{
-			!user ? (
-				<div class="border-border-soft border-t pt-10">
-					<p class="text-text-dim mb-6 text-base leading-relaxed">
-						Para abrir un ticket inicia sesión con Discord: así sabemos quién eres y puedes ver las respuestas
-						en cualquier momento.
-					</p>
-					<a
-						href="/auth/discord/login?next=/support"
-						class="bg-brand hover:bg-brand-hover inline-flex items-center rounded-lg px-5 py-2.5 text-sm font-bold text-white transition-colors"
-					>
-						<i class="bi bi-discord mr-2" />
-						Iniciar sesión con Discord
-					</a>
-				</div>
-			) : (
-				<>
+		<>
 					{botDown && (
 						<p class="border-l-2 border-[#f5b301] py-1 pl-4 text-sm leading-relaxed text-[#f5b301]">
 							Soporte no está disponible ahora mismo. Inténtalo de nuevo en unos minutos; tu historial sigue
@@ -149,9 +135,7 @@ const transcripts = user ? listTranscripts(user.id) : [];
 							</ul>
 						)}
 					</section>
-				</>
-			)
-		}
+		</>
 	</main>
 
 	<Footer />
