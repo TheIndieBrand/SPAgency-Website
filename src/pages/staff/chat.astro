@@ -1,0 +1,67 @@
+---
+export const prerender = false;
+
+import Layout from "../../layouts/Layout.astro";
+import Navbar from "../../components/Navbar.astro";
+import { isStaff } from "../../lib/chat/staff";
+import { getSessionUser } from "../../lib/session";
+
+const user = await getSessionUser(Astro.cookies);
+if (!user) return Astro.redirect("/auth/discord/login?next=/staff/chat");
+// Quien no es staff no debe ni saber que esta página existe.
+if (!isStaff(user)) return Astro.redirect("/");
+---
+
+<Layout title="Conversaciones del asistente — Staff" description="Panel interno de SP Agency.">
+	<Navbar />
+
+	<main id="staff-chat" class="mx-auto max-w-[1180px] px-4 py-8 sm:px-8">
+		<div class="mb-6 flex flex-wrap items-end justify-between gap-4">
+			<div>
+				<div class="text-text-faint mb-2 text-[13px] font-bold tracking-[0.08em] uppercase">Staff</div>
+				<h1 class="font-display text-[30px] leading-tight font-bold tracking-tight">Conversaciones del asistente</h1>
+			</div>
+			<p class="text-text-faint max-w-[420px] text-[13px] leading-relaxed">
+				Cada lectura y cada borrado queda registrado con tu ID. Los usuarios no pueden borrar sus conversaciones: si lo piden, se hace desde aquí.
+			</p>
+		</div>
+
+		<div class="grid gap-6 lg:grid-cols-[340px_1fr]">
+			<section class="min-w-0">
+				<input
+					id="search"
+					type="search"
+					placeholder="Buscar por usuario, ID o título…"
+					autocomplete="off"
+					class="border-border bg-bg-soft text-text focus-visible:border-brand placeholder:text-text-faint mb-3 w-full rounded-lg border px-3.5 py-2.5 text-sm outline-none transition-colors"
+				/>
+				<ul id="list" class="border-border-soft divide-border-soft max-h-[70vh] divide-y overflow-y-auto rounded-xl border [scrollbar-color:var(--color-border)_transparent] [scrollbar-width:thin]" />
+				<p id="list-empty" hidden class="text-text-faint py-8 text-center text-sm">No hay conversaciones.</p>
+			</section>
+
+			<section class="border-border-soft min-h-[300px] min-w-0 rounded-xl border p-5">
+				<p id="viewer-empty" class="text-text-faint py-16 text-center text-sm">Elige una conversación para leerla.</p>
+				<div id="viewer" hidden>
+					<div class="border-border-soft mb-4 flex flex-wrap items-start justify-between gap-3 border-b pb-4">
+						<div class="min-w-0">
+							<h2 id="viewer-title" class="text-text truncate text-base font-bold"></h2>
+							<p id="viewer-meta" class="text-text-faint mt-1 text-[12.5px]"></p>
+						</div>
+						<button
+							id="delete"
+							type="button"
+							class="border-border text-text-dim rounded-lg border px-3.5 py-2 text-[13px] font-bold transition-colors hover:border-red-500/60 hover:text-red-400"
+						>
+							<i class="bi bi-trash3 mr-1.5" />Borrar
+						</button>
+					</div>
+					<div id="thread" class="space-y-4" />
+				</div>
+			</section>
+		</div>
+	</main>
+</Layout>
+
+<script>
+	import "../../scripts/staff-chat";
+</script>

@@ -2,6 +2,7 @@
 import Layout from "./Layout.astro";
 import Navbar from "../components/Navbar.astro";
 import Footer from "../components/Footer.astro";
+import ChatLauncher from "../components/ChatLauncher.astro";
 import { docGroups } from "../lib/docs";
 
 interface Props {
@@ -103,4 +104,5 @@ const linkClass = (active: boolean) =>
 	</div>
 
 	<Footer />
+	<ChatLauncher />
 </Layout>

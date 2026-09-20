@@ -1,0 +1,196 @@
+---
+export const prerender = false;
+
+import Layout from "../../layouts/Layout.astro";
+import Navbar from "../../components/Navbar.astro";
+import { getSessionUser } from "../../lib/session";
+
+const user = await getSessionUser(Astro.cookies);
+// ?embed=1: se muestra dentro del panel flotante de la documentación (iframe),
+// sin navbar y ocupando todo el alto.
+const embed = Astro.url.searchParams.get("embed") === "1";
+
+// Sin sesión, al OAuth de Discord y de vuelta aquí. En el panel embebido no se
+// puede (Discord no se deja enmarcar), así que se ofrece un enlace a la ventana
+// completa.
+if (!user && !embed) return Astro.redirect("/auth/discord/login?next=/support/assistant");
+---
+
+<Layout
+	title="Asistente — SP Agency"
+	description="Pregunta al asistente de IA de SP Agency sobre el bot, su configuración y sus comandos."
+>
+	{!embed && <Navbar />}
+
+	{
+		!user ? (
+			<main class="flex h-dvh items-center justify-center px-6 text-center">
+				<div class="max-w-[300px]">
+					<div class="bg-brand-soft text-brand-hover mx-auto mb-4 flex h-11 w-11 items-center justify-center rounded-full text-lg">
+						<i class="bi bi-stars" />
+					</div>
+					<p class="text-text mb-1 text-base font-bold">Asistente de SP Agency</p>
+					<p class="text-text-dim mb-5 text-sm leading-relaxed">Inicia sesión con Discord para hacerle preguntas.</p>
+					<a
+						href="/auth/discord/login?next=/support/assistant"
+						target="_top"
+						class="bg-brand hover:bg-brand-hover inline-block rounded-lg px-5 py-2.5 text-sm font-bold text-white transition-colors"
+					>
+						Iniciar sesión
+					</a>
+				</div>
+			</main>
+		) : (
+			<div
+				id="assistant"
+				data-embed={embed ? "1" : "0"}
+				class:list={[
+					"mx-auto flex w-full max-w-[1000px] gap-6",
+					embed ? "h-dvh px-3 py-3" : "h-[calc(100dvh-73px)] px-4 py-6 sm:px-8",
+				]}
+			>
+				{/* Conversaciones (no en el panel embebido) */}
+				<aside
+					class:list={["border-border-soft w-60 shrink-0 flex-col border-r pr-5", embed ? "hidden" : "hidden md:flex"]}
+				>
+					<button
+						id="new-chat"
+						type="button"
+						class="border-border text-text hover:border-brand hover:text-brand mb-4 flex w-full items-center justify-center gap-2 rounded-lg border px-3 py-2 text-sm font-bold transition-colors"
+					>
+						<i class="bi bi-plus-lg" />
+						Nueva conversación
+					</button>
+					<div class="text-text-faint mb-2 text-[11px] font-bold tracking-[0.08em] uppercase">Conversaciones</div>
+					<ul id="conversations" class="-mx-1 flex-1 space-y-0.5 overflow-y-auto px-1 [scrollbar-color:var(--color-border)_transparent] [scrollbar-width:thin]" />
+					<p class="text-text-faint mt-4 text-[12px] leading-relaxed">
+						Las conversaciones no se pueden borrar desde aquí. Si quieres que se elimine alguna, pídeselo al staff{" "}
+						<a href="/support" class="text-text-dim hover:text-brand underline underline-offset-2">abriendo un ticket</a>.
+					</p>
+					<a id="staff-link" href="/staff/chat" hidden class="text-brand hover:text-brand-hover mt-3 text-[12px] font-bold">
+						<i class="bi bi-shield-lock mr-1" />Panel de staff
+					</a>
+				</aside>
+
+				{/* Chat */}
+				<section
+					class:list={[
+						"flex min-h-0 min-w-0 flex-1 flex-col",
+						embed && "border-border-soft bg-bg-soft rounded-xl border px-3 pt-3",
+					]}
+				>
+					<header class="mb-3 flex items-center justify-between gap-3">
+						<div class="flex items-center gap-2.5">
+							<span class="bg-brand-soft text-brand-hover flex h-8 w-8 items-center justify-center rounded-full text-sm">
+								<i class="bi bi-stars" />
+							</span>
+							<div>
+								<h1 class="text-text text-sm leading-tight font-bold whitespace-nowrap">{embed ? "Asistente" : "Asistente de SP Agency"}</h1>
+								<p class="text-text-faint text-[11.5px]">Generado con IA</p>
+							</div>
+						</div>
+						<div class="flex items-center gap-3">
+							{embed && (
+								<>
+									<button id="new-chat-embed" type="button" class="text-text-dim hover:text-brand text-xs font-bold transition-colors">
+										Nueva
+									</button>
+									<a href="/support/assistant" target="_blank" rel="noopener" class="text-text-dim hover:text-brand text-xs font-bold transition-colors" title="Abrir en una pestaña, con el historial">
+										<i class="bi bi-box-arrow-up-right" />
+									</a>
+								</>
+							)}
+							<div id="usage" class="hidden items-center gap-2 sm:flex" title="Uso diario. Se restablece a medianoche (hora de Madrid).">
+								<div class:list={["bg-border h-1.5 overflow-hidden rounded-full", embed ? "w-12" : "w-20"]}>
+									<div id="usage-bar" class="bg-brand h-full w-0 rounded-full transition-[width] duration-500" />
+								</div>
+								<span id="usage-label" class="text-text-faint text-[11.5px] whitespace-nowrap tabular-nums" />
+							</div>
+						</div>
+					</header>
+
+					<div id="messages" class="border-border-soft min-h-0 flex-1 space-y-5 overflow-y-auto border-t py-5 [scrollbar-color:var(--color-border)_transparent] [scrollbar-width:thin]">
+						<div id="empty" class="flex h-full flex-col items-center justify-center px-4 text-center">
+							<div class="bg-brand-soft text-brand-hover mb-4 flex h-12 w-12 items-center justify-center rounded-full text-xl">
+								<i class="bi bi-stars" />
+							</div>
+							<h2 class="font-display text-text mb-1.5 text-xl font-bold tracking-tight">¿En qué te ayudo?</h2>
+							<p class="text-text-dim mb-6 max-w-[380px] text-sm leading-relaxed">
+								Pregúntame sobre el bot, su configuración o sus comandos. Si no sé resolverlo, puedo abrirte un ticket.
+							</p>
+							<div class="flex max-w-[460px] flex-wrap justify-center gap-2">
+								<button type="button" data-suggest="¿Cómo activo el Modo Pánico?" class="border-border text-text-dim hover:border-brand hover:text-brand rounded-full border px-3.5 py-1.5 text-[13px] font-semibold transition-colors">¿Cómo activo el Modo Pánico?</button>
+								<button type="button" data-suggest="¿Qué necesita el Anti-Raid para funcionar?" class="border-border text-text-dim hover:border-brand hover:text-brand rounded-full border px-3.5 py-1.5 text-[13px] font-semibold transition-colors">¿Qué necesita el Anti-Raid?</button>
+								<button type="button" data-suggest="¿Cómo restauro mi servidor tras un raid?" class="border-border text-text-dim hover:border-brand hover:text-brand rounded-full border px-3.5 py-1.5 text-[13px] font-semibold transition-colors">Restaurar tras un raid</button>
+							</div>
+							<p class="text-text-faint mt-5 text-[12.5px]">
+								Comandos:
+								<button type="button" data-command="/usage" class="text-text-dim hover:text-brand font-mono font-semibold transition-colors">/usage</button>
+								<span class="mx-1">·</span>
+								<button type="button" data-command="/ticket" class="text-text-dim hover:text-brand font-mono font-semibold transition-colors">/ticket</button>
+							</p>
+						</div>
+					</div>
+
+					{/* Aviso previo: sin aceptarlo no se puede chatear. */}
+					<div id="consent" hidden class="border-border-soft min-h-0 flex-1 overflow-y-auto border-t py-6">
+						<div class="mx-auto max-w-[520px]">
+							<h2 class="font-display text-text mb-4 text-xl font-bold tracking-tight">Antes de empezar</h2>
+							<ul class="text-text-dim marker:text-text-faint mb-5 list-disc space-y-2.5 pl-5 text-sm leading-relaxed">
+								<li>Este asistente funciona con <strong class="text-text">IA</strong> (modelo DeepSeek) y puede equivocarse. Comprueba lo importante en la <a href="/docs" target="_blank" class="text-brand hover:text-brand-hover underline underline-offset-2">documentación</a>.</li>
+								<li><strong class="text-text">El staff de SP Agency puede leer tus conversaciones</strong>, por ejemplo para revisar un problema o mejorar el servicio.</li>
+								<li>Tus mensajes se envían al proveedor de IA (DeepSeek) para generar las respuestas.</li>
+								<li>Las conversaciones se guardan y <strong class="text-text">no puedes borrarlas tú</strong>. Si quieres que se eliminen, pídeselo al staff abriendo un ticket.</li>
+								<li>No compartas contraseñas, tokens ni datos personales.</li>
+							</ul>
+							<label class="text-text mb-4 flex cursor-pointer items-start gap-2.5 text-sm">
+								<input id="consent-check" type="checkbox" class="accent-brand mt-0.5 h-4 w-4" />
+								He leído y acepto lo anterior.
+							</label>
+							<button
+								id="consent-accept"
+								type="button"
+								disabled
+								class="bg-brand hover:bg-brand-hover rounded-lg px-5 py-2.5 text-sm font-bold text-white transition-colors disabled:cursor-not-allowed disabled:opacity-40"
+							>
+								Continuar
+							</button>
+						</div>
+					</div>
+
+					<div id="unavailable" hidden class="text-text-dim min-h-0 flex-1 border-t border-border-soft px-4 py-16 text-center text-sm">
+						El asistente no está disponible ahora mismo. Puedes abrir un <a href="/support" target="_top" class="text-brand hover:text-brand-hover underline underline-offset-2">ticket de soporte</a> y el equipo te ayudará.
+					</div>
+
+					<div id="composer-wrap" class="pb-3">
+						<p id="status" role="status" class="mb-1.5 min-h-4 text-[13px] text-red-400" />
+						<div id="cmd-menu" hidden class="border-border bg-bg-soft mb-2 overflow-hidden rounded-xl border shadow-[0_12px_30px_-12px_rgba(0,0,0,0.7)]"></div>
+						<form id="composer" class="border-border bg-bg-soft focus-within:border-brand flex items-end gap-2 rounded-xl border p-2 transition-colors">
+							<textarea
+								rows="1"
+								placeholder="Escribe tu pregunta… o / para ver los comandos"
+								aria-label="Mensaje"
+								class="text-text placeholder:text-text-faint max-h-32 min-h-[36px] flex-1 resize-none bg-transparent px-2 py-1.5 text-sm leading-relaxed outline-none"
+							/>
+							<button
+								id="send"
+								type="submit"
+								aria-label="Enviar"
+								class="bg-brand hover:bg-brand-hover flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-white transition-colors disabled:opacity-40"
+							>
+								<i class="bi bi-arrow-up" />
+							</button>
+						</form>
+						<p class="text-text-faint mt-2 text-center text-[11.5px] leading-snug">
+							Generado con IA, puede cometer errores. El staff puede leer esta conversación; para borrarla, pídeselo al staff.
+						</p>
+					</div>
+				</section>
+			</div>
+		)
+	}
+</Layout>
+
+<script>
+	import "../../scripts/assistant";
+</script>

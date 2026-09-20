@@ -19,5 +19,6 @@ Así los dos repos no se desincronizan: si cambia una ruta o un error, se cambia
 | :------------ | :-------- | :------- | :-- | :-- |
 | Soporte (tickets) | [`support.md`](support.md) | definido | pendiente | hecha |
 | Verificación de miembros | [`verification.md`](verification.md) | en el bot: `bots/SPAgency/docs/verification.md` | hecho | hecha |
+| Asistente de IA | [`assistant.md`](assistant.md) | — (solo web; usa el de soporte para los tickets) | — | hecha |
 
 El contrato de la verificación (token, rutas, errores) está en el bot: `bots/SPAgency/docs/verification.md`.

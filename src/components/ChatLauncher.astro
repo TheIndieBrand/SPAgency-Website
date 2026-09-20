@@ -1,0 +1,49 @@
+---
+// Botón flotante que abre el asistente en un panel, sin salir de la página.
+// El panel es la propia página /support/assistant en modo embebido (?embed=1),
+// dentro de un iframe: así hay una sola implementación del chat y no se carga
+// nada hasta que se abre por primera vez.
+---
+
+<div id="chat-launcher" class="fixed right-4 bottom-4 z-50 flex flex-col items-end gap-3 sm:right-6 sm:bottom-6">
+	<div
+		id="chat-panel"
+		hidden
+		class="border-border bg-bg h-[min(640px,calc(100dvh-7rem))] w-[min(400px,calc(100vw-2rem))] overflow-hidden rounded-2xl border shadow-[0_24px_60px_-12px_rgba(0,0,0,0.75)]"
+	>
+		<iframe id="chat-frame" title="Asistente de SP Agency" class="h-full w-full border-0" loading="lazy"></iframe>
+	</div>
+
+	<button
+		id="chat-toggle"
+		type="button"
+		aria-expanded="false"
+		aria-controls="chat-panel"
+		class="bg-brand hover:bg-brand-hover flex h-12 items-center gap-2 rounded-full px-5 text-sm font-bold text-white shadow-[0_10px_30px_-8px_rgba(0,147,228,0.7)] transition-colors"
+	>
+		<i class="bi bi-stars text-base"></i>
+		<span id="chat-toggle-label">Asistente</span>
+	</button>
+</div>
+
+<script>
+	const panel = document.getElementById("chat-panel");
+	const frame = document.getElementById("chat-frame") as HTMLIFrameElement | null;
+	const toggle = document.getElementById("chat-toggle");
+	const label = document.getElementById("chat-toggle-label");
+
+	if (panel && frame && toggle && label) {
+		const set = (open: boolean) => {
+			panel.hidden = !open;
+			toggle.setAttribute("aria-expanded", String(open));
+			label.textContent = open ? "Cerrar" : "Asistente";
+			// Se carga la primera vez que se abre.
+			if (open && !frame.src) frame.src = "/support/assistant?embed=1";
+		};
+
+		toggle.addEventListener("click", () => set(panel.hasAttribute("hidden")));
+		document.addEventListener("keydown", (event) => {
+			if (event.key === "Escape" && !panel.hidden) set(false);
+		});
+	}
+</script>
