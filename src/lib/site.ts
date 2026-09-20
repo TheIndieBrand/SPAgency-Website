@@ -11,12 +11,21 @@ export const site = {
 	supportUrl: "/support",
 	changelogUrl: "/changelog",
 	dashboardUrl: "/dashboard",
+	assistantUrl: "/support/assistant",
 };
 
-export const navLinks = [
+// `icon` (clase de bootstrap-icons) es opcional: la navbar lo pinta delante.
+export interface NavLink {
+	label: string;
+	href: string;
+	icon?: string;
+}
+
+export const navLinks: NavLink[] = [
 	{ label: "Documentación", href: site.docsUrl },
 	{ label: "Changelog", href: site.changelogUrl },
 	{ label: "Soporte", href: site.supportUrl },
+	{ label: "Asistente", href: site.assistantUrl, icon: "bi-stars" },
 	{ label: "Dashboard", href: site.dashboardUrl },
 ];
 

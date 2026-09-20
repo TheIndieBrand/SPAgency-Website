@@ -5,15 +5,16 @@ import { navLinks, site } from "../lib/site";
 
 <header id="navbar" class="bg-bg/70 border-border-soft sticky top-0 z-40 border-b backdrop-blur-xl">
 	<div class="mx-auto flex max-w-[1180px] items-center justify-between px-4 py-4 sm:px-8">
-		<div class="flex items-center gap-2.5">
-			<img src="/logo.png" alt={site.name} width="30" height="30" class="h-[30px] w-[30px] rounded-[25%]" />
-			<span class="font-display text-lg font-bold tracking-tight whitespace-nowrap max-[359px]:hidden">{site.name}</span>
-		</div>
+		<a href="/" class="flex items-center gap-2.5" aria-label={site.name}>
+			<img src="/logo.png" alt="" width="30" height="30" class="h-[30px] w-[30px] rounded-[25%]" />
+			<span class="font-display text-lg font-bold tracking-tight whitespace-nowrap max-[419px]:hidden">{site.name}</span>
+		</a>
 
-		<nav class="hidden items-center gap-8 md:flex">
+		<nav class="hidden items-center gap-6 lg:flex xl:gap-8">
 			{
 				navLinks.map((link) => (
-					<a href={link.href} class="text-text-dim hover:text-brand text-sm font-semibold transition-colors">
+					<a href={link.href} class="text-text-dim hover:text-brand inline-flex items-center gap-1.5 text-sm font-semibold transition-colors">
+						{link.icon && <i class={`bi ${link.icon} text-brand text-[13px]`} aria-hidden="true" />}
 						{link.label}
 					</a>
 				))
@@ -28,10 +29,10 @@ import { navLinks, site } from "../lib/site";
 				{labels.invite}
 			</a>
 
-			<!-- Menú de móvil (< md): los enlaces de arriba no caben. <details> funciona
-			     sin JS; el script de abajo solo lo cierra al elegir un enlace, con Escape
-			     o al pulsar fuera. -->
-			<details class="nav-menu relative md:hidden">
+			<!-- Menú de móvil y tablet (< lg): los enlaces de arriba no caben. <details>
+			     funciona sin JS; el script de abajo solo lo cierra al elegir un enlace, con
+			     Escape o al pulsar fuera. -->
+			<details class="nav-menu relative lg:hidden">
 				<summary
 					aria-label="Menú"
 					class="text-text-dim hover:text-brand flex h-[38px] w-10 cursor-pointer list-none items-center justify-center rounded-lg transition-colors [&::-webkit-details-marker]:hidden"
@@ -45,14 +46,71 @@ import { navLinks, site } from "../lib/site";
 						navLinks.map((link) => (
 							<a
 								href={link.href}
-								class="text-text-dim hover:bg-card-hover hover:text-brand block rounded-lg px-3 py-2.5 text-sm font-semibold transition-colors"
+								class="text-text-dim hover:bg-card-hover hover:text-brand flex items-center gap-2 rounded-lg px-3 py-2.5 text-sm font-semibold transition-colors"
 							>
+								{link.icon && <i class={`bi ${link.icon} text-brand text-[13px]`} aria-hidden="true" />}
 								{link.label}
 							</a>
 						))
 					}
 				</div>
 			</details>
+
+			<!-- Cuenta (siempre a la derecha del todo). Las páginas públicas se generan sin
+			     sesión, así que el estado lo resuelve el script de abajo con /api/me: hasta
+			     entonces se ve un círculo neutro, y con sesión ya vista en esta pestaña se
+			     pinta al instante. Con sesión: avatar → panel con nombre y "Cerrar sesión".
+			     Sin sesión: un "+" que lleva a iniciarla. -->
+			<div id="nav-account" class="relative">
+				<span id="nav-skeleton" class="border-border-soft bg-bg-soft animate-status-pulse block h-9 w-9 rounded-full border" aria-hidden="true"></span>
+
+				<a
+					id="nav-login"
+					href="/auth/discord/login"
+					hidden
+					title="Iniciar sesión con Discord"
+					aria-label="Iniciar sesión con Discord"
+					class="border-border text-text-dim hover:border-brand hover:text-brand flex h-9 w-9 items-center justify-center rounded-full border border-dashed text-base transition-colors"
+				>
+					<i class="bi bi-plus-lg" aria-hidden="true"></i>
+				</a>
+
+				<button
+					id="nav-avatar"
+					type="button"
+					hidden
+					aria-haspopup="true"
+					aria-expanded="false"
+					aria-controls="nav-panel"
+					aria-label="Cuenta"
+					class="hover:ring-brand/60 aria-expanded:ring-brand block h-9 w-9 overflow-hidden rounded-full ring-2 ring-transparent transition-shadow"
+				>
+					<img id="nav-avatar-img" src="" alt="" width="36" height="36" class="h-full w-full object-cover" />
+				</button>
+
+				<div
+					id="nav-panel"
+					role="menu"
+					class="bg-bg-soft border-border invisible absolute top-full right-0 mt-3 w-64 origin-top-right scale-95 rounded-xl border p-2 opacity-0 shadow-[0_16px_40px_-12px_rgba(0,0,0,0.7)] transition duration-150 data-[open]:visible data-[open]:scale-100 data-[open]:opacity-100"
+				>
+					<div class="flex items-center gap-3 px-2.5 py-2">
+						<img id="nav-panel-img" src="" alt="" width="40" height="40" class="h-10 w-10 shrink-0 rounded-full object-cover" />
+						<div class="min-w-0">
+							<div id="nav-name" class="text-text truncate text-sm font-bold"></div>
+							<div id="nav-username" class="text-text-faint truncate text-[12px]"></div>
+						</div>
+					</div>
+					<a
+						id="nav-logout"
+						href="/auth/logout"
+						role="menuitem"
+						class="text-text-dim mt-1 flex items-center gap-2.5 rounded-lg px-3 py-2.5 text-sm font-semibold transition-colors hover:bg-red-500/10 hover:text-red-400"
+					>
+						<i class="bi bi-box-arrow-right text-base" aria-hidden="true"></i>
+						Cerrar sesión
+					</a>
+				</div>
+			</div>
 		</div>
 	</div>
 </header>
@@ -72,5 +130,94 @@ import { navLinks, site } from "../lib/site";
 		document.addEventListener("keydown", (event) => {
 			if (event.key === "Escape") close();
 		});
+	}
+
+	// ── Cuenta ──────────────────────────────────────────────────────────────────
+	interface NavUser {
+		name: string;
+		username: string;
+		avatar: string;
+	}
+
+	const account = document.getElementById("nav-account");
+	if (account) {
+		const skeleton = document.getElementById("nav-skeleton")!;
+		const login = document.getElementById("nav-login") as HTMLAnchorElement;
+		const avatarBtn = document.getElementById("nav-avatar") as HTMLButtonElement;
+		const panel = document.getElementById("nav-panel")!;
+
+		// Con sesión, se recuerda el usuario visto en esta pestaña para no parpadear al
+		// cambiar de página; /api/me lo confirma siempre. Sin sesión no se recuerda
+		// nada (justo al volver del login ese dato estaría desfasado).
+		const KEY = "spa:nav-user";
+		const remembered = (): NavUser | null => {
+			try {
+				const raw = sessionStorage.getItem(KEY);
+				return raw ? (JSON.parse(raw) as NavUser) : null;
+			} catch {
+				return null;
+			}
+		};
+		const remember = (user: NavUser | null) => {
+			try {
+				if (user) sessionStorage.setItem(KEY, JSON.stringify(user));
+				else sessionStorage.removeItem(KEY);
+			} catch {
+				/* sin almacenamiento: solo se pierde el pintado instantáneo */
+			}
+		};
+
+		const setOpen = (open: boolean) => {
+			panel.toggleAttribute("data-open", open);
+			avatarBtn.setAttribute("aria-expanded", String(open));
+		};
+
+		// Tras iniciar sesión se vuelve a la página en la que se estaba (solo rutas
+		// del propio sitio: el login rechaza cualquier otra cosa).
+		const here = window.location.pathname + window.location.search;
+		if (/^\/[\w\-./%?=&]*$/.test(here) && !here.startsWith("//") && here !== "/") {
+			login.href = `/auth/discord/login?next=${encodeURIComponent(here)}`;
+		}
+
+		const render = (user: NavUser | null) => {
+			skeleton.hidden = true;
+			login.hidden = user !== null;
+			avatarBtn.hidden = user === null;
+			if (!user) return setOpen(false);
+
+			(document.getElementById("nav-avatar-img") as HTMLImageElement).src = user.avatar;
+			(document.getElementById("nav-panel-img") as HTMLImageElement).src = user.avatar;
+			document.getElementById("nav-name")!.textContent = user.name;
+			document.getElementById("nav-username")!.textContent = `@${user.username}`;
+			avatarBtn.setAttribute("aria-label", `Cuenta de ${user.name}`);
+		};
+
+		const hint = remembered();
+		if (hint) render(hint);
+
+		fetch("/api/me", { headers: { Accept: "application/json" } })
+			.then((res) => (res.ok ? res.json() : Promise.reject(new Error(String(res.status)))))
+			.then((data: { user: (NavUser & { id: string }) | null }) => {
+				const user = data.user && { name: data.user.name, username: data.user.username, avatar: data.user.avatar };
+				remember(user);
+				render(user);
+			})
+			// Sin respuesta no se sabe si hay sesión: se ofrece entrar, que es inocuo.
+			.catch(() => {
+				if (!hint) render(null);
+			});
+
+		avatarBtn.addEventListener("click", () => setOpen(!panel.hasAttribute("data-open")));
+		document.addEventListener("click", (event) => {
+			if (!account.contains(event.target as Node)) setOpen(false);
+		});
+		document.addEventListener("keydown", (event) => {
+			if (event.key === "Escape" && panel.hasAttribute("data-open")) {
+				setOpen(false);
+				avatarBtn.focus();
+			}
+		});
+		// Al cerrar sesión se olvida lo recordado (el enlace navega a /auth/logout).
+		document.getElementById("nav-logout")!.addEventListener("click", () => remember(null));
 	}
 </script>
