@@ -27,3 +27,5 @@ design
 .claude
 # changelog: base SQLite local
 data/
+# generado por `pnpm knowledge` para el asistente de IA
+knowledge/

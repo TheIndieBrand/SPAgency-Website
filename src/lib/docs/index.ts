@@ -1,10 +1,10 @@
-import { gettingStarted } from "./getting-started";
-import { protection } from "./protection";
-import { moderation } from "./moderation";
-import { recovery, help } from "./recovery";
-import type { DocGroup, DocPage } from "./types";
+import { gettingStarted } from "./getting-started.ts";
+import { protection } from "./protection.ts";
+import { moderation } from "./moderation.ts";
+import { recovery, help } from "./recovery.ts";
+import type { DocGroup, DocPage } from "./types.ts";
 
-export type { DocBlock, DocGroup, DocPage } from "./types";
+export type { DocBlock, DocGroup, DocPage } from "./types.ts";
 
 // Orden de la barra lateral y de los botones anterior/siguiente.
 export const docGroups: DocGroup[] = [

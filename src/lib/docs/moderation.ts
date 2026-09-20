@@ -1,4 +1,4 @@
-import type { DocPage } from "./types";
+import type { DocPage } from "./types.ts";
 
 export const moderation: DocPage[] = [
 	{
