@@ -17,6 +17,7 @@ const { guild, active, title, subtitle, raidmodeActive = false } = Astro.props;
 const icon = guildIconUrl(guild);
 const base = `/dashboard/${guild.id}`;
 
+
 const panelNav = [{ key: "general" as const, label: "General", href: base, icon: "bi-grid" }];
 
 const logsNav = [{ key: "logs" as const, label: "Registros de actividad", href: `${base}/logs`, icon: "bi-journal-text" }];
@@ -133,7 +134,13 @@ const configNav = [
 				<h1 class="font-display text-2xl font-bold tracking-tight">{title}</h1>
 				{subtitle && <p class="text-text-faint mt-1 text-sm">{subtitle}</p>}
 			</div>
-			<slot />
+			<div id="settings-root" data-guild={guild.id}>
+				<slot />
+			</div>
 		</main>
 	</div>
 </div>
+
+<script>
+	import "../../scripts/dashboard-settings";
+</script>
