@@ -105,3 +105,35 @@ export function botInviteUrl(guildId: string): string {
 	});
 	return `https://discord.com/oauth2/authorize?${params.toString()}`;
 }
+
+export interface GuildPreview {
+	name: string;
+	iconUrl: string | null;
+}
+
+// Nombre e icono de un servidor donde está el bot, para decirle a quien se
+// verifica "a qué" servidor entra. Es solo cosmético: cualquier fallo devuelve
+// null y la página sigue sin él.
+export async function getGuildPreview(guildId: string): Promise<GuildPreview | null> {
+	const botToken = process.env.DISCORD_BOT_TOKEN;
+	if (!botToken || !/^\d{15,25}$/.test(guildId)) return null;
+
+	try {
+		const res = await fetch(`${API}/guilds/${guildId}`, {
+			headers: { Authorization: `Bot ${botToken}` },
+			signal: AbortSignal.timeout(4000),
+		});
+		if (!res.ok) return null;
+
+		const guild = (await res.json()) as { name?: string; icon?: string | null };
+		if (!guild.name) return null;
+
+		const ext = guild.icon?.startsWith("a_") ? "gif" : "png";
+		return {
+			name: guild.name,
+			iconUrl: guild.icon ? `https://cdn.discordapp.com/icons/${guildId}/${guild.icon}.${ext}` : null,
+		};
+	} catch {
+		return null;
+	}
+}

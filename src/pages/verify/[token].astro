@@ -1,0 +1,171 @@
+---
+export const prerender = false;
+
+import Layout from "../../layouts/Layout.astro";
+import Navbar from "../../components/Navbar.astro";
+import { getGuildPreview, userAvatarUrl } from "../../lib/discord";
+import { getSessionUser } from "../../lib/session";
+import {
+	captchaConfigured,
+	captchaSiteKey,
+	isPlausibleToken,
+	lookupToken,
+	verificationErrorMessage,
+} from "../../lib/verification";
+
+// El token de la URL es una credencial: nada de guardarlo en cachés ni de
+// dejarlo en la cabecera Referer de lo que esta página cargue (el script del
+// captcha viene de un tercero).
+Astro.response.headers.set("Cache-Control", "no-store");
+Astro.response.headers.set("Referrer-Policy", "no-referrer");
+
+const token = Astro.params.token ?? "";
+
+type State =
+	| { kind: "invalid"; message: string }
+	| { kind: "unavailable"; message: string }
+	| { kind: "wrongAccount"; message: string }
+	| { kind: "ready" };
+
+let state: State;
+let guild: Awaited<ReturnType<typeof getGuildPreview>> = null;
+let guildId = "";
+const user = await getSessionUser(Astro.cookies);
+
+if (!isPlausibleToken(token)) {
+	state = { kind: "invalid", message: verificationErrorMessage("invalid_token", 400) };
+} else if (!captchaConfigured()) {
+	state = { kind: "unavailable", message: verificationErrorMessage("not_configured", 503) };
+} else {
+	// Primero se pregunta al bot: un enlace inválido no debería mandar a nadie a iniciar sesión.
+	const target = await lookupToken(token);
+
+	if (!target.ok) {
+		state =
+			target.error === "invalid_token"
+				? { kind: "invalid", message: verificationErrorMessage("invalid_token", 400) }
+				: { kind: "unavailable", message: verificationErrorMessage(target.error, target.status) };
+	} else if (!user) {
+		return Astro.redirect(`/auth/discord/login?next=${encodeURIComponent(Astro.url.pathname)}`);
+	} else if (user.id !== target.data.userId) {
+		state = { kind: "wrongAccount", message: verificationErrorMessage("wrong_account", 403) };
+	} else {
+		state = { kind: "ready" };
+		guildId = target.data.guildId;
+		guild = await getGuildPreview(guildId);
+	}
+}
+
+const siteKey = captchaSiteKey();
+---
+
+<Layout title="Verificación — SP Agency" description="Verifica tu cuenta para acceder al servidor.">
+	<meta slot="head" name="referrer" content="no-referrer" />
+	<meta slot="head" name="robots" content="noindex, nofollow" />
+
+	<Navbar />
+
+	<main class="mx-auto max-w-[520px] px-4 pt-20 pb-28 sm:px-8">
+		{
+			state.kind === "ready" ? (
+				<>
+				<div id="verify" data-token={token} data-guild={guildId}>
+					<div class="mb-10">
+						<div class="text-text-faint mb-3.5 text-[13px] font-bold tracking-[0.08em] uppercase">Verificación</div>
+						<h1 class="font-display text-[34px] leading-tight font-bold tracking-tight">
+							{guild ? `Verifícate para entrar en ${guild.name}` : "Verifícate para entrar al servidor"}
+						</h1>
+						<p class="text-text-dim mt-3.5 text-base leading-relaxed">
+							Comprobamos que eres una persona real. Es un paso rápido y solo lo haces una vez.
+						</p>
+					</div>
+
+					<div class="border-border-soft mb-8 flex items-center gap-3.5 border-y py-4">
+						<img
+							src={userAvatarUrl(user!)}
+							alt=""
+							width="40"
+							height="40"
+							class="h-10 w-10 shrink-0 rounded-full object-cover"
+						/>
+						<div class="min-w-0">
+							<div class="text-text truncate text-sm font-bold">{user!.global_name || user!.username}</div>
+							<div class="text-text-faint text-[13px]">Verificando con esta cuenta de Discord</div>
+						</div>
+						{guild?.iconUrl && (
+							<img
+								src={guild.iconUrl}
+								alt=""
+								width="40"
+								height="40"
+								class="ml-auto h-10 w-10 shrink-0 rounded-full object-cover"
+							/>
+						)}
+					</div>
+
+					<div
+						class="cf-turnstile mb-6"
+						data-sitekey={siteKey}
+						data-theme="dark"
+						data-callback="onCaptchaSolved"
+						data-expired-callback="onCaptchaExpired"
+						data-error-callback="onCaptchaExpired"
+					/>
+
+					<div class="flex flex-wrap items-center gap-4">
+						<button
+							id="verify-button"
+							type="button"
+							disabled
+							class="bg-brand hover:bg-brand-hover rounded-lg px-5 py-2.5 text-sm font-bold text-white transition-colors disabled:cursor-not-allowed disabled:opacity-50"
+						>
+							Verificarme
+						</button>
+						<span id="verify-status" role="status" class="text-sm text-red-400" />
+					</div>
+				</div>
+
+				<div id="verify-done" hidden>
+					<div class="bg-emerald/15 text-emerald mb-6 flex h-12 w-12 items-center justify-center rounded-full text-2xl">
+						<i class="bi bi-check-lg" />
+					</div>
+					<h1 class="font-display text-[34px] leading-tight font-bold tracking-tight">¡Verificado!</h1>
+					<p class="text-text-dim mt-3.5 text-base leading-relaxed">
+						Ya tienes acceso. Vuelve a Discord: el rol se te acaba de asignar.
+					</p>
+					<a
+						id="back-to-discord"
+						href={`https://discord.com/channels/${guildId}`}
+						class="bg-brand hover:bg-brand-hover mt-8 inline-flex items-center rounded-lg px-5 py-2.5 text-sm font-bold text-white transition-colors"
+					>
+						<i class="bi bi-discord mr-2" />
+						Volver a Discord
+					</a>
+				</div>
+
+				<script is:inline src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer />
+				</>
+			) : (
+				<div>
+					<div class="text-text-faint mb-3.5 text-[13px] font-bold tracking-[0.08em] uppercase">Verificación</div>
+					<h1 class="font-display text-[34px] leading-tight font-bold tracking-tight">
+						{state.kind === "wrongAccount" ? "Esta no es tu cuenta" : state.kind === "invalid" ? "Enlace no válido" : "No disponible"}
+					</h1>
+					<p class="text-text-dim mt-3.5 text-base leading-relaxed">{state.message}</p>
+					{state.kind === "wrongAccount" && (
+						<a
+							href="/auth/logout"
+							class="border-border hover:border-brand hover:text-brand mt-8 inline-flex items-center rounded-lg border px-5 py-2.5 text-sm font-bold transition-colors"
+						>
+							Cerrar sesión
+						</a>
+					)}
+				</div>
+			)
+		}
+	</main>
+</Layout>
+
+<script>
+	import "../../scripts/verify";
+</script>
