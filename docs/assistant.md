@@ -90,5 +90,5 @@ Ver `.env.example`: `DEEPSEEK_API_KEY` (sin ella, "no disponible"), `DEEPSEEK_BA
 
 ## Pendiente
 
-- Herramientas de lectura y escritura de la configuración del servidor (requieren conectar el dashboard al Postgres real y un registro único de ajustes que alimente el dashboard, la validación y el conocimiento).
+- Herramientas de lectura y escritura de la configuración del servidor. La base está conectada y existe el registro de ajustes (`src/lib/db/settings.ts`, ver [`dashboard.md`](dashboard.md)): las herramientas del asistente deben construirse sobre `changeSetting`, con propuesta y confirmación del usuario como en los tickets.
 - Cambiar `CONSENT_VERSION` cuando cambie el texto del aviso (`pages/support/assistant.astro`) para volver a pedir la aceptación.
