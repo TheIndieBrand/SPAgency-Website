@@ -16,21 +16,22 @@ Un usuario abre un ticket desde la web; el ticket aparece como un canal en el se
 
 1. **Crear.** El usuario (con sesión de Discord en la web) escribe asunto y mensaje. La web llama `POST /support/tickets`. El bot crea un canal en la categoría de soporte y publica el mensaje inicial.
 2. **Conversar.** La web consulta cada ~3 s `GET /support/tickets/:id/messages?after=<cursor>` y pinta lo nuevo. Lo que el staff escribe en el canal llega así. Lo que el usuario escribe va por `POST /support/tickets/:id/messages` y el bot lo publica en el canal.
-3. **Cerrar.** Cierra el staff (botón o `/ticket close` en el canal) o el usuario (`POST /support/tickets/:id/close`). El bot bloquea el canal, construye el transcript y **lo empuja a la web** (`POST <web>/api/support/transcripts`). Con la confirmación de la web sube la copia del staff, avisa al usuario por DM y borra el canal.
+3. **Cerrar.** Cierra el staff (con el botón **Cerrar ticket** del canal) o el usuario (`POST /support/tickets/:id/close`). El bot bloquea el canal, construye el transcript y **lo empuja a la web** (`POST <web>/api/support/transcripts`). Con la confirmación de la web sube la copia del staff, intenta avisar al usuario por DM (de mejor esfuerzo) y borra el canal.
 4. **Consultar.** El usuario ve sus transcripts en la web (solo lectura). No hay forma de reabrir: el canal ya no existe.
 
 ## Canal del ticket
 
-- **Categoría:** `SUPPORT_CATEGORY_ID`. Discord admite **50 canales por categoría**: con un solo ticket abierto por usuario alcanza de sobra; si se llena, `503 support_full`.
+- **Servidor y categoría:** `SUPPORT_GUILD_ID` y `SUPPORT_CATEGORY_ID`. El bot está en muchos servidores: los eventos solo se atienden en ese servidor, y solo en los canales de esa categoría. Discord admite **50 canales por categoría**: con un solo ticket abierto por usuario alcanza de sobra; si se llena, `503 support_full`.
 - **Nombre:** `ticket-<primeros 6 caracteres del ticketId>`.
 - **Permisos:** `@everyone` sin ver; ven y escriben el bot y el rol `SUPPORT_STAFF_ROLE_ID` (`1055967318485762140`). Nadie más.
-- **Tema (topic):** se escribe **una sola vez**, al crear (Discord limita las ediciones de tema/nombre a 2 cada 10 minutos), con formato estricto y legible por máquina:
+- **Tema (topic):** se escribe **una sola vez**, al crear (Discord limita las ediciones de tema/nombre a 2 cada 10 minutos), con formato estricto y legible por máquina. La primera línea son los identificadores y la segunda es el **asunto** del ticket (el bot no guarda nada más de él):
 
   ```
   ticket:<ticketId> user:<userId>
+  <asunto>
   ```
 
-  Es el "índice" del ticket: para saber los tickets de un usuario el bot recorre los canales de la categoría (ya están en su caché) y parsea el tema. Un canal de la categoría cuyo tema no encaje se ignora.
+  Es el "índice" del ticket: para saber los tickets de un usuario el bot recorre los canales de la categoría (ya están en su caché) y parsea el tema. Un canal de la categoría cuyo tema no encaje se ignora. La fecha de apertura (`createdAt` / `openedAt`) no se guarda: sale del propio ID del canal (un snowflake lleva su fecha).
 - **Mensaje inicial:** lo publica el bot con asunto, nombre y ID del usuario, y un botón **Cerrar ticket** (solo el staff puede pulsarlo).
 
 ## `ticketId`
@@ -126,7 +127,7 @@ Da igual quién cierre (staff o usuario), el proceso es el mismo:
    La web responde `200` (o `401` si la clave no coincide, `400` si el cuerpo no es válido, `413` si pesa más de 5 MB). Es **idempotente por `ticketId`**: repetir el envío no duplica nada. Un `4xx` no se reintenta: indica un fallo del bot, no de disponibilidad.
 
    Esta ruta es solo para el bot: en el proxy inverso conviene restringir `/api/support/transcripts` a `127.0.0.1`.
-5. **Solo tras la confirmación de la web:** subir la copia del staff a `SUPPORT_TRANSCRIPTS_CHANNEL_ID`, mandar un DM al usuario (avisando de que puede verlo en la web; si tiene los DMs cerrados, se ignora sin más) y **borrar el canal**.
+5. **Solo tras la confirmación de la web:** subir la copia del staff a `SUPPORT_TRANSCRIPTS_CHANNEL_ID`, intentar un DM al usuario (avisando de que puede verlo en la web). Es **de mejor esfuerzo**: el usuario no entra al servidor y Discord solo deja escribir por DM a quien comparte un servidor con el bot o ya tiene un DM abierto, así que lo normal es que a veces falle; se ignora sin más, el transcript ya está en la web y **borrar el canal**.
 6. **Si la web no confirma** (caída, error): reintentar con espera creciente (5 s, 30 s, 5 min…). El canal **se queda bloqueado y sin borrar**; si tras los reintentos sigue sin entregarse, se sube igualmente la copia del staff y se registra en `STAFF_LOGS_CHANNEL` para actuar a mano. Al arrancar, el bot retoma los canales marcados como cerrando.
 
 ## Anti-abuso
@@ -142,7 +143,8 @@ Da igual quién cierre (staff o usuario), el proceso es el mismo:
 
 **Bot:**
 - `SUPPORT_API_KEY` — autentica a la web contra `/support/*`.
-- `SUPPORT_CATEGORY_ID` — categoría donde se crean los canales.
+- `SUPPORT_GUILD_ID` — servidor donde viven los tickets.
+- `SUPPORT_CATEGORY_ID` — categoría de ese servidor donde se crean los canales.
 - `SUPPORT_TRANSCRIPTS_CHANNEL_ID` — canal del staff con las copias.
 - `SUPPORT_STAFF_ROLE_ID` — rol del staff (`1055967318485762140`).
 - `SUPPORT_WEB_URL` — base de la web (p. ej. `http://127.0.0.1:4321`).
@@ -166,8 +168,20 @@ Las tres claves son largas y aleatorias y nunca llegan al navegador.
 - [ ] Publicación de mensajes del usuario como embed, sin menciones.
 - [ ] Notas internas `//`.
 - [ ] Cierre: bloqueo, transcript en dos versiones, envío a la web con reintentos, copia al canal del staff, DM y borrado; reanudación de cierres pendientes al arrancar.
-- [ ] Botón **Cerrar ticket** y `/ticket close`, solo para el staff.
+- [ ] Botón **Cerrar ticket**, solo para el staff (sin comando: el botón es la única vía de cierre desde Discord). Tiene que seguir funcionando tras reiniciar el bot.
+- [ ] Excluir los canales de tickets del automod: ignora bots pero no al staff, que podría ser sancionado por lo que escribe en un ticket.
+- [ ] Reconstruir el índice de tickets al arrancar y limpiarlo si borran un canal a mano.
+- [ ] Evitar dos tickets simultáneos del mismo usuario (bloqueo por usuario mientras se crea el canal).
 - [ ] Límites y cooldowns de la tabla anterior.
+
+## Notas para la implementación (sugerencias)
+
+No son parte del contrato: son cosas que se ven al leer el código del bot y que conviene tener presentes.
+
+- **Rol de staff sin caché de roles.** El bot tiene la caché de roles desactivada, así que el rol se lee de los `roles` del miembro que ya trae el propio mensaje, no de la caché.
+- **Antiraid.** Crear y borrar canales de tickets no debería dispararlo, porque ignora al propio bot como ejecutor. Conviene confirmarlo en la prueba con varios tickets seguidos.
+- **Marca de cierre.** Renombrar el canal a `cerrando-<id>` es una sola edición de nombre (dentro del límite de Discord) y sirve para retomar cierres tras un reinicio. Los reintentos de entrega sugeridos son 5 s, 30 s, 5 min y 30 min; agotados, se deja el canal bloqueado y se avisa en `STAFF_LOGS_CHANNEL`.
+- **Permisos del bot** en la categoría: ver canales, gestionar canales y permisos (para crearlos con sus overwrites), enviar mensajes, insertar enlaces, adjuntar archivos y leer el historial.
 
 ## Qué hace la web (contexto)
 
