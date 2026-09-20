@@ -19,11 +19,11 @@ const { name, label, description, checked = false, danger = false, disabled = fa
 	<input type="checkbox" name={name} checked={checked} disabled={disabled} class="peer sr-only" />
 	<div
 		class:list={[
-			"relative h-6 w-11 shrink-0 rounded-full transition-colors",
+			"relative h-6 w-11 shrink-0 rounded-full transition-colors peer-checked:[&>div]:translate-x-5",
 			"bg-border-soft",
 			danger ? "peer-checked:bg-[#ef4444]" : "peer-checked:bg-brand",
 		]}
 	>
-		<div class="absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white transition-transform peer-checked:translate-x-5" />
+		<div class="absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white transition-transform" />
 	</div>
 </label>
