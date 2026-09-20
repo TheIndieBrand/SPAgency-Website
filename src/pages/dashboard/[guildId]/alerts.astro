@@ -6,14 +6,16 @@ import DashboardShell from "../../../components/dashboard/DashboardShell.astro";
 import SettingCard from "../../../components/dashboard/SettingCard.astro";
 import FieldRow from "../../../components/dashboard/FieldRow.astro";
 import { requireGuildAccess } from "../../../lib/dashboard-guard";
-import { getMockGuildConfig } from "../../../lib/mock-config";
+import { loadOrCreateGuildConfig } from "../../../lib/db/guild-config";
 import { inputClass } from "../../../lib/dashboard-ui";
 
 const result = await requireGuildAccess(Astro, Astro.params.guildId);
 if ("redirect" in result) return result.redirect;
 const { guild } = result;
 
-const { configuration, protection } = getMockGuildConfig();
+const loaded = await loadOrCreateGuildConfig(guild.id);
+if (!loaded.ok) return Astro.rewrite(`/dashboard/unavailable?reason=${loaded.reason}`);
+const { configuration, protection } = loaded.config;
 ---
 
 <Layout title={`Alertas y Canales — ${guild.name}`}>
@@ -28,8 +30,8 @@ const { configuration, protection } = getMockGuildConfig();
 			<SettingCard title="Canal de logs" description="Todas las acciones de moderación y eventos de seguridad se guardan siempre en la base de datos; este canal es solo para verlos en vivo en Discord." icon="bi-journal-text">
 				<FieldRow label="Canal" description="Si lo dejas vacío, los logs no se envían a ningún canal (pero se siguen registrando).">
 					<div class="flex items-center gap-2">
-						<span class="text-text-faint text-sm">#</span>
-						<input type="text" placeholder="mod-logs" value={configuration.logsChannel ?? ""} class={inputClass} />
+						<span class="text-text-faint text-sm">ID</span>
+						<input type="text" name="logsChannel" placeholder="ID del canal" value={configuration.logsChannel ?? ""} class={inputClass} />
 					</div>
 				</FieldRow>
 				{
@@ -43,16 +45,16 @@ const { configuration, protection } = getMockGuildConfig();
 			</SettingCard>
 
 			<SettingCard title="Lista blanca (Whitelist)" description="Usuarios y bots exentos de Anti-Raid, Anti-Bots y demás protecciones automáticas." icon="bi-shield-lock">
-				<div class="mb-4 flex flex-wrap gap-2">
+				<div class="mb-4 flex flex-wrap gap-2" data-list="whitelist" data-icon="bi-person-check" data-empty="Ningún usuario o bot en la lista blanca todavía.">
 					{
 						configuration.whitelist.length === 0 ? (
 							<p class="text-text-faint text-xs">Ningún usuario o bot en la lista blanca todavía.</p>
 						) : (
-							configuration.whitelist.map((entry) => (
-								<span class="border-border bg-bg-soft text-text-dim inline-flex items-center gap-2 rounded-full border py-1.5 pr-2 pl-3 text-xs font-semibold">
+							configuration.whitelist.map((id) => (
+								<span data-item={id} class="border-border bg-bg-soft text-text-dim inline-flex items-center gap-2 rounded-full border py-1.5 pr-2 pl-3 text-xs font-semibold">
 									<i class="bi bi-person-check text-brand text-[11px]" />
-									{entry.label}
-									<button type="button" class="text-text-faint hover:text-[#ef4444] transition-colors" aria-label={`Quitar ${entry.label} de la lista blanca`}>
+									{id}
+									<button type="button" data-remove class="text-text-faint hover:text-[#ef4444] transition-colors" aria-label={`Quitar ${id} de la lista blanca`}>
 										<i class="bi bi-x-lg text-[10px]" />
 									</button>
 								</span>
@@ -61,8 +63,8 @@ const { configuration, protection } = getMockGuildConfig();
 					}
 				</div>
 				<div class="flex items-center gap-2">
-					<input type="text" placeholder="ID de usuario o bot…" class={inputClass} />
-					<button type="button" class="bg-brand hover:bg-brand-hover shrink-0 rounded-lg px-4 py-2 text-sm font-bold text-white transition-colors">
+					<input type="text" data-list-input="whitelist" maxlength="25" placeholder="ID de usuario o bot…" class={inputClass} />
+					<button type="button" data-list-add="whitelist" class="bg-brand hover:bg-brand-hover shrink-0 rounded-lg px-4 py-2 text-sm font-bold text-white transition-colors">
 						Añadir
 					</button>
 				</div>

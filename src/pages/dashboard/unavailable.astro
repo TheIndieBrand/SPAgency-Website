@@ -1,0 +1,57 @@
+---
+export const prerender = false;
+
+import Layout from "../../layouts/Layout.astro";
+import Navbar from "../../components/Navbar.astro";
+
+// Se muestra (con Astro.rewrite, sin cambiar la URL) cuando una página de un
+// servidor no puede cargar su configuración: o la base de datos no responde o el
+// bot aún no ha creado las filas de ese servidor.
+const reason = Astro.url.searchParams.get("reason") === "missing" ? "missing" : "unavailable";
+Astro.response.status = 503;
+
+const copy = {
+	missing: {
+		icon: "bi-hourglass-split",
+		title: "Este servidor todavía no tiene configuración",
+		text: "SP Agency la crea en cuanto se une al servidor y puede tardar unos segundos. Si sigue sin aparecer, expulsa al bot e invítalo de nuevo.",
+	},
+	unavailable: {
+		icon: "bi-database-exclamation",
+		title: "No podemos cargar la configuración ahora mismo",
+		text: "No hemos podido conectar con la base de datos. Suele ser algo pasajero: inténtalo de nuevo en unos segundos.",
+	},
+}[reason];
+---
+
+<Layout title="Dashboard no disponible — SP Agency">
+	<meta slot="head" name="robots" content="noindex" />
+	<Navbar />
+
+	<main class="mx-auto flex min-h-[60vh] max-w-[520px] flex-col items-center justify-center px-6 py-16 text-center">
+		<div class="bg-brand-soft text-brand-hover mb-5 flex h-12 w-12 items-center justify-center rounded-full text-xl">
+			<i class={`bi ${copy.icon}`} aria-hidden="true"></i>
+		</div>
+		<h1 class="font-display mb-2.5 text-2xl font-bold tracking-tight">{copy.title}</h1>
+		<p class="text-text-dim mb-8 text-[15px] leading-relaxed">{copy.text}</p>
+		<div class="flex flex-wrap justify-center gap-3">
+			<button
+				id="retry"
+				type="button"
+				class="bg-brand hover:bg-brand-hover rounded-lg px-5 py-2.5 text-sm font-bold text-white transition-colors"
+			>
+				Reintentar
+			</button>
+			<a
+				href="/dashboard"
+				class="border-border text-text-dim hover:border-brand hover:text-brand rounded-lg border px-5 py-2.5 text-sm font-bold transition-colors"
+			>
+				Mis servidores
+			</a>
+		</div>
+	</main>
+</Layout>
+
+<script>
+	document.getElementById("retry")?.addEventListener("click", () => window.location.reload());
+</script>

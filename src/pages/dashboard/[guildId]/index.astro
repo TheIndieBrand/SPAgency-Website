@@ -4,20 +4,28 @@ export const prerender = false;
 import Layout from "../../../layouts/Layout.astro";
 import DashboardShell from "../../../components/dashboard/DashboardShell.astro";
 import { requireGuildAccess } from "../../../lib/dashboard-guard";
-import { getMockGuildConfig, getMockActivity } from "../../../lib/mock-config";
+import { describeActivity, listActivity } from "../../../lib/db/activity";
+import { loadOrCreateGuildConfig } from "../../../lib/db/guild-config";
+import { EMPTY_OVERVIEW, deltaText, getOverview } from "../../../lib/db/overview";
 
 const result = await requireGuildAccess(Astro, Astro.params.guildId);
 if ("redirect" in result) return result.redirect;
 const { guild } = result;
 
-const config = getMockGuildConfig();
-const activity = getMockActivity().slice(0, 5);
+const loaded = await loadOrCreateGuildConfig(guild.id);
+if (!loaded.ok) return Astro.rewrite(`/dashboard/unavailable?reason=${loaded.reason}`);
+const config = loaded.config;
+
+const [overview, rows] = await Promise.all([getOverview(guild.id), listActivity(guild.id, 5)]);
+const stats = overview ?? EMPTY_OVERVIEW;
+const activity = (rows ?? []).map(describeActivity);
+const show = (n: number) => (overview ? String(n) : "—");
 
 const kpis = [
-	{ label: "Ataques bloqueados hoy", value: "0", delta: "+0% vs ayer", icon: "bi-shield-fill-check" },
-	{ label: "Cuentas maliciosas filtradas", value: "3", delta: "+2 vs ayer", icon: "bi-person-fill-x" },
-	{ label: "Advertencias emitidas (7d)", value: "12", delta: "-4 vs semana pasada", icon: "bi-exclamation-triangle" },
-	{ label: "Tiempo de actividad", value: "100%", delta: "24/7", icon: "bi-activity" },
+	{ label: "Ataques bloqueados hoy", value: show(stats.raidsToday), delta: overview ? deltaText(stats.raidsToday, stats.raidsYesterday, "vs ayer") : "", icon: "bi-shield-fill-check" },
+	{ label: "Cuentas maliciosas detectadas (7d)", value: show(stats.maliciousWeek), delta: overview ? deltaText(stats.maliciousWeek, stats.maliciousPrevWeek, "vs semana pasada") : "", icon: "bi-person-fill-x" },
+	{ label: "Advertencias emitidas (7d)", value: show(stats.warnsWeek), delta: overview ? deltaText(stats.warnsWeek, stats.warnsPrevWeek, "vs semana pasada") : "", icon: "bi-exclamation-triangle" },
+	{ label: "Respuestas automáticas (7d)", value: show(stats.autoActionsWeek), delta: overview ? deltaText(stats.autoActionsWeek, stats.autoActionsPrevWeek, "vs semana pasada") : "", icon: "bi-activity" },
 ];
 
 const modules = [
@@ -86,16 +94,17 @@ const toneClass: Record<string, string> = {
 				<div class="border-border-soft flex items-center gap-2.5 border-b px-4 py-3.5">
 					<i class="bi bi-terminal text-text-dim text-sm" />
 					<span class="text-text text-sm font-semibold">Actividad reciente</span>
-					<span class="text-text-faint ml-auto flex items-center gap-1.5 text-xs">
-						<span class="bg-emerald animate-status-pulse inline-block h-1.5 w-1.5 rounded-full" />
-						Live
-					</span>
 				</div>
 				<div class="divide-border-soft divide-y">
 					{
+						activity.length === 0 && (
+							<p class="text-text-faint px-4 py-8 text-center text-[13px]">Aún no hay actividad registrada en este servidor.</p>
+						)
+					}
+					{
 						activity.map((event) => (
 							<div class="flex items-start gap-3 px-4 py-2.5 text-[13px]">
-								<span class="text-text-faint shrink-0 tabular-nums">[{event.time}]</span>
+								<time datetime={event.at} data-local class="text-text-faint shrink-0 tabular-nums">{event.at.slice(11, 16)}</time>
 								<i class={`bi ${event.icon} ${toneClass[event.tone]} mt-0.5 shrink-0 text-xs`} />
 								<span class="text-text-dim leading-relaxed">{event.label}</span>
 							</div>
@@ -109,3 +118,8 @@ const toneClass: Record<string, string> = {
 		</div>
 	</DashboardShell>
 </Layout>
+
+<script>
+	import { localizeTimes } from "../../../scripts/support-ui";
+	localizeTimes();
+</script>

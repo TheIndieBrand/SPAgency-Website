@@ -7,14 +7,16 @@ import SettingCard from "../../../components/dashboard/SettingCard.astro";
 import Toggle from "../../../components/dashboard/Toggle.astro";
 import FieldRow from "../../../components/dashboard/FieldRow.astro";
 import { requireGuildAccess } from "../../../lib/dashboard-guard";
-import { getMockGuildConfig } from "../../../lib/mock-config";
+import { loadOrCreateGuildConfig } from "../../../lib/db/guild-config";
 import { inputClass, selectClass } from "../../../lib/dashboard-ui";
 
 const result = await requireGuildAccess(Astro, Astro.params.guildId);
 if ("redirect" in result) return result.redirect;
 const { guild } = result;
 
-const { moderation, protection } = getMockGuildConfig();
+const loaded = await loadOrCreateGuildConfig(guild.id);
+if (!loaded.ok) return Astro.rewrite(`/dashboard/unavailable?reason=${loaded.reason}`);
+const { moderation, protection } = loaded.config;
 ---
 
 <Layout title={`Automoderación — ${guild.name}`}>
@@ -39,7 +41,7 @@ const { moderation, protection } = getMockGuildConfig();
 					<Toggle name="capsLockEnable" label="Activar filtro" checked={moderation.capsLockEnable} />
 					<FieldRow label="Umbral" description="Porcentaje mínimo de mayúsculas para considerarlo infracción.">
 						<div class="flex items-center gap-2">
-							<input type="number" min="1" max="100" value={moderation.capsLockThreshold} class={inputClass + " !w-20 sm:!w-20"} disabled={!moderation.capsLockEnable} />
+							<input type="number" name="capsLockThreshold" data-depends="capsLockEnable" min="1" max="100" value={moderation.capsLockThreshold} class={inputClass + " !w-20 !min-w-0 sm:!w-20"} disabled={!moderation.capsLockEnable} />
 							<span class="text-text-faint text-sm">%</span>
 						</div>
 					</FieldRow>
@@ -50,7 +52,7 @@ const { moderation, protection } = getMockGuildConfig();
 				<div class="divide-border-soft divide-y">
 					<Toggle name="manyEmojisEnable" label="Activar filtro" checked={moderation.manyEmojisEnable} />
 					<FieldRow label="Umbral" description="Cantidad de emojis en un mismo mensaje.">
-						<input type="number" min="1" value={moderation.manyEmojisThreshold} class={inputClass + " !w-20 sm:!w-20"} disabled={!moderation.manyEmojisEnable} />
+						<input type="number" name="manyEmojisThreshold" data-depends="manyEmojisEnable" min="1" value={moderation.manyEmojisThreshold} class={inputClass + " !w-20 !min-w-0 sm:!w-20"} disabled={!moderation.manyEmojisEnable} />
 					</FieldRow>
 				</div>
 			</SettingCard>
@@ -59,7 +61,7 @@ const { moderation, protection } = getMockGuildConfig();
 				<div class="divide-border-soft divide-y">
 					<Toggle name="manyWordsEnable" label="Activar filtro" checked={moderation.manyWordsEnable} />
 					<FieldRow label="Umbral" description="Cantidad de palabras en un mismo mensaje.">
-						<input type="number" min="1" value={moderation.manyWordsThreshold} class={inputClass + " !w-20 sm:!w-20"} disabled={!moderation.manyWordsEnable} />
+						<input type="number" name="manyWordsThreshold" data-depends="manyWordsEnable" min="1" value={moderation.manyWordsThreshold} class={inputClass + " !w-20 !min-w-0 sm:!w-20"} disabled={!moderation.manyWordsEnable} />
 					</FieldRow>
 				</div>
 			</SettingCard>
@@ -68,18 +70,18 @@ const { moderation, protection } = getMockGuildConfig();
 				<div class="divide-border-soft divide-y">
 					<FieldRow label="Silenciar (timeout) a partir de" description="Número de infracciones acumuladas.">
 						<div class="flex items-center gap-2">
-							<input type="number" min="1" value={moderation.automodMuteAt} class={inputClass + " !w-20 sm:!w-20"} />
+							<input type="number" name="automodMuteAt" min="1" value={moderation.automodMuteAt} class={inputClass + " !w-20 !min-w-0 sm:!w-20"} />
 							<span class="text-text-faint text-sm">infracciones</span>
 						</div>
 					</FieldRow>
 					<FieldRow label="Duración del silencio">
 						<div class="flex items-center gap-2">
-							<input type="number" min="1" value={moderation.automodMuteMinutes} class={inputClass + " !w-20 sm:!w-20"} />
+							<input type="number" name="automodMuteMinutes" min="1" value={moderation.automodMuteMinutes} class={inputClass + " !w-20 !min-w-0 sm:!w-20"} />
 							<span class="text-text-faint text-sm">minutos</span>
 						</div>
 					</FieldRow>
 					<FieldRow label="Acción final" description="Qué hacer si el usuario sigue infringiendo tras el silencio.">
-						<select class={selectClass}>
+						<select name="automodFinalAction" class={selectClass}>
 							<option value="none" selected={moderation.automodFinalAction === "none"}>No hacer nada</option>
 							<option value="kick" selected={moderation.automodFinalAction === "kick"}>Expulsar</option>
 							<option value="ban" selected={moderation.automodFinalAction === "ban"}>Banear</option>
@@ -87,7 +89,7 @@ const { moderation, protection } = getMockGuildConfig();
 					</FieldRow>
 					<FieldRow label="Acción final a partir de" description="Número de infracciones acumuladas para aplicar la acción final.">
 						<div class="flex items-center gap-2">
-							<input type="number" min="1" value={moderation.automodFinalActionAt} class={inputClass + " !w-20 sm:!w-20"} />
+							<input type="number" name="automodFinalActionAt" min="1" value={moderation.automodFinalActionAt} class={inputClass + " !w-20 !min-w-0 sm:!w-20"} />
 							<span class="text-text-faint text-sm">infracciones</span>
 						</div>
 					</FieldRow>
@@ -95,20 +97,26 @@ const { moderation, protection } = getMockGuildConfig();
 			</SettingCard>
 
 			<SettingCard title="Razones predefinidas" description="Lista de razones rápidas que el staff puede usar al moderar." icon="bi-list-check">
-				<div class="flex flex-wrap gap-2">
+				<div class="mb-4 flex flex-wrap gap-2" data-list="forceReasons" data-empty="Sin razones predefinidas: los comandos de moderación aceptan cualquier razón.">
 					{
-						moderation.forceReasons.map((reason) => (
-							<span class="border-border bg-bg-soft text-text-dim inline-flex items-center gap-2 rounded-full border py-1.5 pr-2 pl-3 text-xs font-semibold">
-								{reason}
-								<button type="button" class="text-text-faint hover:text-[#ef4444] transition-colors" aria-label={`Eliminar razón "${reason}"`}>
-									<i class="bi bi-x-lg text-[10px]" />
-								</button>
-							</span>
-						))
+						moderation.forceReasons.length === 0 ? (
+							<p class="text-text-faint text-xs">Sin razones predefinidas: los comandos de moderación aceptan cualquier razón.</p>
+						) : (
+							moderation.forceReasons.map((reason) => (
+								<span data-item={reason} class="border-border bg-bg-soft text-text-dim inline-flex items-center gap-2 rounded-full border py-1.5 pr-2 pl-3 text-xs font-semibold">
+									{reason}
+									<button type="button" data-remove class="text-text-faint transition-colors hover:text-[#ef4444]" aria-label={`Eliminar razón "${reason}"`}>
+										<i class="bi bi-x-lg text-[10px]" />
+									</button>
+								</span>
+							))
+						)
 					}
-					<button type="button" class="border-border-soft text-text-faint hover:border-brand hover:text-brand rounded-full border border-dashed px-3 py-1.5 text-xs font-bold transition-colors">
-						<i class="bi bi-plus mr-1" />
-						Añadir razón
+				</div>
+				<div class="flex items-center gap-2">
+					<input type="text" data-list-input="forceReasons" maxlength="100" placeholder="Nueva razón…" class={inputClass} />
+					<button type="button" data-list-add="forceReasons" class="bg-brand hover:bg-brand-hover shrink-0 rounded-lg px-4 py-2 text-sm font-bold text-white transition-colors">
+						Añadir
 					</button>
 				</div>
 			</SettingCard>

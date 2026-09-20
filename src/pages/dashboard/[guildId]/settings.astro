@@ -6,14 +6,17 @@ import DashboardShell from "../../../components/dashboard/DashboardShell.astro";
 import SettingCard from "../../../components/dashboard/SettingCard.astro";
 import FieldRow from "../../../components/dashboard/FieldRow.astro";
 import { requireGuildAccess } from "../../../lib/dashboard-guard";
-import { getMockGuildConfig } from "../../../lib/mock-config";
+import { getLastBackup, loadOrCreateGuildConfig } from "../../../lib/db/guild-config";
 import { inputClass, selectClass } from "../../../lib/dashboard-ui";
 
 const result = await requireGuildAccess(Astro, Astro.params.guildId);
 if ("redirect" in result) return result.redirect;
 const { guild } = result;
 
-const { core, protection } = getMockGuildConfig();
+const loaded = await loadOrCreateGuildConfig(guild.id);
+if (!loaded.ok) return Astro.rewrite(`/dashboard/unavailable?reason=${loaded.reason}`);
+const { core, protection } = loaded.config;
+const lastBackup = await getLastBackup(guild.id);
 ---
 
 <Layout title={`Ajustes — ${guild.name}`}>
@@ -22,10 +25,10 @@ const { core, protection } = getMockGuildConfig();
 			<SettingCard title="General" icon="bi-sliders">
 				<div class="divide-border-soft divide-y">
 					<FieldRow label="Prefijo de comandos" description="Prefijo para los comandos de texto del bot (los slash commands no lo necesitan).">
-						<input type="text" value={core.prefix} class={inputClass + " !w-24 sm:!w-24"} />
+						<input type="text" name="prefix" maxlength="5" value={core.prefix} class={inputClass + " !w-24 !min-w-0 sm:!w-24"} />
 					</FieldRow>
 					<FieldRow label="Idioma" description="Idioma de las respuestas y notificaciones del bot en este servidor.">
-						<select class={selectClass}>
+						<select name="language" class={selectClass}>
 							<option value="es" selected={core.language === "es"}>Español</option>
 							<option value="en" selected={core.language === "en"}>English</option>
 						</select>
@@ -37,9 +40,17 @@ const { core, protection } = getMockGuildConfig();
 				<div class="border-border-soft flex flex-col items-start justify-between gap-4 border-b pb-4 sm:flex-row sm:items-center">
 					<div>
 						<p class="text-text text-sm font-semibold">Último backup</p>
-						<p class="text-text-faint text-xs">Aún no se ha creado ninguna copia de seguridad para este servidor.</p>
+						{
+								lastBackup ? (
+									<p class="text-text-faint text-xs">
+										Creada el <time datetime={lastBackup} data-local="date">{lastBackup.slice(0, 10)}</time>.
+									</p>
+								) : (
+									<p class="text-text-faint text-xs">Aún no se ha creado ninguna copia de seguridad para este servidor.</p>
+								)
+							}
 					</div>
-					<button type="button" class="bg-brand hover:bg-brand-hover shrink-0 rounded-lg px-4 py-2 text-sm font-bold whitespace-nowrap text-white transition-colors">
+					<button type="button" disabled title="Próximamente" class="cursor-not-allowed opacity-50 bg-brand shrink-0 rounded-lg px-4 py-2 text-sm font-bold whitespace-nowrap text-white">
 						<i class="bi bi-camera mr-1.5" />
 						Crear backup ahora
 					</button>
@@ -55,14 +66,14 @@ const { core, protection } = getMockGuildConfig();
 					<i class="bi bi-exclamation-triangle-fill mt-0.5 text-base text-[#ef4444]" />
 					<div>
 						<h2 class="text-sm font-bold text-[#ef4444]">Zona de peligro</h2>
-						<p class="text-text-faint mt-0.5 text-xs">Estas acciones son irreversibles.</p>
+						<p class="text-text-faint mt-0.5 text-xs">Estas acciones son irreversibles. Aún no están disponibles desde la web.</p>
 					</div>
 				</div>
 				<div class="flex flex-col gap-2 sm:flex-row">
-					<button type="button" class="rounded-lg border border-[#ef4444]/40 px-4 py-2 text-sm font-bold text-[#ef4444] transition-colors hover:bg-[#ef4444]/10">
+					<button type="button" disabled title="Próximamente" class="cursor-not-allowed opacity-50 rounded-lg border border-[#ef4444]/40 px-4 py-2 text-sm font-bold text-[#ef4444]">
 						Restablecer toda la configuración
 					</button>
-					<button type="button" class="rounded-lg border border-[#ef4444]/40 px-4 py-2 text-sm font-bold text-[#ef4444] transition-colors hover:bg-[#ef4444]/10">
+					<button type="button" disabled title="Próximamente" class="cursor-not-allowed opacity-50 rounded-lg border border-[#ef4444]/40 px-4 py-2 text-sm font-bold text-[#ef4444]">
 						Expulsar al bot de este servidor
 					</button>
 				</div>
@@ -70,3 +81,8 @@ const { core, protection } = getMockGuildConfig();
 		</div>
 	</DashboardShell>
 </Layout>
+
+<script>
+	import { localizeTimes } from "../../../scripts/support-ui";
+	localizeTimes();
+</script>

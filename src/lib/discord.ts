@@ -75,6 +75,20 @@ export async function getBotGuildIds(): Promise<Set<string>> {
 	return new Set(guilds.map((g) => g.id));
 }
 
+// Dueño del servidor, con el token del bot (la lista de servidores del usuario solo
+// dice si ÉL es el dueño, no quién lo es).
+export async function getGuildOwnerId(guildId: string): Promise<string | null> {
+	const botToken = process.env.DISCORD_BOT_TOKEN;
+	if (!botToken) return null;
+
+	const res = await fetch(`${API}/guilds/${encodeURIComponent(guildId)}`, {
+		headers: { Authorization: `Bot ${botToken}` },
+	});
+	if (!res.ok) return null;
+	const guild = (await res.json()) as { owner_id?: string };
+	return guild.owner_id ?? null;
+}
+
 export function hasAdminAccess(guild: DiscordGuild): boolean {
 	if (guild.owner) return true;
 	return (BigInt(guild.permissions) & ADMINISTRATOR) === ADMINISTRATOR;

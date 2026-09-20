@@ -4,14 +4,19 @@ export const prerender = false;
 import Layout from "../../../layouts/Layout.astro";
 import DashboardShell from "../../../components/dashboard/DashboardShell.astro";
 import { requireGuildAccess } from "../../../lib/dashboard-guard";
-import { getMockGuildConfig, getMockActivity } from "../../../lib/mock-config";
+import { describeActivity, listActivity } from "../../../lib/db/activity";
+import { loadOrCreateGuildConfig } from "../../../lib/db/guild-config";
 
 const result = await requireGuildAccess(Astro, Astro.params.guildId);
 if ("redirect" in result) return result.redirect;
 const { guild } = result;
 
-const { protection } = getMockGuildConfig();
-const activity = getMockActivity();
+const loaded = await loadOrCreateGuildConfig(guild.id);
+if (!loaded.ok) return Astro.rewrite(`/dashboard/unavailable?reason=${loaded.reason}`);
+const { protection } = loaded.config;
+const rows = await listActivity(guild.id, 200);
+const activityFailed = rows === null;
+const activity = (rows ?? []).map(describeActivity);
 
 const toneClass: Record<string, string> = {
 	danger: "border-[#ef4444]/30 bg-[#ef4444]/10 text-[#ef4444]",
@@ -59,7 +64,7 @@ const filters = [
 				{
 					activity.map((event) => (
 						<div class="log-row flex items-start gap-3 px-4 py-3 text-[13px]" data-tone={event.tone}>
-							<span class="text-text-faint shrink-0 pt-0.5 tabular-nums">[{event.time}]</span>
+							<time datetime={event.at} data-local class="text-text-faint shrink-0 pt-0.5 tabular-nums">{event.at.slice(0, 16).replace("T", " ")}</time>
 							<span class:list={["inline-flex shrink-0 items-center justify-center rounded-full border p-1.5", toneClass[event.tone]]}>
 								<i class={`bi ${event.icon} text-xs`} />
 							</span>
@@ -68,15 +73,18 @@ const filters = [
 					))
 				}
 			</div>
-			<div id="log-empty" class="hidden px-4 py-16 text-center">
+			<div id="log-empty" class:list={["px-4 py-16 text-center", activity.length > 0 && "hidden"]}>
 				<i class="bi bi-inbox text-text-faint mb-3 block text-3xl" />
-				<p class="text-text-dim text-sm">No hay eventos de este tipo todavía.</p>
+				<p class="text-text-dim text-sm">{activityFailed ? "No se pudieron cargar los registros ahora mismo." : "No hay eventos de este tipo todavía."}</p>
 			</div>
 		</div>
 	</DashboardShell>
 </Layout>
 
 <script>
+	import { localizeTimes } from "../../../scripts/support-ui";
+	localizeTimes();
+
 	const filterButtons = document.querySelectorAll<HTMLButtonElement>(".filter-btn");
 	const rows = document.querySelectorAll<HTMLElement>(".log-row");
 	const empty = document.getElementById("log-empty");
