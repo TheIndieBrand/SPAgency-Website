@@ -1,5 +1,5 @@
 // Cliente de la API de soporte del bot (ver docs/support.md). El bot escucha
-// solo en 127.0.0.1 y se autentica con SUPPORT_API_KEY, que nunca sale de aquí:
+// solo en 127.0.0.1 y se autentica con INTERNAL_API_KEY, que nunca sale de aquí:
 // el navegador habla con la web, y la web con el bot.
 
 import { json } from "./session";
@@ -29,8 +29,8 @@ async function call<T>(
 	path: string,
 	{ query, body }: { query?: Record<string, string | undefined>; body?: unknown } = {},
 ): Promise<BotResult<T>> {
-	const base = process.env.SUPPORT_BOT_URL;
-	const key = process.env.SUPPORT_API_KEY;
+	const base = process.env.BOT_API_URL;
+	const key = process.env.INTERNAL_API_KEY;
 	if (!base || !key) return { ok: false, status: 503, error: "not_configured" };
 
 	const url = new URL(path, base);

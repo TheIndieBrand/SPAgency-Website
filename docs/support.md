@@ -62,7 +62,7 @@ El bot mantiene por ticket un búfer en memoria (unos 200 mensajes) alimentado p
 
 ## API del bot — `SupportServer`
 
-Mismo servidor `node:http` y mismo puerto que la API de verificación (`VERIFICATION_SERVER_PORT`, `127.0.0.1`), bajo `/support/*`. Todas las rutas exigen `Authorization: Bearer <SUPPORT_API_KEY>` (`401` si falta o es incorrecta). Cuerpos y respuestas en JSON.
+Mismo servidor `node:http` y mismo puerto que la API de verificación (`BOT_API_PORT`, `127.0.0.1`; antes `VERIFICATION_SERVER_PORT`, ya no es solo de verificación), bajo `/support/*`. Todas las rutas exigen `Authorization: Bearer <INTERNAL_API_KEY>` (`401` si falta o es incorrecta). Cuerpos y respuestas en JSON.
 
 ### `POST /support/tickets` — crear
 
@@ -110,7 +110,7 @@ Da igual quién cierre (staff o usuario), el proceso es el mismo:
 3. **Construir dos versiones:**
    - **Del usuario:** solo `staff` y `user`, sin notas internas ni mensajes del bot.
    - **Del staff:** todo lo anterior más las notas internas `//`, como archivo de texto.
-4. **Empujar la del usuario a la web**: `POST <SUPPORT_WEB_URL>/api/support/transcripts` con `Authorization: Bearer <SUPPORT_WEB_API_KEY>` y este cuerpo:
+4. **Empujar la del usuario a la web**: `POST <WEB_URL>/api/support/transcripts` con `Authorization: Bearer <INTERNAL_API_KEY>` y este cuerpo:
 
    ```json
    {
@@ -142,21 +142,20 @@ Da igual quién cierre (staff o usuario), el proceso es el mismo:
 ## Variables de entorno
 
 **Bot:**
-- `SUPPORT_API_KEY` — autentica a la web contra `/support/*`.
+- `INTERNAL_API_KEY` — la clave compartida con la web (la misma en los dos `.env`). Autentica a la web contra `/support/*` y al bot contra la web al empujar transcripts.
 - `SUPPORT_GUILD_ID` — servidor donde viven los tickets.
 - `SUPPORT_CATEGORY_ID` — categoría de ese servidor donde se crean los canales.
 - `SUPPORT_TRANSCRIPTS_CHANNEL_ID` — canal del staff con las copias.
 - `SUPPORT_STAFF_ROLE_ID` — rol del staff (`1055967318485762140`).
-- `SUPPORT_WEB_URL` — base de la web (p. ej. `http://127.0.0.1:4321`).
-- `SUPPORT_WEB_API_KEY` — autentica al bot contra la web al empujar transcripts.
+- `WEB_URL` — base de la web (p. ej. `http://127.0.0.1:4321`).
+- `BOT_API_PORT` — puerto de la API del bot (por defecto `4501`); sustituye a `VERIFICATION_SERVER_PORT`.
 
 **Web (este repo):**
-- `SUPPORT_BOT_URL` — API del bot (p. ej. `http://127.0.0.1:4501`).
-- `SUPPORT_API_KEY` — la misma que el bot espera.
-- `SUPPORT_WEB_API_KEY` — la misma que el bot envía al entregar transcripts.
+- `BOT_API_URL` — API del bot (p. ej. `http://127.0.0.1:4501`).
+- `INTERNAL_API_KEY` — la misma que tiene el bot.
 - `SUPPORT_DB_PATH` — opcional, archivo SQLite de los transcripts (por defecto `data/support.db`). En producción, en un disco que persista: los transcripts se guardan para siempre.
 
-Las tres claves son largas y aleatorias y nunca llegan al navegador.
+`INTERNAL_API_KEY` es larga y aleatoria y nunca llega al navegador. La comparten web y bot en ambos sentidos; el secreto de firma de la verificación (`VERIFICATION_SECRET`) es otra cosa y solo lo tiene el bot.
 
 ## Qué tiene que implementar el bot
 

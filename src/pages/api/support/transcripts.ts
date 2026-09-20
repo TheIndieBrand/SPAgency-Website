@@ -21,7 +21,7 @@ function keyMatches(header: string | null, expected: string): boolean {
 // idempotente por ticketId, así que los reintentos son seguros. Conviene
 // restringirla en el proxy inverso a 127.0.0.1 (ver docs/support.md).
 export const POST: APIRoute = async ({ request }) => {
-	const expected = process.env.SUPPORT_WEB_API_KEY;
+	const expected = process.env.INTERNAL_API_KEY;
 	if (!expected) return json({ error: "not_configured" }, 503);
 	if (!keyMatches(request.headers.get("authorization"), expected)) return json({ error: "unauthorized" }, 401);
 
