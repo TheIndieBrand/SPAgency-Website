@@ -1,0 +1,151 @@
+---
+export const prerender = false;
+
+import Layout from "../layouts/Layout.astro";
+import Navbar from "../components/Navbar.astro";
+import Footer from "../components/Footer.astro";
+import { navLinks, site } from "../lib/site";
+
+// Astro sirve esta página (con estado 404) para cualquier ruta que no exista.
+// Se muestra la ruta pedida, recortada, para que se vea si es una errata.
+const requested = Astro.url.pathname.length > 60 ? `${Astro.url.pathname.slice(0, 57)}…` : Astro.url.pathname;
+Astro.response.status = 404;
+---
+
+<Layout title="Página no encontrada — SP Agency" description="Esta página no existe o se ha movido.">
+	<meta slot="head" name="robots" content="noindex" />
+
+	<Navbar />
+
+	<main class="relative flex min-h-[calc(100dvh-71px-240px)] items-center justify-center overflow-hidden px-6 py-16">
+		<!-- Resplandor de fondo -->
+		<div class="pointer-events-none absolute top-1/2 left-1/2 h-[520px] w-[520px] -translate-x-1/2 -translate-y-[58%] rounded-full bg-[radial-gradient(circle,rgb(0_121_187/0.16),transparent_65%)]" aria-hidden="true"></div>
+
+		<div class="relative flex max-w-[560px] flex-col items-center text-center">
+			<div class="text-text-faint mb-2 text-[13px] font-bold tracking-[0.08em] uppercase">Error 404</div>
+
+			<!-- 4 · agujero negro · 4 -->
+			<div class="mb-6 flex items-center justify-center gap-[clamp(4px,1.5vw,16px)]" aria-hidden="true">
+				<span class="digit font-display leading-none font-bold">4</span>
+				<span class="void" role="presentation">
+					<span class="void-glow"></span>
+					<span class="void-ring"></span>
+					<span class="void-core"></span>
+				</span>
+				<span class="digit font-display leading-none font-bold">4</span>
+			</div>
+
+			<h1 class="font-display mb-3 text-[clamp(26px,4.4vw,36px)] leading-tight font-bold tracking-tight">
+				Esta página se perdió en el vacío
+			</h1>
+			<p class="text-text-dim mb-1 text-base leading-relaxed">
+				No hemos encontrado nada en
+				<code class="border-border-soft bg-bg-soft text-text rounded border px-1.5 py-0.5 font-mono text-[0.85em] break-all">{requested}</code>.
+			</p>
+			<p class="text-text-faint mb-8 text-sm leading-relaxed">Puede que la dirección tenga una errata o que la página se haya movido.</p>
+
+			<div class="mb-10 flex flex-wrap items-center justify-center gap-3">
+				<a
+					href="/"
+					class="bg-brand hover:bg-brand-hover inline-flex items-center gap-2 rounded-lg px-5 py-2.5 text-sm font-bold text-white transition-colors"
+				>
+					<i class="bi bi-house-door" aria-hidden="true"></i>
+					Volver al inicio
+				</a>
+				<a
+					href={site.docsUrl}
+					class="border-border text-text-dim hover:border-brand hover:text-brand inline-flex items-center gap-2 rounded-lg border px-5 py-2.5 text-sm font-bold transition-colors"
+				>
+					<i class="bi bi-book" aria-hidden="true"></i>
+					Ver la documentación
+				</a>
+			</div>
+
+			<div class="border-border-soft w-full border-t pt-6">
+				<div class="text-text-faint mb-3 text-[11px] font-bold tracking-[0.08em] uppercase">Quizá buscabas</div>
+				<div class="flex flex-wrap items-center justify-center gap-2">
+					{
+						navLinks.map((link) => (
+							<a
+								href={link.href}
+								class="border-border-soft bg-bg-soft text-text-dim hover:border-brand/50 hover:text-brand inline-flex items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-[13px] font-semibold transition-colors"
+							>
+								{link.icon && <i class={`bi ${link.icon} text-brand`} aria-hidden="true" />}
+								{link.label}
+							</a>
+						))
+					}
+				</div>
+			</div>
+		</div>
+	</main>
+
+	<Footer />
+</Layout>
+
+<style>
+	/* Los cuatros: degradado de blanco a azul de marca. */
+	.digit {
+		font-size: clamp(96px, 20vw, 168px);
+		background-image: linear-gradient(180deg, #ffffff 10%, #5fb8f0 100%);
+		-webkit-background-clip: text;
+		background-clip: text;
+		color: transparent;
+	}
+
+	/* El cero: un agujero negro con su disco de acreción girando. */
+	.void {
+		position: relative;
+		display: block;
+		flex-shrink: 0;
+		width: clamp(84px, 17vw, 150px);
+		height: clamp(84px, 17vw, 150px);
+	}
+
+	.void-glow {
+		position: absolute;
+		inset: -35%;
+		background: radial-gradient(circle, rgb(0 147 228 / 0.28), transparent 62%);
+	}
+
+	.void-ring {
+		position: absolute;
+		inset: 0;
+		border-radius: 50%;
+		background: conic-gradient(
+			from 0deg,
+			transparent 0deg,
+			#0079bb 80deg,
+			#8fd0ff 150deg,
+			#ffffff 185deg,
+			#0093e4 235deg,
+			transparent 320deg
+		);
+		-webkit-mask: radial-gradient(circle, transparent 47%, #000 50%, #000 62%, transparent 71%);
+		mask: radial-gradient(circle, transparent 47%, #000 50%, #000 62%, transparent 71%);
+		filter: blur(1.2px);
+		animation: void-spin 9s linear infinite;
+	}
+
+	.void-core {
+		position: absolute;
+		inset: 24%;
+		border-radius: 50%;
+		background: #000;
+		box-shadow:
+			0 0 0 2px rgb(255 255 255 / 0.05),
+			0 0 28px 10px #000;
+	}
+
+	@keyframes void-spin {
+		to {
+			transform: rotate(360deg);
+		}
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.void-ring {
+			animation: none;
+		}
+	}
+</style>
