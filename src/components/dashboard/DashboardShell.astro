@@ -1,4 +1,5 @@
 ---
+import Navbar from "../Navbar.astro";
 import type { DiscordGuild } from "../../lib/discord";
 import { guildIconUrl } from "../../lib/discord";
 
@@ -29,45 +30,34 @@ const configNav = [
 ---
 
 <div class="bg-bg min-h-screen">
-	<!-- ============ TOP BAR ============ -->
-	<header class="border-border-soft border-b">
-		<div class="mx-auto flex max-w-[1400px] items-center justify-between gap-4 px-8 py-3.5">
-			<a href="/dashboard" class="text-text-dim hover:text-brand flex items-center gap-2 text-sm font-semibold transition-colors">
-				<i class="bi bi-arrow-left" />
-				<span class="hidden sm:inline">Volver a mis servidores</span>
-			</a>
+	<Navbar />
 
-			<div class="flex items-center gap-3">
+	<div class="mx-auto flex max-w-[1400px] items-start">
+		<!-- ============ SIDEBAR ============ -->
+		<aside class="border-border-soft sticky top-[73px] hidden h-[calc(100vh-73px)] w-64 shrink-0 overflow-y-auto border-r px-4 py-6 md:block">
+			<div class="border-border-soft mb-6 flex items-center gap-3 border-b px-3 pb-5">
 				{
 					icon ? (
-						<img src={icon} alt={guild.name} class="h-7 w-7 rounded-full object-cover" />
+						<img src={icon} alt="" class="h-9 w-9 shrink-0 rounded-full object-cover" />
 					) : (
-						<div class="bg-bg-soft text-text-dim border-border flex h-7 w-7 items-center justify-center rounded-full border text-xs font-bold">
+						<div class="bg-bg-soft text-text-dim border-border flex h-9 w-9 shrink-0 items-center justify-center rounded-full border text-sm font-bold">
 							{guild.name.charAt(0).toUpperCase()}
 						</div>
 					)
 				}
-				<span class="text-text hidden text-sm font-bold sm:inline">{guild.name}</span>
-				{
-					raidmodeActive ? (
-						<span class="inline-flex items-center gap-1.5 rounded-full border border-[#ef4444]/40 bg-[#ef4444]/10 px-2.5 py-1 text-[10px] font-bold whitespace-nowrap text-[#ef4444]">
-							<span class="inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-[#ef4444]" />
-							Modo Pánico Activo
-						</span>
-					) : (
-						<span class="border-border bg-bg-soft text-text-dim inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10px] font-bold whitespace-nowrap">
-							<span class="bg-emerald animate-status-pulse inline-block h-1.5 w-1.5 rounded-full" />
-							Protección Activa
-						</span>
-					)
-				}
+				<div class="min-w-0">
+					<div class="text-text truncate text-sm font-bold" title={guild.name}>{guild.name}</div>
+					{
+						raidmodeActive && (
+							<span class="mt-1 inline-flex items-center gap-1.5 text-[10px] font-bold whitespace-nowrap text-[#ef4444]">
+								<span class="inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-[#ef4444]" />
+								Modo Pánico Activo
+							</span>
+						)
+					}
+				</div>
 			</div>
-		</div>
-	</header>
 
-	<div class="mx-auto flex max-w-[1400px] items-start">
-		<!-- ============ SIDEBAR ============ -->
-		<aside class="border-border-soft sticky top-0 hidden h-screen w-64 shrink-0 overflow-y-auto border-r px-4 py-6 md:block">
 			<div class="mb-6">
 				<div class="text-text-faint mb-2 px-3 text-[11px] font-bold tracking-[0.08em] uppercase">Panel</div>
 				<nav class="flex flex-col gap-1">
@@ -117,6 +107,11 @@ const configNav = [
 
 		<!-- ============ MOBILE NAV ============ -->
 		<nav class="border-border-soft scrollbar-none flex w-full gap-2 overflow-x-auto border-b px-4 py-3 md:hidden">
+			<span class="text-text border-border flex shrink-0 items-center gap-2 border-r pr-3 text-xs font-bold whitespace-nowrap">
+				{icon ? <img src={icon} alt="" class="h-5 w-5 rounded-full object-cover" /> : <i class="bi bi-hdd-network text-text-faint" />}
+				{guild.name}
+				{raidmodeActive && <span class="inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-[#ef4444]" title="Modo Pánico Activo" />}
+			</span>
 			{
 				[...panelNav, ...logsNav, ...configNav].map((item) => (
 					<a
