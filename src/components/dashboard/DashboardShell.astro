@@ -115,7 +115,7 @@ const allItems = groups.flat();
 		</nav>
 
 		<!-- ============ MAIN CONTENT ============ -->
-		<main class="min-w-0 flex-1 p-6">
+		<main class="dash-fade min-w-0 flex-1 p-6">
 			<div class="mb-6">
 				<h1 class="font-display text-2xl font-bold tracking-tight">{title}</h1>
 				{subtitle && <p class="text-text-faint mt-1 text-sm">{subtitle}</p>}
@@ -130,3 +130,23 @@ const allItems = groups.flat();
 <script>
 	import "../../scripts/dashboard-settings";
 </script>
+
+<style>
+	/* Al llegar desde la carga esquemática de /dashboard, el contenido real entra con
+	   un fundido corto en vez de aparecer de golpe. */
+	.dash-fade {
+		animation: dash-fade 0.3s ease-out both;
+	}
+
+	@keyframes dash-fade {
+		from {
+			opacity: 0;
+		}
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.dash-fade {
+			animation: none;
+		}
+	}
+</style>

@@ -3,6 +3,7 @@ export const prerender = false;
 
 import Layout from "../layouts/Layout.astro";
 import Navbar from "../components/Navbar.astro";
+import { site } from "../lib/site";
 
 // Aquí no se espera a Discord: la lista de servidores es lo lento, así que la
 // página se pinta al momento con tarjetas de carga y la lista llega después
@@ -117,6 +118,7 @@ const skeletons = Array.from({ length: 8 });
 			<!-- ============ EMPTY STATE ============ -->
 			<div id="no-guilds" hidden class="border-border-soft bg-card rounded-[14px] border px-8 py-16 text-center">
 				<p class="text-text-dim text-base">No encontramos servidores de Discord donde seas administrador.</p>
+				<a href={site.inviteUrl} class="bg-brand hover:bg-brand-hover mt-6 inline-block rounded-[10px] px-5 py-2.5 text-sm font-bold text-white transition-colors">Añadir el bot a un servidor</a>
 			</div>
 
 			<!-- ============ EMPTY STATE (search) ============ -->
@@ -126,24 +128,110 @@ const skeletons = Array.from({ length: 8 });
 			</div>
 		</section>
 	</div>
+
+	<!-- ============ CARGA AL ENTRAR EN UN SERVIDOR ============ -->
+	<!-- La página de un servidor se genera entera en el servidor y tarda un momento:
+	     al pulsar su tarjeta se pinta esta versión esquemática del panel (barra lateral
+	     y cifras) hasta que llega la real. Se quita sola si se vuelve atrás. -->
+	<div id="enter-loading" hidden role="status" class="bg-bg fixed inset-x-0 top-[73px] bottom-0 z-40 overflow-hidden">
+		<span class="sr-only">Abriendo el servidor…</span>
+		<div class="mx-auto flex max-w-[1400px] items-start" aria-hidden="true">
+			<aside class="border-border-soft hidden h-[calc(100vh-73px)] w-60 shrink-0 flex-col gap-2 border-r px-3 py-5 md:flex">
+				<div class="mb-5 flex items-center gap-3 px-2">
+					<div class="skeleton h-10 w-10 shrink-0 rounded-xl"></div>
+					<div class="skeleton h-3.5 w-28 rounded"></div>
+				</div>
+				{
+					[0, 1, 2, 3, 4, 5].map((i) => (
+						<div class="skeleton mx-1 h-9 rounded-lg" style={`--i:${i}`}></div>
+					))
+				}
+			</aside>
+			<div class="min-w-0 flex-1 px-4 py-8 sm:px-8">
+				<div class="skeleton mb-3 h-7 w-56 rounded"></div>
+				<div class="skeleton mb-8 h-3.5 w-80 max-w-full rounded"></div>
+				<div class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+					{
+						[0, 1, 2, 3].map((i) => (
+							<div class="border-border-soft bg-card rounded-[14px] border p-5" style={`--i:${i}`}>
+								<div class="skeleton mb-4 h-3 w-3/4 rounded" style={`--i:${i}`}></div>
+								<div class="skeleton h-8 w-16 rounded" style={`--i:${i}`}></div>
+							</div>
+						))
+					}
+				</div>
+				<div class="mt-6 grid gap-4 lg:grid-cols-[2fr_1fr]">
+					<div class="border-border-soft bg-card h-64 rounded-[14px] border p-5">
+						<div class="skeleton mb-5 h-4 w-40 rounded"></div>
+						{
+							[0, 1, 2, 3].map((i) => (
+								<div class="skeleton mb-3 h-3.5 w-full rounded" style={`--i:${i}`}></div>
+							))
+						}
+					</div>
+					<div class="border-border-soft bg-card h-64 rounded-[14px] border p-5">
+						<div class="skeleton mb-5 h-4 w-32 rounded"></div>
+						{
+							[0, 1, 2, 3].map((i) => (
+								<div class="skeleton mb-3 h-3.5 w-3/4 rounded" style={`--i:${i}`}></div>
+							))
+						}
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
 </Layout>
 
 <style is:global>
 	/* Carga: un brillo que barre la tarjeta de izquierda a derecha, escalonado por
-	   columnas para que no parpadeen todas a la vez. */
+	   columnas para que no parpadeen todas a la vez. El brillo (de 100% del ancho, con
+	   bordes que se funden a transparente) empieza y acaba fuera de la caja y va a
+	   velocidad constante: al repetirse no hay salto ni parada. */
 	.skeleton {
 		background-color: rgb(255 255 255 / 0.05);
-		background-image: linear-gradient(90deg, transparent 0%, rgb(255 255 255 / 0.08) 50%, transparent 100%);
+		background-image: linear-gradient(
+			90deg,
+			transparent 25%,
+			rgb(255 255 255 / 0.03) 37.5%,
+			rgb(255 255 255 / 0.09) 50%,
+			rgb(255 255 255 / 0.03) 62.5%,
+			transparent 75%
+		);
 		background-repeat: no-repeat;
-		background-size: 60% 100%;
-		background-position: -100% 0;
-		animation: skeleton-sweep 1.5s ease-in-out infinite;
+		background-size: 200% 100%;
+		background-position: 150% 0;
+		animation: skeleton-sweep 1.8s linear infinite;
 		animation-delay: calc(var(--i, 0) * 90ms);
 	}
 
 	@keyframes skeleton-sweep {
 		to {
-			background-position: 200% 0;
+			background-position: -50% 0;
+		}
+	}
+
+	/* Las tarjetas reales entran con un fundido en vez de sustituir de golpe a las de
+	   carga (la clase se quita al terminar para que filtrar no lo repita). */
+	.card-in {
+		animation: card-in 0.35s ease-out both;
+	}
+
+	@keyframes card-in {
+		from {
+			opacity: 0;
+			transform: translateY(6px);
+		}
+	}
+
+	/* Y la carga al entrar en un servidor aparece con un fundido corto. */
+	#enter-loading:not([hidden]) {
+		animation: enter-fade 0.2s ease-out both;
+	}
+
+	@keyframes enter-fade {
+		from {
+			opacity: 0;
 		}
 	}
 
@@ -151,6 +239,10 @@ const skeletons = Array.from({ length: 8 });
 		.skeleton {
 			animation: none;
 			background-image: none;
+		}
+		.card-in,
+		#enter-loading:not([hidden]) {
+			animation: none;
 		}
 	}
 </style>
@@ -200,7 +292,7 @@ const skeletons = Array.from({ length: 8 });
 		if (g.protected) {
 			const st = g.stats;
 			const dim = st ? "" : " opacity-45";
-			return `<a href="/dashboard/${encodeURIComponent(g.id)}" class="server-card group border-border-soft bg-card hover:border-brand/60 focus-visible:border-brand flex h-full flex-col gap-4 rounded-[14px] border p-5 outline-none transition-colors" ${data}>
+			return `<a href="/dashboard/${encodeURIComponent(g.id)}" class="server-card card-in group border-border-soft bg-card hover:border-brand/60 focus-visible:border-brand flex h-full flex-col gap-4 rounded-[14px] border p-5 outline-none transition-colors" ${data}>
 				${head}
 				<p class="flex min-h-[30px] flex-wrap items-center gap-x-4 gap-y-1 text-xs">
 					<span class="text-emerald inline-flex items-center gap-1.5 font-semibold"><span class="bg-emerald inline-block h-1.5 w-1.5 rounded-full"></span>Activo</span>
@@ -211,7 +303,7 @@ const skeletons = Array.from({ length: 8 });
 		}
 
 		// Sin el bot: tarjeta apagada, sin enlace; la única acción es invitarlo.
-		return `<div class="server-card border-border-soft flex h-full flex-col gap-4 rounded-[14px] border border-dashed p-5" ${data}>
+		return `<div class="server-card card-in border-border-soft flex h-full flex-col gap-4 rounded-[14px] border border-dashed p-5" ${data}>
 			${head}
 			<div class="flex min-h-[30px] items-center justify-between gap-3">
 				<span class="text-text-faint text-xs">El bot aún no está aquí</span>
@@ -294,6 +386,20 @@ const skeletons = Array.from({ length: 8 });
 		$("count-skeleton").hidden = false;
 		load();
 	});
+
+	// Al abrir un servidor se muestra la carga esquemática hasta que llega su página.
+	// Solo con un clic normal (con Ctrl/Cmd o botón central se abre otra pestaña y aquí no cambia nada).
+	grid.addEventListener("animationend", (event) => (event.target as Element).classList.remove("card-in"));
+
+	const enterLoading = $("enter-loading");
+	grid.addEventListener("click", (event) => {
+		const link = (event.target as Element).closest<HTMLAnchorElement>("a.server-card");
+		if (!link || event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+		if (link.target && link.target !== "_self") return;
+		enterLoading.hidden = false;
+	});
+	// Al volver atrás el navegador restaura esta página tal cual estaba: sin esto quedaría la carga puesta.
+	window.addEventListener("pageshow", () => (enterLoading.hidden = true));
 
 	load();
 </script>
