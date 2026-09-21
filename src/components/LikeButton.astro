@@ -1,0 +1,154 @@
+---
+// Botón de "me gusta" (corazón + contador). Se usa en las tarjetas de /testimonios
+// y en las entradas del changelog. El estado inicial lo pinta el servidor; el
+// script de abajo alterna al pulsar (de forma optimista) contra /api/likes. Si
+// hay varios botones del mismo target en la página, se actualizan a la vez.
+// Sin sesión, pulsarlo lleva al login de Discord y vuelve a la misma página.
+interface Props {
+	target: string;
+	count: number;
+	liked: boolean;
+	// Es un comentario del propio usuario: se ve el contador, pero no se puede pulsar.
+	own?: boolean;
+	// Hay sesión (solo cambia la etiqueta que se anuncia).
+	signedIn?: boolean;
+	class?: string;
+}
+
+const { target, count, liked, own = false, signedIn = false, class: className } = Astro.props;
+
+const label = own ? "Tu propio comentario" : !signedIn ? "Inicia sesión con Discord para dar me gusta" : liked ? "Quitar me gusta" : "Me gusta";
+---
+
+<button
+	type="button"
+	data-like
+	data-target={target}
+	data-own={own ? "" : undefined}
+	aria-pressed={liked ? "true" : "false"}
+	aria-label={`${label} (${count})`}
+	title={label}
+	class:list={["like-btn", className]}
+>
+	<i class="bi bi-heart like-off" aria-hidden="true"></i>
+	<i class="bi bi-heart-fill like-on" aria-hidden="true"></i>
+	<span data-like-count>{count}</span>
+</button>
+
+<style is:global>
+	.like-btn {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.4rem;
+		padding: 0.3rem 0.65rem;
+		border-radius: 999px;
+		font-size: 13px;
+		font-weight: 600;
+		line-height: 1;
+		color: var(--color-text-faint);
+		background: transparent;
+		transition:
+			color 0.15s ease,
+			background-color 0.15s ease;
+	}
+
+	.like-btn:not([data-own]):hover {
+		color: #fb7185;
+		background: rgb(251 113 133 / 0.1);
+	}
+
+	.like-btn[data-own] {
+		cursor: default;
+		opacity: 0.75;
+	}
+
+	.like-btn .like-on {
+		display: none;
+	}
+
+	.like-btn[aria-pressed="true"] {
+		color: #fb7185;
+	}
+
+	.like-btn[aria-pressed="true"] .like-on {
+		display: inline;
+	}
+
+	.like-btn[aria-pressed="true"] .like-off {
+		display: none;
+	}
+
+	.like-btn.like-pop .like-on {
+		animation: like-pop 0.32s ease-out;
+	}
+
+	@keyframes like-pop {
+		0% {
+			transform: scale(0.6);
+		}
+		60% {
+			transform: scale(1.35);
+		}
+		100% {
+			transform: scale(1);
+		}
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.like-btn.like-pop .like-on {
+			animation: none;
+		}
+	}
+</style>
+
+<script>
+	// Un solo escuchador para todos los botones de la página (delegación).
+	function paint(target: string, liked: boolean, count: number, pop = false) {
+		document.querySelectorAll<HTMLButtonElement>(`[data-like][data-target="${CSS.escape(target)}"]`).forEach((button) => {
+			button.setAttribute("aria-pressed", liked ? "true" : "false");
+			const counter = button.querySelector("[data-like-count]");
+			if (counter) counter.textContent = String(count);
+			if (pop && liked) {
+				button.classList.remove("like-pop");
+				// Reinicia la animación aunque se pulse rápido.
+				void button.offsetWidth;
+				button.classList.add("like-pop");
+			}
+		});
+	}
+
+	document.addEventListener("click", async (event) => {
+		const button = (event.target as HTMLElement).closest<HTMLButtonElement>("[data-like]");
+		if (!button || button.hasAttribute("data-own") || button.dataset.busy) return;
+
+		const target = button.dataset.target!;
+		const wasLiked = button.getAttribute("aria-pressed") === "true";
+		const wasCount = Number(button.querySelector("[data-like-count]")?.textContent ?? 0);
+
+		// Optimista: se ve al instante y se corrige con lo que responda el servidor.
+		button.dataset.busy = "1";
+		paint(target, !wasLiked, Math.max(0, wasCount + (wasLiked ? -1 : 1)), true);
+
+		try {
+			const res = await fetch("/api/likes", {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({ target }),
+			});
+
+			if (res.status === 401) {
+				paint(target, wasLiked, wasCount);
+				window.location.href = `/auth/discord/login?next=${encodeURIComponent(window.location.pathname)}`;
+				return;
+			}
+			if (!res.ok) return paint(target, wasLiked, wasCount);
+
+			const data = (await res.json()) as { liked: boolean; count: number };
+			paint(target, data.liked, data.count);
+		} catch {
+			paint(target, wasLiked, wasCount);
+		} finally {
+			delete button.dataset.busy;
+		}
+	});
+</script>

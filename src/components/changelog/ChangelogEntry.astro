@@ -1,5 +1,6 @@
 ---
 import { formatChangelogDate } from "../../lib/changelog";
+import LikeButton from "../LikeButton.astro";
 
 interface Props {
 	name: string;
@@ -12,9 +13,11 @@ interface Props {
 	href?: string;
 	latest?: boolean;
 	draft?: boolean;
+	// Me gusta de la entrada (no hay en los borradores). `signedIn` = hay sesión.
+	like?: { target: string; count: number; liked: boolean; signedIn: boolean };
 }
 
-const { name, version, subtitle = "", html, publishedAt, href, latest = false, draft = false } = Astro.props;
+const { name, version, subtitle = "", html, publishedAt, href, latest = false, draft = false, like } = Astro.props;
 
 const inList = Boolean(href);
 const Heading = inList ? "h2" : "h1";
@@ -30,9 +33,16 @@ const soloNameClass = inList ? "text-[36px]" : "text-[40px] sm:text-[52px]";
 	inList ? (
 		<article class="cl-item md:grid md:grid-cols-[150px_minmax(0,1fr)] md:gap-x-10" data-latest={latest ? "" : undefined}>
 			<div class="hidden pt-4 md:block">
-				<time datetime={publishedAt} class="text-text-faint text-sm font-semibold md:sticky md:top-24">
-					{date}
-				</time>
+				<div class="md:sticky md:top-24">
+					<time datetime={publishedAt} class="text-text-faint text-sm font-semibold">
+						{date}
+					</time>
+					{like && (
+						<div class="-ml-2.5 mt-3">
+							<LikeButton {...like} />
+						</div>
+					)}
+				</div>
 			</div>
 
 			<div class="cl-rail min-w-0 pb-20 pl-7 md:pl-10">
@@ -41,6 +51,11 @@ const soloNameClass = inList ? "text-[36px]" : "text-[40px] sm:text-[52px]";
 				<time datetime={publishedAt} class="text-text-faint mb-3 block text-sm font-semibold md:hidden">
 					{date}
 				</time>
+				{like && (
+					<div class="-ml-2.5 mb-3 md:hidden">
+						<LikeButton {...like} />
+					</div>
+				)}
 
 				<Heading>
 					<a href={href} class="group block">
@@ -90,6 +105,8 @@ const soloNameClass = inList ? "text-[36px]" : "text-[40px] sm:text-[52px]";
 					)}
 				</div>
 
+				<div class="flex items-center gap-3">
+				{like && <LikeButton {...like} />}
 				<button
 					type="button"
 					data-copy-link
@@ -98,6 +115,7 @@ const soloNameClass = inList ? "text-[36px]" : "text-[40px] sm:text-[52px]";
 					<i class="bi bi-link-45deg text-base" />
 					<span data-copy-label>Copiar enlace</span>
 				</button>
+				</div>
 			</div>
 
 			<Heading>

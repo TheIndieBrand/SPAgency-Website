@@ -5,10 +5,12 @@ import Layout from "../layouts/Layout.astro";
 import Navbar from "../components/Navbar.astro";
 import Footer from "../components/Footer.astro";
 import CommunityBackdrop from "../components/CommunityBackdrop.astro";
+import LikeButton from "../components/LikeButton.astro";
 import TestimonialCard from "../components/TestimonialCard.astro";
 import { hasPublishedTestimonial, latestForUser, listApproved, MAX_LENGTH, MIN_LENGTH } from "../lib/community-testimonials";
 import { userAvatarUrl } from "../lib/discord";
 import { sections } from "../lib/home-content";
+import { likeStates, likeTarget, noLikes } from "../lib/likes";
 import { getSessionUser } from "../lib/session";
 import { safeAvatar } from "../lib/support-format";
 import { testimonials } from "../lib/testimonials";
@@ -18,18 +20,20 @@ const mine = user ? latestForUser(user.id) : null;
 // Quien ya tiene un testimonio publicado (uno de los de siempre o uno aprobado) no puede enviar otro.
 const alreadyPublished = user ? hasPublishedTestimonial(user.id) : false;
 const isCurated = user ? testimonials.some((t) => t.userId === user.id) : false;
+const likes = likeStates("testimonial:", user?.id);
 
 // El muro: los testimonios de siempre (los del home) y, a continuación, los de la
 // comunidad ya aprobados por el staff, del más reciente al más antiguo. Los de la
 // comunidad viven SOLO aquí: el home no los muestra nunca.
 const defaultAvatar = "https://cdn.discordapp.com/embed/avatars/0.png";
 const wall = [
-	...testimonials,
+	...testimonials.map((t) => ({ ...t, like: { target: likeTarget.curated(t.userId), ownerId: t.userId } })),
 	...listApproved().map((c) => ({
 		username: c.displayName,
 		role: `@${c.username}`,
 		avatar: safeAvatar(c.avatar) ?? defaultAvatar,
 		comment: c.comment,
+		like: { target: likeTarget.community(c.id), ownerId: c.userId },
 	})),
 ];
 
@@ -160,7 +164,15 @@ const STATUS_NOTE = {
 					{
 						wall.map((t) => (
 							<div class="mb-5 break-inside-avoid">
-								<TestimonialCard testimonial={t} fluid />
+								<TestimonialCard testimonial={t} fluid>
+									<LikeButton
+										target={t.like.target}
+										count={(likes.get(t.like.target) ?? noLikes).count}
+										liked={(likes.get(t.like.target) ?? noLikes).liked}
+										own={user?.id === t.like.ownerId}
+										signedIn={Boolean(user)}
+									/>
+								</TestimonialCard>
 							</div>
 						))
 					}

@@ -7,19 +7,27 @@ import Footer from "../../components/Footer.astro";
 import ChangelogEntry from "../../components/changelog/ChangelogEntry.astro";
 import { getChangelogBySlug, getChangelogNeighbors } from "../../lib/changelog";
 import { isOwner } from "../../lib/changelog-auth";
+import { likeStates, likeTarget, noLikes } from "../../lib/likes";
 import { getSessionUser } from "../../lib/session";
 
 const entry = getChangelogBySlug(Astro.params.slug ?? "");
 
 // Un borrador solo lo ve el dueño (para revisarlo antes de publicar); para
 // cualquier otro es como si no existiera.
-const owner = entry && !entry.published ? isOwner(await getSessionUser(Astro.cookies)) : false;
+const user = await getSessionUser(Astro.cookies);
+const owner = entry && !entry.published ? isOwner(user) : false;
 
 if (!entry || (!entry.published && !owner)) {
 	return new Response("Not found", { status: 404 });
 }
 
 const { newer, older, isLatest } = getChangelogNeighbors(entry.id);
+
+// Me gusta: solo las entradas publicadas (un borrador no se puede gustar).
+const target = likeTarget.changelog(entry.id);
+const like = entry.published
+	? { target, ...(likeStates("changelog:", user?.id).get(target) ?? noLikes), signedIn: Boolean(user) }
+	: undefined;
 ---
 
 <Layout title={`${entry.title} — Changelog — SP Agency`} description={`Novedades de SP Agency: ${entry.title}.`}>
@@ -42,6 +50,7 @@ const { newer, older, isLatest } = getChangelogNeighbors(entry.id);
 			publishedAt={entry.publishedAt}
 			latest={isLatest}
 			draft={!entry.published}
+			like={like}
 		/>
 
 		{
