@@ -1,0 +1,177 @@
+---
+export const prerender = false;
+
+import Layout from "../layouts/Layout.astro";
+import Navbar from "../components/Navbar.astro";
+import Footer from "../components/Footer.astro";
+import CommunityBackdrop from "../components/CommunityBackdrop.astro";
+import TestimonialCard from "../components/TestimonialCard.astro";
+import { hasPublishedTestimonial, latestForUser, listApproved, MAX_LENGTH, MIN_LENGTH } from "../lib/community-testimonials";
+import { userAvatarUrl } from "../lib/discord";
+import { sections } from "../lib/home-content";
+import { getSessionUser } from "../lib/session";
+import { safeAvatar } from "../lib/support-format";
+import { testimonials } from "../lib/testimonials";
+
+const user = await getSessionUser(Astro.cookies);
+const mine = user ? latestForUser(user.id) : null;
+// Quien ya tiene un testimonio publicado (uno de los de siempre o uno aprobado) no puede enviar otro.
+const alreadyPublished = user ? hasPublishedTestimonial(user.id) : false;
+const isCurated = user ? testimonials.some((t) => t.userId === user.id) : false;
+
+// El muro: los testimonios de siempre (los del home) y, a continuación, los de la
+// comunidad ya aprobados por el staff, del más reciente al más antiguo. Los de la
+// comunidad viven SOLO aquí: el home no los muestra nunca.
+const defaultAvatar = "https://cdn.discordapp.com/embed/avatars/0.png";
+const wall = [
+	...testimonials,
+	...listApproved().map((c) => ({
+		username: c.displayName,
+		role: `@${c.username}`,
+		avatar: safeAvatar(c.avatar) ?? defaultAvatar,
+		comment: c.comment,
+	})),
+];
+
+const STATUS_NOTE = {
+	pending: "Tu comentario está pendiente de revisión. Cuando el staff lo apruebe aparecerá aquí abajo.",
+	approved: "Tu último comentario ya está publicado. ¡Gracias por compartirlo!",
+	rejected: "Tu último comentario no se ha publicado. Puedes enviar otro cuando quieras.",
+} as const;
+---
+
+<Layout
+	title="Testimonios — SP Agency"
+	description="Lo que dice la comunidad sobre SP Agency. Deja tu comentario con tu cuenta de Discord."
+>
+	<Navbar />
+
+	<div class="relative isolate min-h-screen bg-black">
+		<CommunityBackdrop />
+
+		<main class="mx-auto max-w-[1100px] px-4 pt-16 pb-24 sm:px-8">
+			<header class="mx-auto mb-12 max-w-[640px] text-center">
+				<div class="text-text-faint mb-3.5 text-[13px] font-bold tracking-[0.08em] uppercase">{sections.testimonials.eyebrow}</div>
+				<h1 class="font-display text-[40px] leading-[1.1] font-bold tracking-tight sm:text-[46px]">{sections.testimonials.title}</h1>
+				<p class="text-text-dim mt-4 text-base leading-relaxed">
+					Opiniones sobre SP Agency de quienes lo usan. ¿Lo usas tú? Cuéntanos qué tal te va.
+				</p>
+			</header>
+
+			<!-- ============ AGREGAR EL TUYO ============ -->
+			<section aria-labelledby="add-title" class="mx-auto mb-20 max-w-[640px]">
+				<div class="rounded-[14px] border border-white/10 bg-black/45 p-6 backdrop-blur-md sm:p-7">
+					<h2 id="add-title" class="font-display mb-1 text-xl font-bold tracking-tight">Agrega el tuyo</h2>
+
+					<p class="text-text-dim mb-5 flex items-start gap-2 text-[13px] leading-relaxed">
+						<i class="bi bi-shield-check text-brand-hover mt-0.5" aria-hidden="true"></i>
+						<span>El staff se reserva el derecho de aprobar cada comentario público.</span>
+					</p>
+
+					{
+						!user ? (
+							<div>
+								<p class="text-text-dim mb-5 text-sm leading-relaxed">
+									Para dejar un comentario inicia sesión con Discord. Se mostrará tu nombre y tu avatar de Discord.
+								</p>
+								<a
+									href="/auth/discord/login?next=/testimonios"
+									class="bg-brand hover:bg-brand-hover inline-flex items-center rounded-lg px-5 py-2.5 text-sm font-bold text-white transition-colors"
+								>
+									<i class="bi bi-discord mr-2" />
+									Iniciar sesión con Discord
+								</a>
+							</div>
+						) : (
+							<div id="compose">
+								{mine && (
+									<div
+										id="last-status"
+										class:list={[
+											"mb-5 border-l-2 py-1 pl-4 text-sm leading-relaxed",
+											mine.status === "pending" && "border-[#f5b301] text-[#f5b301]",
+											mine.status === "approved" && "border-emerald text-emerald",
+											mine.status === "rejected" && "border-border text-text-dim",
+										]}
+									>
+										{STATUS_NOTE[mine.status]}
+										{mine.status === "pending" && (
+											<blockquote class="text-text-dim mt-2 text-[13px] whitespace-pre-line">{mine.comment}</blockquote>
+										)}
+									</div>
+								)}
+
+								{isCurated && mine?.status !== "approved" && (
+									<div class="border-emerald text-emerald mb-1 border-l-2 py-1 pl-4 text-sm leading-relaxed">
+										Ya apareces entre los testimonios de SP Agency. ¡Gracias por tu apoyo!
+									</div>
+								)}
+
+								{mine?.status !== "pending" && !alreadyPublished && (
+									<form id="comment-form" class="flex flex-col gap-4" data-min={MIN_LENGTH} data-max={MAX_LENGTH}>
+										<div class="flex items-center gap-3">
+											<img
+												src={userAvatarUrl(user)}
+												alt=""
+												width="36"
+												height="36"
+												class="h-9 w-9 shrink-0 rounded-full object-cover"
+											/>
+											<div class="min-w-0">
+												<div class="text-text truncate text-sm font-bold">{user.global_name || user.username}</div>
+												<div class="text-text-faint text-xs">Comentarás con tu cuenta de Discord</div>
+											</div>
+										</div>
+
+										<label class="flex flex-col gap-2">
+											<span class="text-text-dim text-sm font-semibold">Tu comentario sobre el bot</span>
+											<textarea
+												name="comment"
+												required
+												rows="4"
+												minlength={MIN_LENGTH}
+												maxlength={MAX_LENGTH}
+												class="border-border text-text focus-visible:border-brand resize-y rounded-lg border bg-black/40 px-3.5 py-2.5 text-sm leading-relaxed outline-none transition-colors"
+											/>
+										</label>
+
+										<div class="flex flex-wrap items-center gap-x-4 gap-y-2">
+											<button
+												type="submit"
+												class="bg-brand hover:bg-brand-hover rounded-lg px-5 py-2.5 text-sm font-bold text-white transition-colors disabled:opacity-60"
+											>
+												Enviar comentario
+											</button>
+											<span id="counter" class="text-text-faint text-xs" />
+											<span id="form-status" role="status" class="text-sm" />
+										</div>
+									</form>
+								)}
+							</div>
+						)
+					}
+				</div>
+			</section>
+
+			<!-- ============ EL MURO ============ -->
+			<section aria-labelledby="wall-title">
+				<h2 id="wall-title" class="sr-only">Comentarios de la comunidad</h2>
+				<div class="columns-1 gap-5 sm:columns-2 lg:columns-3">
+					{
+						wall.map((t) => (
+							<div class="mb-5 break-inside-avoid">
+								<TestimonialCard testimonial={t} fluid />
+							</div>
+						))
+					}
+				</div>
+			</section>
+		</main>
+	</div>
+
+	<Footer />
+</Layout>
+
+<script>
+	import "../scripts/testimonials";
+</script>

@@ -61,6 +61,7 @@ export function createOutro(r: SceneRefs) {
 		diveBloom,
 		diveSpark,
 		ctaScene,
+		community,
 		communityWindow,
 		communityTrack,
 		outroBlackhole,
@@ -69,6 +70,9 @@ export function createOutro(r: SceneRefs) {
 		spaceStarsCanvas,
 	} = r;
 	const { buildCamera, cameraAt, tipScreenAt, zoomAt } = createCamera();
+	// "Agrega el tuyo": cuelga de la pista tras la última tarjeta, pero no es una tarjeta
+	// (ni cuenta para centrar la última ni para el foco).
+	const communityAction = communityTrack!.querySelector<HTMLElement>("[data-community-action]");
 	// Estela: la punta en coordenadas del MUNDO (cámara + posición en pantalla),
 	// muestreada en el tiempo y guardada como polilínea; con la longitud
 	// acumulada se revela con stroke-dashoffset hasta donde va la punta.
@@ -259,6 +263,15 @@ export function createOutro(r: SceneRefs) {
 		const trackY = Math.max(yRest, g.winH - travelled);
 		gsap.set(communityTrack, { y: trackY });
 
+		// Solo se puede pulsar (y enfocar) con el carrusel visible: como con la CTA final,
+		// un elemento interactivo dentro de la escena no debe recibir clics ni tabulador
+		// cuando ya no se ve.
+		if (communityAction) {
+			const actionLive = Number(gsap.getProperty(community, "opacity")) > 0.5;
+			communityAction.style.pointerEvents = actionLive ? "auto" : "none";
+			communityAction.tabIndex = actionLive ? 0 : -1;
+		}
+
 		// Foco: escala según lo cerca que está el centro de cada tarjeta del centro
 		// de la pantalla (0 → tamaño normal, 1 → agrandada), suavizado.
 		const radius = H * CARD_FOCUS_RADIUS_VH;
@@ -276,7 +289,7 @@ export function createOutro(r: SceneRefs) {
 		// 1) Medidas de las tarjetas.
 		g.winTop = communityWindow!.offsetTop;
 		g.winH = communityWindow!.offsetHeight;
-		g.cardEls = Array.from(communityTrack!.children) as HTMLElement[];
+		g.cardEls = Array.from(communityTrack!.children).filter((el) => !el.hasAttribute("data-community-action")) as HTMLElement[];
 		g.cardMids = Float64Array.from(g.cardEls, (el) => el.offsetTop + el.offsetHeight / 2);
 		g.lastMid = g.cardMids[g.cardMids.length - 1];
 

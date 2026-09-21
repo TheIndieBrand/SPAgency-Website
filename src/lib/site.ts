@@ -49,6 +49,7 @@ export const footerColumns = [
 	{
 		title: "Comunidad",
 		links: [
+			{ label: "Testimonios", href: "/testimonios" },
 			{ label: "Discord", href: "#" },
 			{ label: "GitHub", href: "#" },
 			{ label: "Términos", href: "#" },

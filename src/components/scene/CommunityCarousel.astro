@@ -1,4 +1,5 @@
 ---
+import AddTestimonialButton from "../AddTestimonialButton.astro";
 import TestimonialCard from "../TestimonialCard.astro";
 import { sections } from "../../lib/home-content";
 import { testimonials } from "../../lib/testimonials";
@@ -24,6 +25,10 @@ import { testimonials } from "../../lib/testimonials";
 	>
 		<div id="community-track" class="flex flex-col items-center gap-5">
 			{testimonials.map((t) => <TestimonialCard testimonial={t} />)}
+			<!-- "Agrega el tuyo": bajo la última tarjeta, sube con ellas. No es una tarjeta
+			     (ver data-community-action en outro.ts) y solo se puede pulsar mientras
+			     el carrusel está a la vista; el resto del tiempo ni se enfoca ni recibe clics. -->
+			<AddTestimonialButton class="pointer-events-none mt-3" tabindex="-1" data-community-action />
 		</div>
 	</div>
 </div>

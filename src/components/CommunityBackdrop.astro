@@ -1,0 +1,159 @@
+---
+// Fondo de /testimonios: el mismo cielo del tramo final de la escena del home
+// (campo de estrellas de star-field.ts sobre negro) más algo de decoración
+// propia: dos resplandores azules, la curva de la asíntota subiendo por la
+// derecha, símbolos matemáticos que aparecen y se desvanecen y alguna estrella
+// fugaz. Todo es decorativo (aria-hidden) y con prefers-reduced-motion queda
+// quieto. Va DENTRO de un contenedor `relative isolate`, detrás del contenido.
+const glyphs = [
+	{ text: "λ", x: 6, y: 14, size: 26, tone: "brand", peak: 0.2, duration: 9, delay: 0.2 },
+	{ text: "Σ", x: 90, y: 30, size: 24, tone: "brand", peak: 0.16, duration: 10, delay: 0.6 },
+	{ text: "∞", x: 4, y: 58, size: 30, tone: "brand", peak: 0.18, duration: 11, delay: 0.85 },
+	{ text: "O(1)", x: 82, y: 72, size: 14, tone: "text", peak: 0.16, duration: 8, delay: 0.4 },
+	{ text: "∂/∂t", x: 12, y: 84, size: 14, tone: "text", peak: 0.14, duration: 12, delay: 0.1 },
+	{ text: "π", x: 94, y: 8, size: 22, tone: "text", peak: 0.14, duration: 10.5, delay: 0.7 },
+	{ text: "√n", x: 70, y: 46, size: 16, tone: "text", peak: 0.12, duration: 9.5, delay: 0.3 },
+	{ text: "Δt", x: 38, y: 92, size: 16, tone: "brand", peak: 0.14, duration: 11.5, delay: 0.55 },
+];
+---
+
+<div class="pointer-events-none absolute inset-0 -z-10 overflow-hidden" aria-hidden="true">
+	<!-- Controlador de star-field.ts (lee su opacidad y su `y`) y el lienzo. -->
+	<div id="stars-controller" class="hidden" style="opacity: 1"></div>
+	<canvas id="stars-canvas" class="absolute inset-0 h-full w-full"></canvas>
+
+	<div
+		class="absolute -top-44 -right-[12%] h-[560px] w-[560px] rounded-full"
+		style="background: radial-gradient(closest-side, rgba(0, 121, 187, 0.22), transparent)"
+	>
+	</div>
+	<div
+		class="absolute -bottom-52 -left-[14%] h-[640px] w-[640px] rounded-full"
+		style="background: radial-gradient(closest-side, rgba(0, 121, 187, 0.13), transparent)"
+	>
+	</div>
+
+	<!-- La curva de la asíntota, muy tenue, subiendo por el lado derecho. -->
+	<svg class="absolute top-0 right-0 hidden h-full w-[44%] max-w-[620px] sm:block" viewBox="0 0 400 800" preserveAspectRatio="none">
+		<defs>
+			<linearGradient id="backdrop-curve" x1="0" y1="1" x2="0" y2="0">
+				<stop offset="0" stop-color="#0079bb" stop-opacity="0"></stop>
+				<stop offset="0.55" stop-color="#0079bb" stop-opacity="0.3"></stop>
+				<stop offset="1" stop-color="#4cc3ff" stop-opacity="0.75"></stop>
+			</linearGradient>
+		</defs>
+		<path
+			d="M -20 790 C 120 780, 260 700, 320 480 C 360 330, 372 150, 380 -20"
+			fill="none"
+			stroke="url(#backdrop-curve)"
+			stroke-width="2"
+			stroke-linecap="round"
+			vector-effect="non-scaling-stroke"></path>
+	</svg>
+
+	<div class="font-mono select-none">
+		{
+			glyphs.map((g) => (
+				<span
+					class="animate-glyph-appear absolute leading-none whitespace-nowrap"
+					style={`left:${g.x}%; top:${g.y}%; font-size:${g.size}px; color:${g.tone === "brand" ? "#0079bb" : "#eeeeee"}; --glyph-peak:${g.peak}; --glyph-duration:${g.duration}s; animation-delay:${-(g.delay * g.duration).toFixed(2)}s;`}
+				>
+					{g.text}
+				</span>
+			))
+		}
+	</div>
+
+	<span class="shooting-star" style="--top: 12%; --delay: 3s; --every: 19s"></span>
+	<span class="shooting-star" style="--top: 34%; --delay: 11s; --every: 27s"></span>
+	<span class="shooting-star" style="--top: 6%; --delay: 17s; --every: 33s"></span>
+</div>
+
+<style>
+	.shooting-star {
+		position: absolute;
+		left: 0;
+		top: var(--top);
+		width: 110px;
+		height: 1px;
+		opacity: 0;
+		background: linear-gradient(to right, transparent, rgba(255, 255, 255, 0.85));
+		transform: translateX(-140px) rotate(18deg);
+		animation: shoot var(--every) linear infinite;
+		animation-delay: var(--delay);
+	}
+
+	/* Cruza de izquierda a derecha en el primer ~5% del ciclo y descansa el resto. */
+	@keyframes shoot {
+		0% {
+			opacity: 0;
+			transform: translateX(-140px) rotate(18deg);
+		}
+		1% {
+			opacity: 1;
+		}
+		5% {
+			opacity: 0;
+			transform: translateX(110vw) translateY(34vh) rotate(18deg);
+		}
+		100% {
+			opacity: 0;
+			transform: translateX(110vw) translateY(34vh) rotate(18deg);
+		}
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.shooting-star {
+			display: none;
+		}
+	}
+</style>
+
+<script>
+	import { createStarField } from "../scripts/star-field";
+
+	const canvas = document.getElementById("stars-canvas") as HTMLCanvasElement | null;
+	const controller = document.getElementById("stars-controller");
+
+	// Cielo fijo (sin parpadeo ni deriva) para prefers-reduced-motion. Determinista.
+	function drawStatic(target: HTMLCanvasElement) {
+		const ctx = target.getContext("2d");
+		if (!ctx) return;
+		const dpr = Math.min(window.devicePixelRatio || 1, 2);
+		const w = target.clientWidth;
+		const h = target.clientHeight;
+		target.width = Math.round(w * dpr);
+		target.height = Math.round(h * dpr);
+		ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+		let seed = 0x5eed;
+		const rand = () => {
+			seed = (seed + 0x6d2b79f5) >>> 0;
+			let t = seed;
+			t = Math.imul(t ^ (t >>> 15), t | 1);
+			t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+			return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+		};
+		ctx.fillStyle = "#ffffff";
+		for (let i = 0; i < 110; i++) {
+			ctx.globalAlpha = 0.35 + rand() * 0.45;
+			const size = 1 + Math.floor(rand() * 3);
+			ctx.fillRect(rand() * w, rand() * h, size, size);
+		}
+	}
+
+	if (canvas && controller) {
+		if (matchMedia("(prefers-reduced-motion: reduce)").matches) {
+			drawStatic(canvas);
+		} else {
+			const field = createStarField(canvas, controller);
+			const start = performance.now();
+			// Deriva lenta hacia arriba y un poco de paralaje con el scroll.
+			const tick = () => {
+				field.setCamera(0, ((performance.now() - start) / 1000) * 5 + window.scrollY * 0.18);
+				requestAnimationFrame(tick);
+			};
+			requestAnimationFrame(tick);
+		}
+	}
+</script>

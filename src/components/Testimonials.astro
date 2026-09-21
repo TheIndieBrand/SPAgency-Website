@@ -8,6 +8,7 @@
 // → derecha). Se reparten automáticamente entre las dos filas, no hace falta
 // tocar nada más al agregar o quitar testimonios. Con prefers-reduced-motion no
 // hay marquee: las tarjetas se muestran todas, en filas que se ajustan al ancho.
+import AddTestimonialButton from "./AddTestimonialButton.astro";
 import TestimonialCard from "./TestimonialCard.astro";
 import { sections } from "../lib/home-content";
 import { testimonials } from "../lib/testimonials";
@@ -46,5 +47,11 @@ const row2 = testimonials.slice(half);
 				{row2.map((t) => <TestimonialCard testimonial={t} />)}
 			</div>
 		</div>
+	</div>
+
+	<!-- Justo debajo de la última tarjeta: lleva a /testimonios, donde cualquiera con
+	     sesión de Discord puede dejar el suyo (lo aprueba el staff). -->
+	<div class="mt-9 flex justify-center px-8">
+		<AddTestimonialButton />
 	</div>
 </section>

@@ -12,6 +12,7 @@
 
 export interface Testimonial {
 	username: string;
+	userId: string;
 	role: string;
 	avatar: string;
 	decoration?: string;
@@ -21,12 +22,14 @@ export interface Testimonial {
 export const testimonials: Testimonial[] = [
 	{
 		username: "ether",
+		userId: "760769497358794783",
 		role: "Founder @ SPA",
 		avatar: "/avatars/ether.png",
 		comment: "spa en seyfert es god",
 	},
 	{
 		username: "Rensga",
+		userId: "708479724980142162",
 		role: "CEO @ The Indie Brand",
 		avatar: "/avatars/rensga.png",
 		decoration: "/avatars/rensga-decoration.png",
@@ -34,12 +37,14 @@ export const testimonials: Testimonial[] = [
 	},
 	{
 		username: "Zaguspro",
+		userId: "642824574773231616",
 		role: "Admin @ Kigo",
 		avatar: "/avatars/zaguspro.png",
 		comment: "Este es un bot con muchas nuevas funciones que ayuda a protegerte a ti y a tus usuarios",
 	},
 	{
 		username: "🍁Eastๅ͟𝓦𝖗𝖎𝖙𝖊𝖗ᴿᶻ",
+		userId: "843458878871044106",
 		role: "Owner @ RZ",
 		avatar: "/avatars/east.png",
 		decoration: "/avatars/east-decoration.png",
@@ -47,12 +52,14 @@ export const testimonials: Testimonial[] = [
 	},
 	{
 		username: "_zPro",
+		userId: "655792452996825128",
 		role: "CEO @ The Indie Brand",
 		avatar: "/avatars/zpro.png",
 		comment: "Más rápido y renovado que nunca",
 	},
 	{
 		username: "JustEvil",
+		userId: "391283181665517568",
 		role: "Owner @ Ganyu Studios",
 		avatar: "/avatars/justevil.png",
 		decoration: "/avatars/justevil-decoration.png",
@@ -60,6 +67,7 @@ export const testimonials: Testimonial[] = [
 	},
 	{
 		username: "VirtualOx",
+		userId: "429815351774281748",
 		role: "CEO @ The Indie Brand",
 		avatar: "/avatars/virtualox.png",
 		decoration: "/avatars/virtualox-decoration.png",
@@ -68,12 +76,14 @@ export const testimonials: Testimonial[] = [
 	},
 	{
 		username: "Doctor",
+		userId: "688693850180812856",
 		role: "Admin @ Korex Hosting",
 		avatar: "/avatars/doctor.png",
 		comment: "SPA me cambió la vida, ahora soy millonario",
 	},
 	{
 		username: "Aitor",
+		userId: "306787329975123969",
 		role: "Founder @ Navigo Bot",
 		avatar: "/avatars/aitor.png",
 		comment:

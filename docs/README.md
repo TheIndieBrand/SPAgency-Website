@@ -21,5 +21,6 @@ Así los dos repos no se desincronizan: si cambia una ruta o un error, se cambia
 | Verificación de miembros | [`verification.md`](verification.md) | en el bot: `bots/SPAgency/docs/verification.md` | hecho | hecha |
 | Asistente de IA | [`assistant.md`](assistant.md) | — (solo web; usa el de soporte para los tickets) | — | hecha |
 | Dashboard y base de datos | [`dashboard.md`](dashboard.md) | Postgres compartido con el bot (rol `spagency_web`) | migraciones y triggers | hecha (lectura y escritura) |
+| Testimonios de la comunidad | [`testimonials.md`](testimonials.md) | — (solo web) | — | hecha |
 
 El contrato de la verificación (token, rutas, errores) está en el bot: `bots/SPAgency/docs/verification.md`.
