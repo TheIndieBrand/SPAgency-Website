@@ -7,9 +7,22 @@
 
 export type Routes = Record<string, string>;
 
-// Ruta suelta: empieza por una sección de la web y no va pegada a otra cosa
-// (así no se confunde con un comando como /backup ni con parte de una URL).
-const BARE_ROUTE = /(?<![\w/.:#-])\/(?:docs|support|changelog|dashboard)(?:\/[\w-]+)*(?:#[\w-]+)?/g;
+// Secciones cuyas rutas no salen del mapa (de ellas cuelgan páginas dinámicas).
+const BASE_SECTIONS = ["docs", "support", "changelog", "dashboard"];
+
+// Ruta suelta: empieza por una sección real de la web y no va pegada a otra cosa
+// (así no se confunde con un comando como /backup ni con parte de una URL). Las
+// secciones salen de las rutas del mapa del sitio, así que una página nueva
+// (/terminos, /privacidad…) se reconoce sola.
+function bareRoute(routes: Routes): RegExp {
+	const sections = new Set(BASE_SECTIONS);
+	for (const path of Object.keys(routes)) {
+		const first = path.split("/")[1];
+		if (first) sections.add(first);
+	}
+	const names = [...sections].map((n) => n.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|");
+	return new RegExp(`(?<![\\w/.:#-])\\/(?:${names})(?:\\/[\\w-]+)*(?:#[\\w-]+)?`, "g");
+}
 
 const isKnown = (path: string, routes: Routes) =>
 	path in routes || path.startsWith("/changelog/") || path.startsWith("/support/tickets/");
@@ -20,7 +33,9 @@ function iconFor(path: string): string {
 	if (path.startsWith("/support/tickets")) return "bi-ticket-perforated";
 	if (path.startsWith("/support")) return "bi-life-preserver";
 	if (path.startsWith("/changelog")) return "bi-clock-history";
-	return "bi-link-45deg";
+	if (path.startsWith("/privacidad")) return "bi-shield-lock";
+	if (path.startsWith("/testimonios")) return "bi-chat-quote";
+	return "bi-file-earmark-text"; // cualquier página nueva
 }
 
 // "/docs/anti-raid#lista-blanca" → "Anti-Raid › lista blanca"
@@ -58,6 +73,8 @@ export function decorateRoutes(root: Element, routes: Routes): void {
 		a.replaceWith(chip(href, !text || text.startsWith("/") ? labelFor(href, routes) : text));
 	});
 
+	const bare = bareRoute(routes);
+
 	// 2. Rutas sueltas en el texto (fuera de enlaces, botones y bloques de código).
 	const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
 		acceptNode: (node) =>
@@ -68,7 +85,7 @@ export function decorateRoutes(root: Element, routes: Routes): void {
 
 	for (const node of nodes) {
 		const text = node.data;
-		const matches = [...text.matchAll(BARE_ROUTE)].filter((m) => isKnown(m[0].split("#")[0], routes));
+		const matches = [...text.matchAll(bare)].filter((m) => isKnown(m[0].split("#")[0], routes));
 		if (!matches.length) continue;
 
 		// `/docs/anti-raid` a secas dentro de <code>: se sustituye el <code> entero.

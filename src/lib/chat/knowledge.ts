@@ -16,6 +16,7 @@ export interface Chunk {
 	text: string;
 	terms: Map<string, number>;
 	length: number;
+	lead?: boolean; // apertura de una página general: puntúa un poco más
 }
 
 const MAX_PART_CHARS = 800;
@@ -107,9 +108,15 @@ function chunkPage(page: Page): Chunk[] {
 	const chunks: Chunk[] = [];
 	const [intro, ...sections] = page.body.split(/\n## /);
 
+	// En las páginas generales (términos, privacidad, testimonios…) el título pesa igual
+	// en todos los fragmentos, y a "¿qué son los términos?" contestaba con un apartado
+	// cualquiera. Los dos primeros (la introducción y el primer apartado) llevan una
+	// pequeña ventaja: es donde la página dice qué es.
+	let added = 0;
 	const add = (heading: string, text: string) => {
 		const url = heading && page.kind === "docs" ? `${page.url}#${slugify(heading)}` : page.url;
-		for (const part of splitLong(text.trim())) if (part) chunks.push(makeChunk(page.title, heading, url, part));
+		const lead = page.kind === "site" && added++ < 2;
+		for (const part of splitLong(text.trim())) if (part) chunks.push({ ...makeChunk(page.title, heading, url, part), lead });
 	};
 
 	add("", intro);
@@ -205,6 +212,7 @@ export interface Hit {
 
 const K1 = 1.4;
 const B = 0.75;
+const LEAD_BOOST = 1.25;
 const MIN_SCORE = 2.5; // por debajo, no hay nada relevante: mejor no inyectar ruido
 
 export function search(query: string, limit: number): Hit[] {
@@ -232,7 +240,7 @@ export function search(query: string, limit: number): Hit[] {
 			const idf = Math.log(1 + (chunks.length - n + 0.5) / (n + 0.5));
 			score += (idf * tf * (K1 + 1)) / (tf + K1 * (1 - B + (B * chunk.length) / avgLength));
 		}
-		return { chunk, score };
+		return { chunk, score: chunk.lead ? score * LEAD_BOOST : score };
 	});
 
 	const ranked = scored.filter((s) => s.score >= MIN_SCORE).sort((a, b) => b.score - a.score);

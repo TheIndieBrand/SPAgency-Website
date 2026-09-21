@@ -28,7 +28,7 @@ Si el cliente corta a mitad, lo generado se conserva y se cobra por estimación.
 
 Cuando el asistente cita una página de la web, se muestra como **botón** hacia la ruta oficial (con icono según la sección y el título de la página) en lugar de un enlace de texto. Lo hace `scripts/chat-links.ts` sobre el HTML ya saneado y cubre tres casos: enlaces de Markdown (`[Anti-Raid](/docs/anti-raid)`), rutas sueltas en el texto (`/docs/anti-raid#lista-blanca`, que se muestra como «Anti-Raid › lista blanca») y rutas entre `código`.
 
-Solo se convierten las rutas que **existen**: la lista sale del mapa del sitio (`_sitemap.md`, vía `siteRoutes()` en `GET /api/chat/state`) más `/changelog/*` y `/support/tickets/*`. Una ruta inventada por el modelo se queda como texto, y un comando como `/backup` no se confunde con una ruta (solo cuentan las que empiezan por `/docs`, `/support`, `/changelog` o `/dashboard`). El estilo está en `global.css` (`.route-chip`).
+Solo se convierten las rutas que **existen**: la lista sale del mapa del sitio (`_sitemap.md`, vía `siteRoutes()` en `GET /api/chat/state`) más `/changelog/*` y `/support/tickets/*`. Una ruta inventada por el modelo se queda como texto, y un comando como `/backup` no se confunde con una ruta: una ruta suelta solo cuenta si empieza por una sección real, y las secciones salen de esas mismas rutas (más `/docs`, `/support`, `/changelog` y `/dashboard`), así que una página nueva (`/terminos`…) se reconoce sola. El icono es por sección (docs, dashboard, soporte, changelog, privacidad, testimonios); el resto de páginas usa uno genérico. El estilo está en `global.css` (`.route-chip`).
 
 ## Comandos del chat
 
