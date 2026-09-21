@@ -7,11 +7,15 @@ export const site = {
 	description:
 		"SP Agency detecta y bloquea raids, spam y cuentas falsas en tu servidor de Discord en tiempo real.",
 	inviteUrl: "#",
+	discordUrl: "https://discord.gg/mG5CaDvKsk",
+	githubUrl: "https://github.com/devEthan6737/SPAgency",
 	docsUrl: "/docs",
 	supportUrl: "/support",
 	changelogUrl: "/changelog",
 	dashboardUrl: "/dashboard",
 	assistantUrl: "/support/assistant",
+	termsUrl: "/terminos",
+	privacyUrl: "/privacidad",
 };
 
 // `icon` (clase de bootstrap-icons) es opcional: la navbar lo pinta delante.
@@ -43,16 +47,16 @@ export const footerColumns = [
 		links: [
 			{ label: "Documentación", href: site.docsUrl },
 			{ label: "Soporte", href: site.supportUrl },
-			{ label: "Estado del sistema", href: "#" },
 		],
 	},
 	{
 		title: "Comunidad",
 		links: [
 			{ label: "Testimonios", href: "/testimonios" },
-			{ label: "Discord", href: "#" },
-			{ label: "GitHub", href: "#" },
-			{ label: "Términos", href: "#" },
+			{ label: "Discord", href: site.discordUrl },
+			{ label: "GitHub", href: site.githubUrl },
+			{ label: "Términos", href: site.termsUrl },
+			{ label: "Privacidad", href: site.privacyUrl },
 		],
 	},
 ];

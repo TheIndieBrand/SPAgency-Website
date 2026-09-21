@@ -1,0 +1,438 @@
+---
+export const prerender = true;
+
+import LegalPage from "../components/LegalPage.astro";
+import { legal } from "../lib/legal";
+
+const toc = [
+	{ id: "responsable", title: "Quién es el responsable" },
+	{ id: "datos", title: "Qué datos tratamos, para qué y cuánto tiempo" },
+	{ id: "base-legal", title: "Base legal" },
+	{ id: "servidores", title: "Si administras un servidor" },
+	{ id: "destinatarios", title: "Con quién compartimos datos" },
+	{ id: "transferencias", title: "Transferencias fuera de la Unión Europea" },
+	{ id: "conservacion", title: "Conservación y borrado" },
+	{ id: "derechos", title: "Tus derechos" },
+	{ id: "menores", title: "Menores de edad" },
+	{ id: "seguridad", title: "Seguridad" },
+	{ id: "cookies", title: "Cookies y almacenamiento en tu navegador" },
+	{ id: "cambios", title: "Cambios en esta política" },
+	{ id: "contacto", title: "Contacto" },
+];
+---
+
+<LegalPage
+	title="Política de privacidad"
+	description="Qué datos trata SP Agency, para qué, con quién los comparte, cuánto tiempo los conserva y cómo ejercer tus derechos."
+	toc={toc}
+	other={{ href: "/terminos", label: "Términos del servicio" }}
+>
+	<section id="responsable">
+		<h2>Quién es el responsable</h2>
+		<p>
+			El responsable del tratamiento de los datos que se describen aquí es <strong>{legal.entity}</strong>, que presta el
+			servicio {legal.product} (el bot de Discord y este sitio web).
+			{legal.holder.taxId && <> NIF/CIF: {legal.holder.taxId}.</>}
+			{legal.holder.address && <> Domicilio: {legal.holder.address}.</>}
+			{
+				legal.holder.email && (
+					<>
+						{" "}
+						Correo: <a href={`mailto:${legal.holder.email}`}>{legal.holder.email}</a>.
+					</>
+				)
+			}
+			Puedes contactar con nosotros abriendo un ticket en <a href="/support">soporte</a>.
+		</p>
+		<p>
+			Aplicamos el Reglamento (UE) 2016/679 (RGPD) y la Ley Orgánica 3/2018 (LOPDGDD). Esta política explica lo que hacemos en
+			lenguaje llano; si algo no queda claro, pregúntanos.
+		</p>
+		<div class="legal-note">
+			<strong>Lo esencial.</strong> No vendemos tus datos, no hacemos publicidad y no usamos herramientas de analítica ni de
+			seguimiento. Solo tratamos lo necesario para que el bot y la web funcionen, y el bot no guarda el contenido de los
+			mensajes de tu servidor.
+		</div>
+	</section>
+
+	<section id="datos">
+		<h2>Qué datos tratamos, para qué y cuánto tiempo</h2>
+		<p>Depende de qué parte del servicio uses:</p>
+
+		<div class="legal-table">
+			<table>
+				<thead>
+					<tr>
+						<th>Función</th>
+						<th>Qué datos</th>
+						<th>Para qué</th>
+						<th>Cuánto tiempo</th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr>
+						<td>Inicio de sesión con Discord</td>
+						<td>
+							Tu ID, nombre de usuario, nombre visible y avatar de Discord, y la lista de tus servidores con tus permisos en
+							ellos.
+						</td>
+						<td>Identificarte y, en el panel, mostrarte los servidores que administras.</td>
+						<td>
+							Mientras dure tu sesión (una cookie con los tokens de Discord, que caduca con ellos). No guardamos tu lista de
+							servidores.
+						</td>
+					</tr>
+					<tr>
+						<td>Panel de control</td>
+						<td>
+							Los ajustes de protección que configuras para tus servidores y un registro de cambios: quién (su ID de Discord)
+							cambió qué ajuste, con el valor anterior y el nuevo, cuándo y si fue desde el panel o desde el asistente de IA.
+						</td>
+						<td>Aplicarlos en el bot y poder saber quién cambió una protección (seguridad).</td>
+						<td>
+							Los ajustes, mientras el bot esté en el servidor. El registro de cambios, sin borrado automático (puedes pedir que
+							se borre por <a href="/support">soporte</a>).
+						</td>
+					</tr>
+					<tr>
+						<td>El bot en tu servidor</td>
+						<td>
+							De los miembros: ID, nombre, si tienen avatar, fecha de creación de la cuenta, momento de entrada, eventos del
+							registro de auditoría (quién crea o borra canales, roles, webhooks o baneos) y acciones de moderación (avisos con
+							su motivo y quién los puso, expulsiones, baneos, detecciones automáticas).
+						</td>
+						<td>Detectar y frenar raids, bots y cuentas maliciosas, moderar automáticamente y guardar un registro de seguridad.</td>
+						<td>Mientras el bot esté en el servidor; al expulsarlo se borran.</td>
+					</tr>
+					<tr>
+						<td>Alta y baja del bot</td>
+						<td>Nombre, ID y número de miembros del servidor, y su propietario (su ID).</td>
+						<td>Saber en qué servidores funciona el bot y avisar a nuestro equipo cuando entra o sale.</td>
+						<td>
+							El ID del propietario se guarda con la configuración mientras el bot esté en el servidor. El aviso queda como
+							mensaje en un canal interno de nuestro equipo.
+						</td>
+					</tr>
+					<tr>
+						<td>Mensajes de tu servidor</td>
+						<td>El contenido de los mensajes se lee en el momento para el automod (mayúsculas, flood, palabras, menciones).</td>
+						<td>Moderación automática.</td>
+						<td>
+							<strong>No se guarda.</strong> Solo se conservan brevemente en memoria identificadores para detectar menciones
+							borradas, y en el registro queda el tipo de infracción, no el texto.
+						</td>
+					</tr>
+					<tr>
+						<td>Copia de seguridad (<code>/backup</code>)</td>
+						<td>
+							Nombre e icono del servidor, canales y categorías, roles y sus permisos, lista de baneos con su motivo, emojis y
+							stickers.
+						</td>
+						<td>Restaurar el servidor tras un ataque.</td>
+						<td>Hasta que la reemplaces o borres, o se expulse al bot.</td>
+					</tr>
+					<tr>
+						<td>Aviso de emergencia (SOS)</td>
+						<td>Nombre, ID y número de miembros del servidor y una invitación reciente.</td>
+						<td>Que el equipo de SP Agency pueda ayudarte en una emergencia.</td>
+						<td>Queda como mensaje en un canal interno de nuestro equipo.</td>
+					</tr>
+					<tr>
+						<td>Verificación de miembros</td>
+						<td>
+							Un enlace firmado con tu ID y el servidor, que se te manda por DM; tu cuenta de Discord al abrirlo; y la señal del
+							captcha (Cloudflare Turnstile).
+						</td>
+						<td>Comprobar que eres una persona y darte el rol de verificado.</td>
+						<td>El enlace caduca a los 15 minutos y no se guarda.</td>
+					</tr>
+					<tr>
+						<td>Soporte</td>
+						<td>Asunto y mensajes del ticket, tu ID, nombre de usuario y avatar.</td>
+						<td>Atender tu consulta.</td>
+						<td>
+							El canal existe mientras dura el ticket. Al cerrarlo guardamos una copia en tu historial, sin borrado automático.
+						</td>
+					</tr>
+					<tr>
+						<td>Asistente de IA</td>
+						<td>
+							Tus mensajes (con los secretos más evidentes enmascarados), las respuestas, tu aceptación del aviso (versión y
+							fecha) y tu consumo diario. Si le pides algo sobre la configuración de un servidor tuyo, también el servidor
+							elegido para esa conversación y sus ajustes (IDs de canales, roles y usuarios de la lista blanca, prefijo, etc.),
+							que se envían al proveedor de IA. Los cambios que propone se guardan hasta que los confirmas o caducan (1 hora).
+						</td>
+						<td>Responderte y limitar el uso.</td>
+						<td>
+							Sin borrado automático. No puedes borrarlas tú: pídelo por <a href="/support">soporte</a>.
+						</td>
+					</tr>
+					<tr>
+						<td>Testimonios</td>
+						<td>
+							Tu comentario, nombre visible, usuario y avatar de Discord; y, solo internamente, tu ID y quién lo revisó y cuándo.
+						</td>
+						<td>Mostrarlo en la web si el staff lo aprueba.</td>
+						<td>Mientras esté publicado o hasta que pidas retirarlo.</td>
+					</tr>
+					<tr>
+						<td>Me gusta</td>
+						<td>Tu ID y a qué has dado «me gusta».</td>
+						<td>Contar los me gusta e impedir duplicados.</td>
+						<td>Mientras exista el elemento o hasta que lo quites.</td>
+					</tr>
+					<tr>
+						<td>Blacklist global (UBFB)</td>
+						<td>
+							ID de las cuentas marcadas y el motivo. En un reporte (<code>/report</code>): el ID de la cuenta reportada, el motivo,
+							las pruebas y tu ID y nombre como autor.
+						</td>
+						<td>Proteger a los servidores de cuentas maliciosas.</td>
+						<td>Según las reglas de UBFB.</td>
+					</tr>
+					<tr>
+						<td>Funcionamiento y seguridad</td>
+						<td>
+							Datos técnicos de la conexión (dirección IP, navegador, fecha) que el servidor puede registrar, y las cookies
+							técnicas descritas más abajo.
+						</td>
+						<td>Mantener la web segura y diagnosticar fallos.</td>
+						<td>El tiempo mínimo necesario.</td>
+					</tr>
+				</tbody>
+			</table>
+		</div>
+
+		<p>
+			No pedimos datos que no necesitemos y no tomamos decisiones sobre ti basadas únicamente en tratamientos automatizados con
+			efectos jurídicos: las detecciones del bot actúan sobre las cuentas de un servidor según lo que configura su administración,
+			que puede revisarlas y revertirlas.
+		</p>
+	</section>
+
+	<section id="base-legal">
+		<h2>Base legal</h2>
+		<ul>
+			<li>
+				<strong>Prestarte el servicio</strong> que has pedido (inicio de sesión, panel, soporte, verificación, tickets): art.
+				6.1.b) RGPD.
+			</li>
+			<li>
+				<strong>Interés legítimo</strong> en proteger los servidores, los usuarios y el propio servicio frente a raids, cuentas
+				maliciosas y abusos, y en mantener la seguridad de la web: art. 6.1.f) RGPD. Puedes oponerte (ver «Tus derechos»).
+			</li>
+			<li>
+				<strong>Tu consentimiento</strong> para el asistente de IA (lo aceptas antes de usarlo) y para mostrar públicamente tu
+				comentario en los testimonios: art. 6.1.a) RGPD. Puedes retirarlo cuando quieras.
+			</li>
+			<li>
+				<strong>Obligaciones legales</strong>, cuando una norma o una autoridad nos lo exija: art. 6.1.c) RGPD.
+			</li>
+		</ul>
+	</section>
+
+	<section id="servidores">
+		<h2>Si administras un servidor</h2>
+		<p>
+			Cuando el bot trata datos de los miembros de tu servidor (registros, avisos, baneos, copias de seguridad), lo hace por
+			encargo tuyo y para prestarte el servicio: tú decides cómo lo configuras y para qué lo usas, y nosotros solo tratamos esos
+			datos con esa finalidad. Como administrador o administradora eres quien debe informar a tus miembros de la moderación y de
+			los registros que haces, y tener una base legal para ello.
+		</p>
+		<p>
+			Los avisos y registros del bot los ve quien tú decidas en los canales que configures; no los enviamos a nadie más. Nuestro
+			equipo solo recibe el aviso de alta y baja del bot y, si lo pides tú (o el propio bot, si lo activas), el aviso de
+			emergencia (SOS).
+		</p>
+	</section>
+
+	<section id="destinatarios">
+		<h2>Con quién compartimos datos</h2>
+		<p>No vendemos datos ni los cedemos con fines comerciales. Solo intervienen estos terceros, cuando usas la función correspondiente:</p>
+		<ul>
+			<li>
+				<strong>Discord</strong>: es la plataforma sobre la que funciona todo (inicio de sesión, API, servidores, mensajes
+				directos). También sirve tu avatar desde su red de contenidos, por lo que recibe tu IP como cuando ves Discord. Se rige
+				por su <a href="https://discord.com/privacy" target="_blank" rel="noopener noreferrer">política de privacidad</a>.
+			</li>
+			<li>
+				<strong>DeepSeek</strong>: proveedor del modelo de IA del asistente. Recibe los mensajes que le envías al usar el
+				asistente (con los secretos más evidentes enmascarados) y el contexto necesario para responder.
+			</li>
+			<li>
+				<strong>Cloudflare</strong>: su servicio Turnstile (captcha) se carga solo en la página de verificación y procesa datos
+				técnicos del navegador y la IP para distinguir personas de bots.
+			</li>
+			<li>
+				<strong>UBFB</strong>: la blacklist global con la que trabaja el bot, para las consultas y los reportes descritos arriba.
+			</li>
+			<li>
+				<strong>Proveedores de infraestructura</strong> (alojamiento del servidor y de la base de datos), que tratan los datos por
+				nuestra cuenta y solo para alojarlos.
+			</li>
+			<li>
+				<strong>Nuestro equipo</strong> (staff): accede a los tickets y, con un aviso previo, a las conversaciones del asistente.
+				Cada lectura o borrado queda registrado con el identificador de quien lo hace.
+			</li>
+			<li>
+				<strong>Autoridades</strong>, cuando la ley nos obligue a ello.
+			</li>
+		</ul>
+	</section>
+
+	<section id="transferencias">
+		<h2>Transferencias fuera de la Unión Europea</h2>
+		<p>
+			Discord y Cloudflare son empresas con sede en Estados Unidos y pueden tratar datos fuera del Espacio Económico Europeo con
+			las garantías que ellas mismas establecen (cláusulas contractuales tipo o el Marco de Privacidad de Datos UE–EE. UU.).
+		</p>
+		<div class="legal-note">
+			<strong>Sobre el asistente de IA.</strong> DeepSeek es un proveedor con servidores fuera del Espacio Económico Europeo,
+			incluida la República Popular China, un país sin decisión de adecuación de la Comisión Europea. Por eso el asistente te pide
+			aceptar expresamente este envío antes de usarlo, y te recomendamos <strong>no escribir datos personales, contraseñas ni
+			tokens</strong> en él. Si no quieres que tus mensajes salgan del EEE, no lo uses: el soporte por tickets y el resto del
+			servicio funcionan sin él.
+		</div>
+	</section>
+
+	<section id="conservacion">
+		<h2>Conservación y borrado</h2>
+		<p>
+			Los plazos de cada dato están en la tabla de arriba. En resumen:
+		</p>
+		<ul>
+			<li>
+				<strong>Datos de un servidor</strong> (configuración, registros, avisos, baneos temporales, copia de seguridad): se
+				conservan mientras el bot esté en él. <strong>Al expulsar al bot, se borran</strong> de nuestra base de datos.
+			</li>
+			<li>
+				<strong>Tickets y conversaciones con el asistente:</strong> no aplicamos un borrado automático; los conservamos mientras
+				sean útiles para ti y para el servicio, y los <strong>eliminamos cuando lo pidas</strong>.
+			</li>
+			<li>
+				<strong>Testimonios y me gusta:</strong> mientras estén publicados o hasta que los retires o nos lo pidas.
+			</li>
+			<li>
+				<strong>Sesión:</strong> hasta que cierres sesión o caduque. Al cerrar sesión se borra la cookie.
+			</li>
+		</ul>
+		<p>
+			Tras la eliminación podemos conservar bloqueados los datos imprescindibles durante los plazos que exija la ley, y copias de
+			seguridad técnicas durante un tiempo limitado hasta que se sobrescriban.
+		</p>
+	</section>
+
+	<section id="derechos">
+		<h2>Tus derechos</h2>
+		<p>Puedes ejercer en cualquier momento los derechos de:</p>
+		<ul>
+			<li><strong>Acceso</strong>: saber qué datos tuyos tratamos y recibir una copia.</li>
+			<li><strong>Rectificación</strong>: corregir datos inexactos.</li>
+			<li><strong>Supresión</strong>: que borremos tus datos (por ejemplo, tus tickets o tus conversaciones con el asistente).</li>
+			<li><strong>Oposición</strong> a los tratamientos basados en interés legítimo, y <strong>limitación</strong> del tratamiento.</li>
+			<li><strong>Portabilidad</strong>: recibir los datos que nos diste en un formato estructurado.</li>
+			<li><strong>Retirar tu consentimiento</strong> cuando el tratamiento se base en él, sin que afecte a lo hecho antes.</li>
+		</ul>
+		<p>
+			Para ejercerlos, abre un ticket en <a href="/support">soporte</a>
+			{
+				legal.holder.email && (
+					<>
+						{" "}
+						o escribe a <a href={`mailto:${legal.holder.email}`}>{legal.holder.email}</a>
+					</>
+				)
+			}
+			indicando qué quieres. Respondemos en el plazo máximo de un mes. Podemos pedirte que confirmes tu identidad (por ejemplo,
+			iniciando sesión con la misma cuenta de Discord).
+		</p>
+		<p>
+			Si crees que no hemos tratado bien tus datos, puedes reclamar ante {legal.dpaName}:
+			<a href={legal.dpaUrl} target="_blank" rel="noopener noreferrer">{legal.dpaUrl.replace("https://", "")}</a>.
+		</p>
+	</section>
+
+	<section id="menores">
+		<h2>Menores de edad</h2>
+		<p>
+			El servicio requiere la edad mínima que exige Discord. Las funciones basadas en el consentimiento (el asistente de IA y
+			publicar un testimonio) solo están pensadas para mayores de 14 años, la edad mínima para consentir en España. Si eres
+			menor de esa edad, no las uses; si creemos que se ha usado una sin permiso, podemos eliminar los datos.
+		</p>
+	</section>
+
+	<section id="seguridad">
+		<h2>Seguridad</h2>
+		<p>
+			Aplicamos medidas razonables para proteger tus datos: conexión cifrada (HTTPS), cookies de sesión que el navegador no deja
+			leer a los scripts, comunicación entre nuestros servicios protegida con claves, acceso del personal restringido y
+			registrado, y enmascarado de secretos evidentes en el asistente. Ningún sistema es infalible: si detectas un problema de
+			seguridad, avísanos por <a href="/support">soporte</a>. Si ocurriera una brecha que te afecte, te lo comunicaremos en los
+			casos y plazos que exige la ley.
+		</p>
+	</section>
+
+	<section id="cookies">
+		<h2>Cookies y almacenamiento en tu navegador</h2>
+		<p>
+			Solo usamos elementos <strong>técnicos y necesarios</strong> para que la web funcione. No usamos cookies de analítica, de
+			publicidad ni de seguimiento, por lo que no hay banner de consentimiento.
+		</p>
+		<div class="legal-table">
+			<table>
+				<thead>
+					<tr>
+						<th>Nombre</th>
+						<th>Para qué</th>
+						<th>Duración</th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr>
+						<td><code>spa_session</code></td>
+						<td>Mantener tu sesión iniciada con Discord (cookie segura, no accesible desde scripts).</td>
+						<td>Lo que dure el token de Discord, o hasta que cierres sesión.</td>
+					</tr>
+					<tr>
+						<td><code>spa_next</code></td>
+						<td>Recordar a qué página volver tras iniciar sesión.</td>
+						<td>10 minutos.</td>
+					</tr>
+					<tr>
+						<td>Almacenamiento de sesión del navegador</td>
+						<td>Recordar tu nombre y avatar en la barra de navegación para pintarlos al instante.</td>
+						<td>Hasta cerrar la pestaña.</td>
+					</tr>
+				</tbody>
+			</table>
+		</div>
+		<p>
+			Las fuentes y los iconos se sirven desde esta misma web. La página de verificación carga el script del captcha de Cloudflare,
+			que puede usar sus propios elementos técnicos para funcionar.
+		</p>
+	</section>
+
+	<section id="cambios">
+		<h2>Cambios en esta política</h2>
+		<p>
+			Podemos actualizarla cuando cambie el servicio o la normativa. La fecha de arriba indica la última revisión y los cambios
+			importantes los anunciaremos en el <a href="/changelog">changelog</a> o en la propia web. Si un cambio afecta a un
+			tratamiento basado en tu consentimiento, volveremos a pedírtelo.
+		</p>
+	</section>
+
+	<section id="contacto">
+		<h2>Contacto</h2>
+		<p>
+			Para cualquier duda o para ejercer tus derechos, abre un ticket en <a href="/support">soporte</a>.
+			{
+				legal.holder.email && (
+					<>
+						{" "}
+						También puedes escribir a <a href={`mailto:${legal.holder.email}`}>{legal.holder.email}</a>.
+					</>
+				)
+			}
+		</p>
+	</section>
+</LegalPage>

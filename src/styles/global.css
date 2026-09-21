@@ -661,3 +661,166 @@
   font-size: 0.75em;
   opacity: 0.7;
 }
+
+/* Textos legales (Términos y Privacidad): prosa larga con apartados numerados
+   automáticamente. El número de cada <h2> sale de un contador CSS, así que solo hay
+   que escribir los títulos y mantener el mismo orden que el índice (LegalPage). */
+.legal-prose {
+  counter-reset: legal;
+  color: var(--color-text-dim);
+  font-size: 15.5px;
+  line-height: 1.75;
+  overflow-wrap: anywhere;
+}
+
+.legal-prose > section {
+  scroll-margin-top: 6rem;
+}
+
+.legal-prose h2 {
+  counter-increment: legal;
+  display: flex;
+  gap: 0.6rem;
+  margin: 3rem 0 1rem;
+  font-family: var(--font-display);
+  font-size: 1.4rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  line-height: 1.25;
+  color: var(--color-text);
+}
+
+.legal-prose > section:first-child h2 {
+  margin-top: 0;
+}
+
+.legal-prose h2::before {
+  content: counter(legal) '.';
+  flex: none;
+  min-width: 1.6rem;
+  color: var(--color-brand-hover);
+}
+
+.legal-prose h3 {
+  margin: 1.75rem 0 0.5rem;
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.legal-prose p + p,
+.legal-prose p + ul,
+.legal-prose p + ol,
+.legal-prose ul + p,
+.legal-prose ol + p {
+  margin-top: 1rem;
+}
+
+.legal-prose ul,
+.legal-prose ol {
+  padding-left: 1.4rem;
+}
+
+.legal-prose ul {
+  list-style: disc;
+}
+
+.legal-prose ol {
+  list-style: decimal;
+}
+
+.legal-prose li + li {
+  margin-top: 0.45rem;
+}
+
+.legal-prose li::marker {
+  color: var(--color-text-faint);
+}
+
+.legal-prose strong {
+  color: var(--color-text);
+  font-weight: 700;
+}
+
+.legal-prose a {
+  color: var(--color-text);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-color: var(--color-text-faint);
+  transition:
+    color 0.15s,
+    text-decoration-color 0.15s;
+}
+
+.legal-prose a:hover {
+  color: var(--color-brand-hover);
+  text-decoration-color: var(--color-brand-hover);
+}
+
+.legal-prose code {
+  font-family: ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
+  font-size: 0.86em;
+  color: var(--color-text);
+  background: rgb(255 255 255 / 0.07);
+  border-radius: 5px;
+  padding: 0.12em 0.42em;
+}
+
+/* Aviso destacado dentro del texto. */
+.legal-prose .legal-note {
+  margin-top: 1rem;
+  padding: 0.85rem 1.1rem;
+  border-left: 2px solid var(--color-brand);
+  background: rgb(0 121 187 / 0.08);
+  border-radius: 0 8px 8px 0;
+  font-size: 0.95em;
+}
+
+.legal-prose .legal-note strong {
+  color: var(--color-text);
+}
+
+/* Tabla de datos: se desliza en horizontal en pantallas estrechas. */
+.legal-prose .legal-table th:first-child,
+.legal-prose .legal-table td:first-child {
+  width: 19%;
+}
+
+.legal-prose .legal-table {
+  margin-top: 1.25rem;
+  overflow-x: auto;
+  border: 1px solid var(--color-border-soft);
+  border-radius: 10px;
+}
+
+.legal-prose table {
+  width: 100%;
+  min-width: 680px;
+  border-collapse: collapse;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.legal-prose th,
+.legal-prose td {
+  padding: 0.75rem 0.9rem;
+  text-align: left;
+  vertical-align: top;
+  border-bottom: 1px solid var(--color-border-soft);
+}
+
+.legal-prose tr:last-child td {
+  border-bottom: 0;
+}
+
+.legal-prose th {
+  color: var(--color-text);
+  font-weight: 700;
+  background: rgb(255 255 255 / 0.03);
+}
+
+.legal-prose td:first-child {
+  color: var(--color-text);
+  font-weight: 600;
+}

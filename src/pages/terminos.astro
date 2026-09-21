@@ -1,0 +1,276 @@
+---
+export const prerender = true;
+
+import LegalPage from "../components/LegalPage.astro";
+import { legal } from "../lib/legal";
+
+const toc = [
+	{ id: "quienes-somos", title: "Quiénes somos y qué es SP Agency" },
+	{ id: "aceptacion", title: "Aceptación y cambios" },
+	{ id: "requisitos", title: "Quién puede usar el servicio" },
+	{ id: "cuenta", title: "Tu cuenta y el inicio de sesión" },
+	{ id: "bot", title: "El bot en tu servidor" },
+	{ id: "uso-aceptable", title: "Uso aceptable" },
+	{ id: "contenido", title: "Lo que publicas o nos envías" },
+	{ id: "asistente", title: "Asistente de IA" },
+	{ id: "soporte", title: "Soporte y tickets" },
+	{ id: "ubfb", title: "Blacklist global (UBFB) y reportes" },
+	{ id: "disponibilidad", title: "Disponibilidad y cambios del servicio" },
+	{ id: "responsabilidad", title: "Garantías y limitación de responsabilidad" },
+	{ id: "baja", title: "Suspensión y baja" },
+	{ id: "propiedad", title: "Propiedad intelectual" },
+	{ id: "ley", title: "Ley aplicable" },
+	{ id: "contacto", title: "Contacto" },
+];
+---
+
+<LegalPage
+	title="Términos del servicio"
+	description="Las condiciones para usar SP Agency: el bot de seguridad para Discord y su sitio web."
+	toc={toc}
+	other={{ href: "/privacidad", label: "Política de privacidad" }}
+>
+	<section id="quienes-somos">
+		<h2>Quiénes somos y qué es SP Agency</h2>
+		<p>
+			{legal.product} es un bot de seguridad para servidores de Discord (protección frente a raids, bots y cuentas
+			maliciosas, moderación automática, copias de seguridad y registros) junto con este sitio web: el panel de control, la
+			documentación, el soporte por tickets, el asistente de IA, el changelog y los testimonios. Lo presta
+			<strong>{legal.entity}</strong>
+			(«nosotros»).
+		</p>
+		{
+			(legal.holder.taxId || legal.holder.address || legal.holder.email) && (
+				<p>
+					Datos del titular:
+					{legal.holder.taxId && <> NIF/CIF {legal.holder.taxId}.</>}
+					{legal.holder.address && <> Domicilio: {legal.holder.address}.</>}
+					{legal.holder.email && (
+						<>
+							{" "}
+							Correo: <a href={`mailto:${legal.holder.email}`}>{legal.holder.email}</a>.
+						</>
+					)}
+				</p>
+			)
+		}
+		<p>
+			Estos términos regulan el uso de todo lo anterior. Cómo tratamos tus datos está en la
+			<a href="/privacidad">Política de privacidad</a>.
+		</p>
+	</section>
+
+	<section id="aceptacion">
+		<h2>Aceptación y cambios</h2>
+		<p>
+			Al añadir el bot a un servidor, iniciar sesión con Discord o usar cualquier parte del sitio aceptas estos términos. Si no
+			estás de acuerdo, no uses el servicio.
+		</p>
+		<p>
+			Podemos actualizar estos términos, por ejemplo cuando añadimos funciones. La fecha de arriba indica la última revisión;
+			los cambios importantes los anunciaremos en el <a href="/changelog">changelog</a> o en la propia web. Si sigues usando el
+			servicio después de un cambio, entendemos que lo aceptas.
+		</p>
+	</section>
+
+	<section id="requisitos">
+		<h2>Quién puede usar el servicio</h2>
+		<ul>
+			<li>
+				Tener la <strong>edad mínima que exige Discord</strong> para tener cuenta (13 años, o más si tu país lo establece).
+				Además, las funciones que se basan en tu consentimiento (el asistente de IA y publicar un testimonio) requieren tener al
+				menos <strong>14 años</strong>, la edad mínima para consentir el tratamiento de datos en España.
+			</li>
+			<li>
+				Cumplir los <a href="https://discord.com/terms" target="_blank" rel="noopener noreferrer">Términos de Discord</a> y sus
+				normas de la comunidad. Usar SP Agency no te exime de ellos.
+			</li>
+			<li>
+				Para añadir el bot a un servidor tienes que tener permiso para gestionarlo. Quien lo añade es responsable de haberlo
+				hecho con autorización de quien administra ese servidor.
+			</li>
+		</ul>
+	</section>
+
+	<section id="cuenta">
+		<h2>Tu cuenta y el inicio de sesión</h2>
+		<p>
+			No hay registro propio: se entra con tu cuenta de Discord. Eres responsable de lo que se haga con tu sesión, así que no la
+			compartas ni dejes tu dispositivo abierto en equipos que no sean tuyos. Puedes cerrar sesión cuando quieras y revocar el
+			acceso de SP Agency desde los ajustes de tu cuenta de Discord (Aplicaciones autorizadas).
+		</p>
+		<p>
+			Si detectas un uso no autorizado de tu sesión o un fallo de seguridad, avísanos por <a href="/support">soporte</a>.
+		</p>
+	</section>
+
+	<section id="bot">
+		<h2>El bot en tu servidor</h2>
+		<p>
+			Al añadir el bot le concedes los permisos que solicita al invitarlo (entre ellos expulsar y banear miembros, ver el
+			registro de auditoría, gestionar canales y roles, leer, enviar y gestionar mensajes y aislar temporalmente a miembros).
+			Con ellos, según cómo lo configures, el bot puede actuar <strong>de forma automática</strong>: bloquear, expulsar o banear
+			cuentas, eliminar mensajes o webhooks, restaurar canales y roles desde una copia de seguridad y avisarte por mensaje.
+		</p>
+		<div class="legal-note">
+			<strong>Es una herramienta de apoyo, no un sistema infalible.</strong> Varias detecciones son heurísticas (por ejemplo,
+			puntuar cuentas nuevas o entradas simultáneas) y pueden equivocarse. Tú decides qué se activa y con qué severidad, y eres
+			responsable de revisar los registros y de las decisiones de moderación en tu servidor.
+		</div>
+		<p>
+			Para que la protección funcione, el rol del bot debe estar por encima de los roles que tiene que poder moderar y no debe
+			perder los permisos necesarios; si dejan de cumplirse, algunas protecciones se desactivan solas y el bot lo indica en los
+			registros. Si quieres dejar de usarlo, basta con expulsarlo del servidor.
+		</p>
+	</section>
+
+	<section id="uso-aceptable">
+		<h2>Uso aceptable</h2>
+		<p>No puedes usar el servicio para:</p>
+		<ul>
+			<li>Acosar, amenazar, discriminar o vulnerar derechos de otras personas, ni para actividades ilegales.</li>
+			<li>Atacar o degradar el servicio o a otros usuarios: raids, spam, intentos de eludir los límites, escaneos, ingeniería inversa de nuestras APIs o acceso a datos que no son tuyos.</li>
+			<li>Suplantar a otra persona o hacer pasar comentarios, reportes o tickets por lo que no son.</li>
+			<li>Presentar reportes falsos o de mala fe a la blacklist global, o usar los sistemas de verificación o de soporte para fines ajenos a su propósito.</li>
+			<li>Hacer un uso abusivo del asistente de IA (automatizarlo, sortear los límites diarios o intentar que revele datos internos o de otras personas).</li>
+		</ul>
+		<p>
+			Podemos retirar contenido, limitar el acceso o expulsar al bot de un servidor si incumples estas reglas.
+		</p>
+	</section>
+
+	<section id="contenido">
+		<h2>Lo que publicas o nos envías</h2>
+		<p>
+			Eres responsable de los mensajes que envías (tickets, comentarios, preguntas al asistente) y de tener derecho a compartirlos.
+			Nos concedes el permiso limitado que necesitamos para tratarlos con la finalidad para la que los envías: atender tu
+			consulta, mostrarlos en la web cuando corresponda, moderarlos y mejorar el servicio.
+		</p>
+		<h3>Testimonios de la comunidad</h3>
+		<p>
+			Puedes dejar un comentario sobre el bot en <a href="/testimonios">Testimonios</a> con tu cuenta de Discord. Se mostrará con
+			tu nombre visible, tu usuario y tu avatar de Discord. <strong>El staff se reserva el derecho de aprobar cada comentario
+			público</strong>: hasta que se apruebe no lo verá nadie, y podemos rechazarlo o retirarlo después sin necesidad de dar
+			explicaciones (por ejemplo, si es ofensivo, engañoso, publicidad o contiene datos personales). Solo puedes tener un
+			testimonio publicado y los comentarios de la comunidad se muestran únicamente en esa página. Puedes pedir que retiremos el
+			tuyo cuando quieras por <a href="/support">soporte</a>.
+		</p>
+		<h3>Me gusta</h3>
+		<p>
+			Con sesión iniciada puedes dar «me gusta» a testimonios y entradas del changelog. Nadie puede dárselo a su propio comentario.
+		</p>
+	</section>
+
+	<section id="asistente">
+		<h2>Asistente de IA</h2>
+		<p>
+			El asistente funciona con un modelo de inteligencia artificial de un tercero (DeepSeek). <strong>Puede equivocarse</strong>
+			y no sustituye a la <a href="/docs">documentación</a> ni a nuestro equipo: comprueba lo importante. No es asesoramiento
+			profesional de ningún tipo.
+		</p>
+		<ul>
+			<li>Tus mensajes se envían al proveedor de IA para generar las respuestas. Si le pides algo sobre la configuración de tu servidor, también se le envían sus ajustes (IDs de canales, roles y usuarios de la lista blanca, prefijo, etc.).</li>
+			<li>
+				El asistente <strong>solo propone</strong> cambios de configuración: no se aplica nada hasta que los confirmas con el botón,
+				y solo si eres administrador de ese servidor. Revisa siempre lo que propone antes de confirmar: eres responsable de los
+				cambios que apruebas. Cada cambio, hecho desde el panel o desde el asistente, queda anotado con tu usuario.
+			</li>
+			<li>Las conversaciones se guardan y <strong>el staff de SP Agency puede leerlas</strong>, por ejemplo para revisar un problema o mejorar el servicio. Cada acceso queda registrado.</li>
+			<li>No puedes borrarlas tú mismo: si quieres que se eliminen, pídelo por <a href="/support">soporte</a>.</li>
+			<li>No compartas contraseñas, tokens ni datos personales. Enmascaramos los secretos más evidentes, pero no es un filtro perfecto.</li>
+			<li>Hay un límite diario de uso por persona; puede cambiar.</li>
+		</ul>
+		<p>
+			Antes de usarlo se te pide aceptar este aviso; si cambia, volveremos a pedírtelo.
+		</p>
+	</section>
+
+	<section id="soporte">
+		<h2>Soporte y tickets</h2>
+		<p>
+			Puedes abrir un ticket desde la web con tu cuenta de Discord. Cada ticket es un canal privado en el servidor de Discord de
+			SP Agency al que solo accede nuestro equipo; tú lo sigues desde la web. Al cerrarlo, guardamos una copia de la conversación
+			en tu historial, que no se puede reabrir. Respondemos en cuanto podemos, sin un plazo garantizado.
+		</p>
+	</section>
+
+	<section id="ubfb">
+		<h2>Blacklist global (UBFB) y reportes</h2>
+		<p>
+			El bot consulta la blacklist global de <a href={legal.ubfbUrl} target="_blank" rel="noopener noreferrer">UBFB</a>, un
+			servicio asociado a SP Agency, para reaccionar cuando entra a tu servidor una cuenta marcada como maliciosa (según lo que
+			hayas configurado: solo avisar y marcarla, o banearla). Con el comando <code>/report</code> puedes reportar una cuenta a
+			esa lista aportando un motivo y pruebas; esos reportes se revisan y solo debes enviar los que sean ciertos y verificables.
+		</p>
+		<p>
+			Si estás en la lista y crees que es un error, puedes apelar en <a href={legal.ubfbAppealsUrl} target="_blank" rel="noopener noreferrer">{legal.ubfbAppealsUrl.replace("https://", "")}</a>.
+		</p>
+	</section>
+
+	<section id="disponibilidad">
+		<h2>Disponibilidad y cambios del servicio</h2>
+		<p>
+			Hacemos lo posible por mantener el servicio en marcha, pero no garantizamos que esté disponible siempre ni sin errores:
+			puede haber interrupciones por mantenimiento, fallos propios, de Discord o de proveedores externos. Podemos añadir, cambiar
+			o retirar funciones (o poner límites de uso). Si algún día alguna función pasara a ser de pago, lo anunciaremos con antelación.
+		</p>
+	</section>
+
+	<section id="responsabilidad">
+		<h2>Garantías y limitación de responsabilidad</h2>
+		<p>
+			El servicio se ofrece «tal cual», sin garantías de que detecte todos los ataques, evite todos los daños o no cometa errores
+			(por ejemplo, un ban a una cuenta legítima o un raid que no se frene a tiempo). En la medida en que la ley lo permita, no
+			respondemos de daños indirectos ni de pérdidas derivadas de un uso o de una configuración inadecuados, de fallos de Discord
+			o de terceros, ni de datos, servidores o comunidades perdidos.
+		</p>
+		<p>
+			Nada de lo anterior limita los derechos que la ley te reconozca como consumidor o usuario y que no se puedan excluir por
+			contrato, ni nuestra responsabilidad por dolo o negligencia grave.
+		</p>
+	</section>
+
+	<section id="baja">
+		<h2>Suspensión y baja</h2>
+		<p>
+			Podemos suspender o retirar tu acceso, o el del bot en un servidor, si incumples estos términos o si es necesario para
+			proteger el servicio o a otras personas. Tú puedes dejar de usar el servicio en cualquier momento: cierra sesión, revoca
+			la aplicación en Discord y expulsa al bot de tu servidor. Al expulsarlo se borran los datos de configuración y registros
+			de ese servidor (ver <a href="/privacidad#conservacion">Política de privacidad</a>). Para eliminar otros datos, como tus
+			tickets o tus conversaciones con el asistente, pídelo por <a href="/support">soporte</a>.
+		</p>
+	</section>
+
+	<section id="propiedad">
+		<h2>Propiedad intelectual</h2>
+		<p>
+			El nombre, el logotipo y los contenidos de la web son de {legal.entity} o de sus licenciantes. El software del bot se
+			distribuye bajo licencia BSD de 3 cláusulas, según se indica en su repositorio. Lo que tú creas (tus mensajes, tu servidor)
+			sigue siendo tuyo.
+		</p>
+	</section>
+
+	<section id="ley">
+		<h2>Ley aplicable</h2>
+		<p>
+			Estos términos se rigen por la legislación española. Si eres consumidor, se te aplican también las normas imperativas de
+			protección del consumidor de tu país de residencia y puedes acudir a los tribunales que te correspondan. Antes de acudir a
+			ellos, escríbenos por <a href="/support">soporte</a>: preferimos resolverlo de forma amistosa.
+		</p>
+	</section>
+
+	<section id="contacto">
+		<h2>Contacto</h2>
+		<p>
+			Para cualquier duda sobre estos términos, abre un ticket en <a href="/support">soporte</a>.
+			{
+				legal.holder.email && (
+					<>
+						{" "}
+						También puedes escribir a <a href={`mailto:${legal.holder.email}`}>{legal.holder.email}</a>.
+					</>
+				)
+			}
+		</p>
+	</section>
+</LegalPage>

@@ -1,0 +1,64 @@
+---
+// Estructura común de los textos legales: cabecera con la fecha de revisión, índice
+// fijo a la izquierda (en escritorio) y el texto a la derecha. El contenido llega
+// por el slot, con un <section id> + <h2> por apartado (el índice y la numeración
+// salen de ahí: los títulos se numeran solos por CSS, ver .legal-prose).
+import Layout from "../layouts/Layout.astro";
+import Navbar from "./Navbar.astro";
+import Footer from "./Footer.astro";
+import { legal } from "../lib/legal";
+
+interface Props {
+	title: string;
+	description: string;
+	// Los apartados, en el mismo orden que las <section> del slot.
+	toc: Array<{ id: string; title: string }>;
+	// El otro texto legal, para enlazarlo al final.
+	other: { href: string; label: string };
+}
+
+const { title, description, toc, other } = Astro.props;
+---
+
+<Layout title={`${title} — ${legal.product}`} description={description}>
+	<Navbar />
+
+	<main class="mx-auto max-w-[1080px] px-4 pt-16 pb-28 sm:px-8">
+		<header class="mb-14 max-w-[720px]">
+			<div class="text-text-faint mb-3.5 text-[13px] font-bold tracking-[0.08em] uppercase">Legal</div>
+			<h1 class="font-display text-[40px] leading-[1.1] font-bold tracking-tight sm:text-[46px]">{title}</h1>
+			<p class="text-text-faint mt-4 text-sm">
+				Última actualización: <time datetime={legal.updatedIso}>{legal.updated}</time>
+			</p>
+		</header>
+
+		<div class="lg:grid lg:grid-cols-[220px_minmax(0,720px)] lg:gap-x-16">
+			<nav aria-label="Índice" class="mb-12 lg:mb-0">
+				<div class="lg:sticky lg:top-24">
+					<div class="text-text-faint mb-3 text-[13px] font-bold tracking-[0.08em] uppercase">Contenido</div>
+					<ol class="text-text-dim list-decimal space-y-1.5 pl-5 text-sm marker:text-[#6e6e6e]">
+						{
+							toc.map((item) => (
+								<li>
+									<a href={`#${item.id}`} class="hover:text-brand transition-colors">
+										{item.title}
+									</a>
+								</li>
+							))
+						}
+					</ol>
+				</div>
+			</nav>
+
+			<article class="legal-prose min-w-0">
+				<slot />
+
+				<p class="border-border-soft mt-16 border-t pt-8 text-sm">
+					Ver también: <a href={other.href}>{other.label}</a>.
+				</p>
+			</article>
+		</div>
+	</main>
+
+	<Footer />
+</Layout>

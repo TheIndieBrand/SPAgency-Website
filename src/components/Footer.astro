@@ -20,7 +20,7 @@ import { footerColumns as columns, site } from "../lib/site";
 					<div class="text-text mb-3.5 text-[13px] font-bold">{col.title}</div>
 					<div class="flex flex-col gap-2.5">
 						{col.links.map((link) => (
-							<a href={link.href} class="text-text-dim hover:text-brand text-sm font-semibold transition-colors">
+							<a href={link.href} {...(link.href.startsWith("http") ? { target: "_blank", rel: "noopener noreferrer" } : {})} class="text-text-dim hover:text-brand text-sm font-semibold transition-colors">
 								{link.label}
 							</a>
 						))}
@@ -29,8 +29,14 @@ import { footerColumns as columns, site } from "../lib/site";
 			))
 		}
 	</div>
-	<div class="border-border-soft text-text-faint mx-auto max-w-[1180px] border-t px-8 py-6 text-[13px]">
-		© 2026 {site.name}. Todos los derechos reservados.
+	<div
+		class="border-border-soft text-text-faint mx-auto flex max-w-[1180px] flex-wrap items-center justify-between gap-x-6 gap-y-2 border-t px-8 py-6 text-[13px]"
+	>
+		<span>© 2026 {site.name}. Todos los derechos reservados.</span>
+		<nav aria-label="Legal" class="flex gap-5">
+			<a href={site.termsUrl} class="hover:text-brand transition-colors">Términos del servicio</a>
+			<a href={site.privacyUrl} class="hover:text-brand transition-colors">Política de privacidad</a>
+		</nav>
 	</div>
 </footer>
 
