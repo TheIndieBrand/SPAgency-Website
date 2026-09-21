@@ -89,4 +89,18 @@ export const testimonials: Testimonial[] = [
 		comment:
 			"Es un bot con mucha historia y experiencia detrás. El saber hacer y gestionar, SP lo lleva dentro. Lo recomiendo.",
 	},
+	{
+		username: "vamp1re",
+		userId: "1544516984870404197",
+		role: "Cybersecurity Ingeneer",
+		avatar: "/avatars/vampire.png",
+		comment: "meti este bot a mi servidor y me senti tan relajado.. como si estuviera en un spa"
+	},
+	{
+		username: "SP Agency",
+		userId: "0",
+		role: "SP Agency @ Official Bot",
+		avatar: "/avatars/spagency.png",
+		comment: "ola"
+	}
 ];
