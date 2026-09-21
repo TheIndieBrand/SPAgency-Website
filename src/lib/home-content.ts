@@ -46,17 +46,17 @@ export const features: Feature[] = [
 	{
 		icon: "bi-broadcast-pin",
 		title: "Detección de raids en tiempo real",
-		desc: "Analiza patrones de entrada y bloquea oleadas de cuentas antes de que actúen.",
+		desc: "Frena ráfagas de canales, roles y bans masivos y banea a quien las causa.",
 	},
 	{
 		icon: "bi-patch-check",
 		title: "Verificación de cuentas",
-		desc: "Filtra cuentas nuevas, sin avatar o sospechosas con reglas configurables.",
+		desc: "Puntúa cuentas nuevas o sospechosas al unirse y exige verificación con captcha.",
 	},
 	{
 		icon: "bi-funnel",
-		title: "Anti-spam inteligente",
-		desc: "Detecta mensajes masivos, menciones y enlaces maliciosos al instante.",
+		title: "Automoderación",
+		desc: "Anti-flood, mayúsculas, emojis y ghost-pings, con sanciones que escalan.",
 	},
 	{
 		icon: "bi-file-earmark-text",
@@ -64,9 +64,9 @@ export const features: Feature[] = [
 		desc: "Historial detallado de cada acción para auditar lo que pasó y cuándo.",
 	},
 	{
-		icon: "bi-cpu",
-		title: "Auto-moderación con IA",
-		desc: "Modelos entrenados para distinguir tráfico legítimo de ataques coordinados.",
+		icon: "bi-person-fill-x",
+		title: "Cuentas maliciosas",
+		desc: "Comprueba cada cuenta al unirse contra la lista global de usuarios maliciosos.",
 	},
 	{
 		icon: "bi-speedometer2",

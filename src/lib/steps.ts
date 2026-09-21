@@ -19,7 +19,7 @@ export const steps: Step[] = [
 	},
 	{
 		n: "3",
-		title: "Protegido 24/7",
+		title: "Protegido",
 		short: "Protegido",
 		desc: "Detección y respuesta automática desde el primer minuto.",
 	},
