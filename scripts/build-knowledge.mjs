@@ -6,6 +6,9 @@
 //   · home        → src/lib/home-content.ts, steps.ts, site.ts (datos)
 //   · dashboard   → los propios .astro de src/pages/dashboard (se extraen los
 //                   títulos, interruptores y campos de cada ajuste)
+//   · el resto de páginas públicas → se descubren solas recorriendo src/pages
+//                   (términos, privacidad, testimonios…); una página nueva entra
+//                   sin tocar este script
 // así que cada cambio de la web llega al asistente con solo volver a ejecutarlo.
 // El changelog no pasa por aquí: vive en SQLite y el asistente lo lee en vivo.
 //
@@ -151,6 +154,7 @@ function extractDashboard(source) {
 		} else if (name === "SettingCard") {
 			flush();
 			lines.push(`\n## ${a.title}${a.description ? `\n\n${a.description}\n` : "\n"}`);
+			if (a.name) lines.push("- Se activa o desactiva con el interruptor del bloque.");
 		} else if (name === "Toggle") {
 			flush();
 			lines.push(`- **${a.label}** (interruptor)${a.description ? `: ${a.description}` : ""}`);
@@ -189,6 +193,91 @@ for (const name of readdirSync(dashboardDir).filter((f) => f.endsWith(".astro") 
 		kind: "dashboard",
 		body: `Sección **${title}** del dashboard. Se abre en ${site.dashboardUrl}, eligiendo el servidor y entrando en ${title} del menú lateral (hace falta ser administrador del servidor y que SP Agency esté en él).\n\n${body}`,
 	});
+}
+
+// ── Resto de páginas públicas: se descubren recorriendo src/pages ───────────
+// Cualquier .astro nuevo entra solo, con el texto que tenga escrito en su marcado.
+// Se salta lo que no es una página pública de contenido (API, sesión, staff,
+// verificación, rutas dinámicas), lo que ya se genera arriba (la misma URL no se
+// repite) y lo que lleve `export const knowledge = false;` en su cabecera.
+
+const SKIP = [/^api\//, /^auth\//, /^staff\//, /^verify\//, /^dashboard\//, /^docs\//, /^changelog\/admin/, /^404/, /^black-hole/, /\[/];
+
+// Quita los bloques {…} de JavaScript del marcado (con llaves anidadas), tras
+// resolver los {legal.x} simples, que sí son texto.
+function stripExpressions(html, values) {
+	html = html.replace(/\{legal\.(\w+)\}/g, (m, key) => (typeof values[key] === "string" ? values[key] : ""));
+	let out = "";
+	let depth = 0;
+	for (const ch of html) {
+		if (ch === "{") depth++;
+		else if (ch === "}") depth = Math.max(0, depth - 1);
+		else if (!depth) out += ch;
+	}
+	return out;
+}
+
+function markupToMarkdown(source, values) {
+	let body = source
+		.replace(/^---[\s\S]*?\n---/, "")
+		.replace(/<script\b[\s\S]*?<\/script>/g, "")
+		.replace(/<style\b[\s\S]*?<\/style>/g, "")
+		.replace(/<!--[\s\S]*?-->/g, "");
+	body = stripExpressions(body, values)
+		.replace(/<h[12]\b[^>]*>/g, "\n\n## ")
+		.replace(/<h3\b[^>]*>/g, "\n\n### ")
+		.replace(/<\/h[1-3]>/g, "\n\n")
+		.replace(/<li\b[^>]*>/g, "\n- ")
+		.replace(/<\/t[dh]>\s*<t[dh]\b[^>]*>/g, " | ")
+		.replace(/<tr\b[^>]*>/g, "\n- ")
+		.replace(/<\/(p|div|section|ul|ol|table|thead|tbody|article|header|button)>|<br\s*\/?>/g, "\n")
+		.replace(/<[^>]+>/g, " ")
+		.replace(/&nbsp;/g, " ")
+		.replace(/&amp;/g, "&")
+		.replace(/&lt;/g, "<")
+		.replace(/&gt;/g, ">")
+		.replace(/&quot;/g, '"')
+		.replace(/&#39;/g, "'");
+	return body
+		.split("\n")
+		.map((line) => line.replace(/[ \t]+/g, " ").trim())
+		.filter((line) => !/^#{2,3}$/.test(line))
+		.join("\n")
+		.replace(/\n{3,}/g, "\n\n")
+		.trim();
+}
+
+const { legal } = await load("src/lib/legal.ts");
+const pagesDir = join(root, "src/pages");
+const taken = new Set(sitemap.map((p) => p.url));
+
+for (const rel of readdirSync(pagesDir, { recursive: true })
+	.map((p) => String(p).replaceAll("\\", "/"))
+	.filter((p) => p.endsWith(".astro"))
+	.sort()) {
+	if (SKIP.some((re) => re.test(rel))) continue;
+
+	const url = "/" + rel.replace(/\.astro$/, "").replace(/(^|\/)index$/, "");
+	if (url === "/" || taken.has(url)) continue;
+
+	const source = readFileSync(join(pagesDir, rel), "utf8");
+	if (/export\s+const\s+knowledge\s*=\s*false/.test(source)) continue;
+
+	const head = source.match(/<(?:Layout|LegalPage)\b([^>]*)>/);
+	const props = head ? attrs(head[1]) : {};
+	const title = (props.title ?? rel.replace(/\.astro$/, "")).replace(/\s+—\s+SP Agency$/, "");
+	const body = markupToMarkdown(source, legal);
+	if (!body && !props.description) continue;
+
+	page({
+		file: `page-${rel.replace(/\.astro$/, "").replace(/\//g, "-")}.md`,
+		title,
+		url,
+		summary: props.description ?? "",
+		kind: "site",
+		body: body || props.description,
+	});
+	taken.add(url);
 }
 
 // ── Mapa del sitio (va en el prompt de sistema: corto y siempre igual) ──────
