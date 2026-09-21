@@ -24,15 +24,19 @@ function getDb(): DatabaseSync {
 		);
 		CREATE INDEX IF NOT EXISTS setting_changes_guild ON setting_changes (guild_id, id DESC);
 	`);
+	// Bases creadas antes de distinguir de dónde venía el cambio.
+	const columns = (db.prepare("PRAGMA table_info(setting_changes)").all() as unknown as { name: string }[]).map((c) => c.name);
+	if (!columns.includes("source")) db.exec("ALTER TABLE setting_changes ADD COLUMN source TEXT NOT NULL DEFAULT 'dashboard'");
 	return db;
 }
 
-export function recordSettingChange(change: { guildId: string; userId: string; key: string; old: unknown; value: unknown }): void {
+// `source`: el dashboard (autoguardado) o el asistente de IA (tras confirmar el usuario).
+export function recordSettingChange(change: { guildId: string; userId: string; key: string; old: unknown; value: unknown; source?: "dashboard" | "assistant" }): void {
 	// Que no se pueda anotar no debe impedir el cambio (ya está hecho): se avisa en el log.
 	try {
 		getDb()
-			.prepare("INSERT INTO setting_changes (guild_id, user_id, key, old_value, new_value, at) VALUES (?, ?, ?, ?, ?, ?)")
-			.run(change.guildId, change.userId, change.key, JSON.stringify(change.old ?? null), JSON.stringify(change.value ?? null), new Date().toISOString());
+			.prepare("INSERT INTO setting_changes (guild_id, user_id, key, old_value, new_value, at, source) VALUES (?, ?, ?, ?, ?, ?, ?)")
+			.run(change.guildId, change.userId, change.key, JSON.stringify(change.old ?? null), JSON.stringify(change.value ?? null), new Date().toISOString(), change.source ?? "dashboard");
 	} catch (error) {
 		console.error("[audit] no se pudo anotar el cambio:", error instanceof Error ? error.message : error);
 	}

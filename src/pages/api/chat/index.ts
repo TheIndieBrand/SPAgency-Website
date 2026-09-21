@@ -1,5 +1,6 @@
 import type { APIRoute } from "astro";
 import { chatTurn } from "../../../lib/chat/run";
+import { tokenFromCookies } from "../../../lib/dashboard-guard";
 import { requireUser } from "../../../lib/session";
 
 export const prerender = false;
@@ -15,5 +16,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
 	const message = typeof body?.message === "string" ? body.message : "";
 	const conversationId = typeof body?.conversationId === "string" && body.conversationId ? body.conversationId : undefined;
 
-	return chatTurn({ user: auth.user, conversationId, message, signal: request.signal });
+	// El token de Discord solo sirve para comprobar sus servidores; nunca llega al modelo.
+	const { token } = tokenFromCookies(cookies);
+	return chatTurn({ user: auth.user, accessToken: token ?? "", conversationId, message, signal: request.signal });
 };

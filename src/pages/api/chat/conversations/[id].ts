@@ -1,5 +1,5 @@
 import type { APIRoute } from "astro";
-import { getConversation, listMessages, listProposals } from "../../../../lib/chat/db";
+import { getConversation, getConversationGuild, listMessages, listProposals } from "../../../../lib/chat/db";
 import { messageViews } from "../../../../lib/chat/view";
 import { json, requireUser } from "../../../../lib/session";
 
@@ -20,6 +20,7 @@ export const GET: APIRoute = async ({ request, cookies, params }) => {
 		id: conversation.id,
 		title: conversation.title,
 		ticketId: conversation.ticketId,
+		guild: getConversationGuild(id),
 		messages: messageViews(listMessages(id), listProposals(id)),
 	});
 };

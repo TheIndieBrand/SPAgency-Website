@@ -1,6 +1,6 @@
 import OpenAI from "openai";
 import { MAX_OUTPUT_TOKENS, llmSettings } from "./config";
-import { TICKET_TOOL, TICKET_TOOL_NAME, ticketDraftMessages, type ChatMessage } from "./prompt";
+import { SETTINGS_TOOL, TICKET_TOOL, TICKET_TOOL_NAME, ticketDraftMessages, type ChatMessage } from "./prompt";
 import { parseTicketDraft, type TicketDraft } from "./ticket";
 import { estimateUsage, type TokenUsage } from "./usage";
 
@@ -45,7 +45,7 @@ export async function* streamCompletion(messages: ChatMessage[], signal: AbortSi
 			stream_options: { include_usage: true },
 			max_tokens: MAX_OUTPUT_TOKENS,
 			temperature: 0.3,
-			tools: [TICKET_TOOL],
+			tools: [TICKET_TOOL, SETTINGS_TOOL],
 		},
 		{ signal },
 	);
@@ -60,7 +60,10 @@ export async function* streamCompletion(messages: ChatMessage[], signal: AbortSi
 
 		// Las llamadas a herramientas llegan troceadas: el nombre en el primer
 		// fragmento y los argumentos (JSON) repartidos en los siguientes.
+		// Solo se atiende la primera llamada (índice 0): mezclar los argumentos de
+		// varias daría un JSON roto.
 		for (const call of delta?.tool_calls ?? []) {
+			if ((call.index ?? 0) !== 0) continue;
 			if (call.function?.name) toolName = call.function.name;
 			if (call.function?.arguments) toolArgs += call.function.arguments;
 		}

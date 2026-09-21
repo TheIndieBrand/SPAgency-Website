@@ -125,6 +125,12 @@ if (!user && !embed) return Astro.redirect("/auth/discord/login?next=/support/as
 							</div>
 							<p class="text-text-faint mt-5 text-[12.5px]">
 								Comandos:
+								<button type="button" data-command="/servidor" class="text-text-dim hover:text-brand font-mono font-semibold transition-colors">/servidor</button>
+								<span class="mx-1">·</span>
+								<button type="button" data-command="/config" class="text-text-dim hover:text-brand font-mono font-semibold transition-colors">/config</button>
+								<span class="mx-1">·</span>
+								<button type="button" data-command="/panico" class="text-text-dim hover:text-brand font-mono font-semibold transition-colors">/panico</button>
+								<span class="mx-1">·</span>
 								<button type="button" data-command="/usage" class="text-text-dim hover:text-brand font-mono font-semibold transition-colors">/usage</button>
 								<span class="mx-1">·</span>
 								<button type="button" data-command="/ticket" class="text-text-dim hover:text-brand font-mono font-semibold transition-colors">/ticket</button>
@@ -139,7 +145,8 @@ if (!user && !embed) return Astro.redirect("/auth/discord/login?next=/support/as
 							<ul class="text-text-dim marker:text-text-faint mb-5 list-disc space-y-2.5 pl-5 text-sm leading-relaxed">
 								<li>Este asistente funciona con <strong class="text-text">IA</strong> (modelo DeepSeek) y puede equivocarse. Comprueba lo importante en la <a href="/docs" target="_blank" class="text-brand hover:text-brand-hover underline underline-offset-2">documentación</a>.</li>
 								<li><strong class="text-text">El staff de SP Agency puede leer tus conversaciones</strong>, por ejemplo para revisar un problema o mejorar el servicio.</li>
-								<li>Tus mensajes se envían al proveedor de IA (DeepSeek) para generar las respuestas.</li>
+								<li>Tus mensajes se envían al proveedor de IA (DeepSeek) para generar las respuestas. Si le pides algo sobre la configuración de tu servidor, también se le envían sus ajustes (IDs de canales, roles y usuarios de la lista blanca, prefijo, etc.).</li>
+								<li>Si le pides cambiar la configuración de tu servidor, el asistente <strong class="text-text">solo lo propone</strong>: no se aplica nada hasta que lo confirmas con el botón, y solo si eres administrador de ese servidor.</li>
 								<li>Las conversaciones se guardan y <strong class="text-text">no puedes borrarlas tú</strong>. Si quieres que se eliminen, pídeselo al staff abriendo un ticket.</li>
 								<li>No compartas contraseñas, tokens ni datos personales.</li>
 							</ul>
@@ -163,6 +170,7 @@ if (!user && !embed) return Astro.redirect("/auth/discord/login?next=/support/as
 					</div>
 
 					<div id="composer-wrap" class="pb-3">
+						<p id="guild-chip" hidden class="text-text-dim mb-1.5 text-[12.5px]"><i class="bi bi-hdd-network mr-1"></i>Servidor de esta conversación: <strong id="guild-name" class="text-brand"></strong> <span class="text-text-faint">· cámbialo con /servidor</span></p>
 						<p id="status" role="status" class="mb-1.5 min-h-4 text-[13px] text-red-400" />
 						<div id="cmd-menu" hidden class="border-border bg-bg-soft mb-2 overflow-hidden rounded-xl border shadow-[0_12px_30px_-12px_rgba(0,0,0,0.7)]"></div>
 						<form id="composer" class="border-border bg-bg-soft focus-within:border-brand flex items-end gap-2 rounded-xl border p-2 transition-colors">

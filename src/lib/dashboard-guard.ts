@@ -58,6 +58,15 @@ async function botGuildIds(fresh = false): Promise<Cached<Set<string>>> {
 	return pendingBot;
 }
 
+// Servidores que el usuario puede gestionar (administrador y con el bot dentro), con la
+// misma caché que el resto. Null si Discord rechaza la sesión.
+export async function listAccessibleGuilds(accessToken: string): Promise<DiscordGuild[] | null> {
+	const guilds = await userGuilds(accessToken);
+	if (!guilds) return null;
+	const bots = await botGuildIds();
+	return guilds.value.filter((g) => hasAdminAccess(g) && bots.value.has(g.id)).sort((a, b) => a.name.localeCompare(b.name));
+}
+
 export type AccessResult = { guild: DiscordGuild } | { error: "unauthorized" | "forbidden" };
 
 export async function resolveGuildAccess(accessToken: string, guildId: string | undefined): Promise<AccessResult> {
@@ -78,7 +87,7 @@ export async function resolveGuildAccess(accessToken: string, guildId: string | 
 	return { guild };
 }
 
-function tokenFromCookies(cookies: AstroCookies): { cookieName: string; token: string | null } {
+export function tokenFromCookies(cookies: AstroCookies): { cookieName: string; token: string | null } {
 	const cookieName = process.env.SESSION_COOKIE_NAME || "spa_session";
 	const raw = cookies.get(cookieName)?.value;
 	if (!raw) return { cookieName, token: null };

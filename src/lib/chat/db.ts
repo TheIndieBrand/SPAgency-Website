@@ -31,8 +31,14 @@ export interface StoredMessage {
 	proposalId: string | null;
 }
 
+// "ticket": abrir un ticket con el staff. "settings": cambiar ajustes del servidor
+// (`payload` guarda el servidor y los cambios ya validados, en JSON).
+export type ProposalKind = "ticket" | "settings";
+
 export interface Proposal {
 	id: string;
+	kind: ProposalKind;
+	payload: string | null;
 	conversationId: string;
 	userId: string;
 	subject: string;
@@ -85,6 +91,15 @@ function getDb(): DatabaseSync {
 			created_at TEXT NOT NULL
 		);
 
+		-- Servidor del dashboard sobre el que actúa el asistente EN ESTA conversación. No se
+		-- arrastra a otras: con varios servidores, cada conversación pregunta cuál es.
+		DROP TABLE IF EXISTS chat_guild;
+		CREATE TABLE IF NOT EXISTS conversation_guild (
+			conversation_id TEXT PRIMARY KEY REFERENCES conversations (id) ON DELETE CASCADE,
+			guild_id TEXT NOT NULL,
+			guild_name TEXT NOT NULL
+		);
+
 		CREATE TABLE IF NOT EXISTS consents (
 			user_id TEXT NOT NULL,
 			version TEXT NOT NULL,
@@ -119,6 +134,9 @@ function getDb(): DatabaseSync {
 	for (const column of ["requests", "prompt_tokens", "cached_tokens", "completion_tokens"]) {
 		if (!columns.has(column)) db.exec(`ALTER TABLE usage_daily ADD COLUMN ${column} INTEGER NOT NULL DEFAULT 0`);
 	}
+	const proposalColumns = new Set((db.prepare("PRAGMA table_info(proposals)").all() as unknown as { name: string }[]).map((c) => c.name));
+	if (!proposalColumns.has("kind")) db.exec("ALTER TABLE proposals ADD COLUMN kind TEXT NOT NULL DEFAULT 'ticket'");
+	if (!proposalColumns.has("payload")) db.exec("ALTER TABLE proposals ADD COLUMN payload TEXT");
 	return db;
 }
 
@@ -232,6 +250,8 @@ export function recentTurns(conversationId: string, limit: number): { role: "use
 
 interface ProposalRow {
 	id: string;
+	kind: string;
+	payload: string | null;
 	conversation_id: string;
 	user_id: string;
 	subject: string;
@@ -243,6 +263,8 @@ interface ProposalRow {
 
 const toProposal = (r: ProposalRow): Proposal => ({
 	id: r.id,
+	kind: r.kind === "settings" ? "settings" : "ticket",
+	payload: r.payload,
 	conversationId: r.conversation_id,
 	userId: r.user_id,
 	subject: r.subject,
@@ -252,11 +274,18 @@ const toProposal = (r: ProposalRow): Proposal => ({
 	createdAt: r.created_at,
 });
 
-export function createProposal(input: { conversationId: string; userId: string; subject: string; summary: string }): string {
+export function createProposal(input: {
+	conversationId: string;
+	userId: string;
+	subject: string;
+	summary: string;
+	kind?: ProposalKind;
+	payload?: unknown;
+}): string {
 	const id = newId();
 	getDb()
-		.prepare("INSERT INTO proposals (id, conversation_id, user_id, subject, summary, status, created_at) VALUES (?, ?, ?, ?, ?, 'pending', ?)")
-		.run(id, input.conversationId, input.userId, input.subject, input.summary, now());
+		.prepare("INSERT INTO proposals (id, conversation_id, user_id, subject, summary, status, created_at, kind, payload) VALUES (?, ?, ?, ?, ?, 'pending', ?, ?, ?)")
+		.run(id, input.conversationId, input.userId, input.subject, input.summary, now(), input.kind ?? "ticket", input.payload === undefined ? null : JSON.stringify(input.payload));
 	return id;
 }
 
@@ -277,6 +306,21 @@ export function moveProposal(id: string, from: ProposalStatus, to: ProposalStatu
 		.prepare("UPDATE proposals SET status = ?, ticket_id = COALESCE(?, ticket_id) WHERE id = ? AND status = ?")
 		.run(to, ticketId ?? null, id, from);
 	return Number(result.changes) === 1;
+}
+
+// ── Servidor elegido ────────────────────────────────────────────────────────
+
+export function getConversationGuild(conversationId: string): { id: string; name: string } | null {
+	const row = getDb().prepare("SELECT guild_id, guild_name FROM conversation_guild WHERE conversation_id = ?").get(conversationId) as unknown as
+		| { guild_id: string; guild_name: string }
+		| undefined;
+	return row ? { id: row.guild_id, name: row.guild_name } : null;
+}
+
+export function setConversationGuild(conversationId: string, guild: { id: string; name: string }): void {
+	getDb()
+		.prepare("INSERT INTO conversation_guild (conversation_id, guild_id, guild_name) VALUES (?, ?, ?) ON CONFLICT(conversation_id) DO UPDATE SET guild_id = excluded.guild_id, guild_name = excluded.guild_name")
+		.run(conversationId, guild.id, guild.name);
 }
 
 // ── Consentimiento y uso ────────────────────────────────────────────────────

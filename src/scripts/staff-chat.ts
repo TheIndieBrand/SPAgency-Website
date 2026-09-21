@@ -18,7 +18,7 @@ interface View {
 	html: string;
 	at: string;
 	units?: number;
-	proposal: { subject: string; status: string } | null;
+	proposal: { kind?: string; subject: string; status: string } | null;
 }
 
 const root = document.getElementById("staff-chat");
@@ -82,7 +82,7 @@ function init(root: HTMLElement) {
 				const tone = m.role === "user" ? "text-text" : "text-text-dim";
 				const units = m.units ? ` · ${Math.round(m.units)} u.` : "";
 				const proposal = m.proposal
-					? `<p class="text-text-faint mt-1 text-[12px]">Propuesta de ticket «${escapeHtml(m.proposal.subject)}» (${escapeHtml(m.proposal.status)})</p>`
+					? `<p class="text-text-faint mt-1 text-[12px]">${m.proposal.kind === "settings" ? "Propuesta de cambios" : "Propuesta de ticket"} «${escapeHtml(m.proposal.subject)}» (${escapeHtml(m.proposal.status)})</p>`
 					: "";
 				return `<div>
 					<div class="text-text-faint mb-1 text-[11.5px] font-bold tracking-[0.06em] uppercase">${who}<span class="font-normal normal-case tracking-normal"> · ${date(m.at)}${units}</span></div>

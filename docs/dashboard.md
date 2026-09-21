@@ -46,7 +46,7 @@ Ojo: esto no sustituye al bot. Las protecciones leen esas filas en el bot, así 
 2. **Registro de ajustes** (`src/lib/db/settings.ts`): fuente única de qué se puede cambiar, con tabla, columna, tipo y límites. La clave del cliente **solo elige una entrada del registro**; nombres de tabla y columna no vienen nunca del navegador y todos los valores van parametrizados. Tipos: booleano, opción, entero, duración (`30d`, mismo formato que el parser del bot), ID de Discord y texto; las listas se cambian de elemento en elemento (`array_append` / `array_remove`), no enteras, para no pisar cambios concurrentes.
 3. **Reglas entre ajustes**: la verificación no se activa sin rol, y el rol no se quita con la verificación activa.
 4. **Modo Pánico**: al encenderlo se fija `raidmode_activated_at` (UTC) y al apagarlo se pone a `NULL`. El auto-apagado del bot (`RaidmodeExpiry`) se programa a partir de esa fecha: sin ella el modo no se apagaría nunca. Volver a encenderlo no reinicia la cuenta atrás.
-5. **Auditoría** (`src/lib/audit.ts`, SQLite `data/audit.db`, `AUDIT_DB_PATH`): quién cambió qué, con valor anterior y nuevo. La web no puede escribir en los registros del bot, así que estos cambios quedan aquí.
+5. **Auditoría** (`src/lib/audit.ts`, SQLite `data/audit.db`, `AUDIT_DB_PATH`): quién cambió qué, con valor anterior y nuevo, y si vino del dashboard o del asistente de IA (`source`, ver [`assistant.md`](assistant.md)). La web no puede escribir en los registros del bot, así que estos cambios quedan aquí.
 
 Códigos de error: `400` petición o ajuste desconocido, `401` sin sesión, `403` sin acceso al servidor, `404` servidor sin configuración, `415` no es JSON, `422` valor no válido (con el motivo en `message`), `503` base no disponible.
 
@@ -56,7 +56,7 @@ Cada control con `name` guarda al cambiar; los números, también al dejar de te
 
 ## Registros y cifras
 
-`listActivity` une `server_event_logs` y `bot_action_logs`. La base guarda el tipo y los datos, no el texto: `describeActivity` (`src/lib/db/activity.ts`) traduce cada tipo a una frase. Un tipo que no conozca se muestra tal cual, para no esconder eventos si el bot es más nuevo que la web. Las cifras de General (`getOverview`) cuentan "hoy" y "ayer" en hora de Madrid.
+`listActivity` une `server_event_logs` y `bot_action_logs`. La base guarda el tipo y los datos, no el texto: `describeActivity` (`src/lib/db/activity.ts`) traduce cada tipo a una frase. Un tipo que no conozca se muestra tal cual, para no esconder eventos si el bot es más nuevo que la web. Las cifras de General (`getOverview`) cuentan "hoy" y "ayer" en hora de Madrid. Las tarjetas de la lista de servidores (`/dashboard`) muestran «ataques frenados hoy» (`raidDetected`) y «módulos activos» (los seis de General) con una sola consulta para todos los servidores (`getGuildCardStats`, vía `/api/dashboard/guilds`); sin datos, quedan apagadas con «—».
 
 ## Pendiente
 

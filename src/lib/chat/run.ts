@@ -7,40 +7,30 @@ import {
 	CONTEXT_CHUNKS,
 	HISTORY_MESSAGES,
 	MAX_INPUT_CHARS,
-	RATE_PER_MINUTE,
 	chatConfigured,
 } from "./config";
 import { addMessage, createConversation, createProposal, getConversation, hasConsent, recentTurns } from "./db";
+import { listAccessibleGuilds } from "../dashboard-guard";
+import { ASK_GUILD_TEXT, buildSettingsProposal, isHowTo, loadConfigFor, noGuildContext, resolveGuild, settingsContext, wantsSettings, type GuildRef } from "./dashboard";
+import type { GuildConfig } from "../db/guild-config";
 import { draftTicket, streamCompletion } from "./llm";
 import { search } from "./knowledge";
-import { buildMessages, messageChars } from "./prompt";
+import { SETTINGS_TOOL_NAME, buildMessages, messageChars } from "./prompt";
 import { redactSecrets } from "./redact";
 import { parseTicketDraft } from "./ticket";
 import { estimateUsage, recordUsage, usageState, type TokenUsage } from "./usage";
+import { withinRate } from "./rate";
 
 // Un turno del chat: valida, recupera contexto, llama al modelo en streaming y
 // guarda el resultado. La respuesta al navegador es un flujo SSE con estos
 // eventos:
 //   meta      { conversationId }
 //   html      { html }            → texto acumulado ya formateado y saneado
-//   proposal  { id, subject, summary }
+//   proposal  { id, kind, subject, summary }
 //   done      { usage }
 //   error     { message }
 
 const active = new Set<string>(); // usuarios con una generación en curso
-const recent = new Map<string, number[]>(); // marcas de tiempo por usuario (límite por minuto)
-
-function withinRate(userId: string): boolean {
-	const cutoff = Date.now() - 60_000;
-	const stamps = (recent.get(userId) ?? []).filter((t) => t > cutoff);
-	if (stamps.length >= RATE_PER_MINUTE) {
-		recent.set(userId, stamps);
-		return false;
-	}
-	stamps.push(Date.now());
-	recent.set(userId, stamps);
-	return true;
-}
 
 // Comprobaciones previas comunes al chat y a los comandos que gastan tokens.
 function guardBase(user: DiscordUser): Response | null {
@@ -75,10 +65,12 @@ function guardBudget(user: DiscordUser): Response | null {
 	return null;
 }
 
+const DEFAULT_SETTINGS_TEXT = "Te he preparado estos cambios. Revísalos y confírmalos si son lo que querías:";
 const DEFAULT_TICKET_TEXT = "No he encontrado la respuesta. Puedo abrir un ticket para que el equipo te ayude; revisa el resumen y confírmalo:";
 
 export function chatTurn(input: {
 	user: DiscordUser;
+	accessToken: string;
 	conversationId?: string;
 	message: string;
 	signal: AbortSignal;
@@ -122,7 +114,22 @@ export function chatTurn(input: {
 			let text = "";
 			let usage: TokenUsage | null = null;
 			let toolArguments: string | null = null;
+			let settingsArguments: string | null = null;
 			let promptChars = 0;
+			// Servidor y configuración sobre los que se puede proponer cambios.
+			const ctx: { target: { guild: GuildRef; config: GuildConfig } | null; reason: "none" | "multiple" | "unavailable" } = { target: null, reason: "none" };
+			const findTarget = async () => {
+				if (ctx.target) return ctx.target;
+				const selection = await resolveGuild(input.accessToken, conversation);
+				if (!selection.ok) {
+					ctx.reason = selection.reason;
+					return null;
+				}
+				const config = await loadConfigFor(selection.guild);
+				if (!config) ctx.reason = "unavailable";
+				else ctx.target = { guild: selection.guild, config };
+				return ctx.target;
+			};
 
 			try {
 				send("meta", { conversationId: conversation });
@@ -138,7 +145,29 @@ export function chatTurn(input: {
 				const lastUser = [...history].reverse().find((m) => m.role === "user")?.content ?? "";
 				const hits = search(question.length < 40 ? `${lastUser} ${question}` : question, CONTEXT_CHUNKS);
 
-				const messages = buildMessages(history, question, hits);
+				// Los ajustes del servidor solo se mandan si el mensaje habla de ajustes.
+				let settingsBlock = "";
+				if (wantsSettings(question.length < 40 ? `${lastUser} ${question}` : question)) {
+					const found = await findTarget();
+
+					// Varios servidores y ninguno elegido en esta conversación: no se adivina ni se
+					// llama al modelo (no gasta cupo). Se pregunta cuál, con botones, y el cliente
+					// repite la petición cuando el usuario elige. Las preguntas de «cómo se hace» se
+					// contestan con la documentación sin pedir servidor.
+					if (!found && ctx.reason === "multiple" && !isHowTo(question)) {
+						const list = (await listAccessibleGuilds(input.accessToken).catch(() => null)) ?? [];
+						addMessage({ conversationId: conversation, role: "assistant", content: ASK_GUILD_TEXT });
+						send("html", { html: renderMessageHtml(ASK_GUILD_TEXT) });
+						send("servers", { guilds: list.map((g) => ({ id: g.id, name: g.name })), retry: question });
+						send("done", { usage: usageState(user.id) });
+						return;
+					}
+
+					if (found) send("guild", { id: found.guild.id, name: found.guild.name });
+					settingsBlock = found ? settingsContext(found.guild, found.config) : noGuildContext(ctx.reason);
+				}
+
+				const messages = buildMessages(history, question, hits, settingsBlock);
 				promptChars = messageChars(messages);
 
 				let lastSent = 0;
@@ -154,23 +183,55 @@ export function chatTurn(input: {
 					} else {
 						usage = event.usage;
 						if (event.toolCall?.name === "offer_ticket") toolArguments = event.toolCall.arguments;
+						if (event.toolCall?.name === SETTINGS_TOOL_NAME) settingsArguments = event.toolCall.arguments;
 					}
 				}
 
 				const draft = toolArguments ? parseTicketDraft(toolArguments) : null;
-				if (!text.trim() && !draft) throw new Error("empty_completion");
 
-				let proposalId: string | null = null;
-				if (draft) {
+				// Cambios propuestos por el modelo: se validan y se guardan como propuesta; no se
+				// aplica nada hasta que el usuario confirme.
+				let settings: ReturnType<typeof buildSettingsProposal> | null = null;
+				if (settingsArguments) {
+					let changes: unknown = null;
+					try {
+						changes = (JSON.parse(settingsArguments) as { changes?: unknown }).changes;
+					} catch {
+						changes = null;
+					}
+					const found = await findTarget();
+					settings = found
+						? buildSettingsProposal(found.guild, found.config, changes)
+						: { problems: [ctx.reason === "multiple" ? "Elige primero el servidor con /servidor." : "No he podido acceder a la configuración de tu servidor."] };
+					const list = settings.problems.map((p) => `- ${p}`).join("\n");
+					if (!settings.payload) {
+						text = `${text.trim() ? `${text.trim()}\n\n` : ""}No he preparado ningún cambio:\n\n${list || "- No he entendido qué cambiar."}`;
+					} else if (list) {
+						// Propuesta válida, pero algo de lo pedido se quedó fuera: se dice.
+						text = `${text.trim() || DEFAULT_SETTINGS_TEXT}\n\nNo he incluido:\n\n${list}`;
+					}
+				}
+
+				if (!text.trim() && !draft && !settings?.payload) throw new Error("empty_completion");
+
+				let proposal: { id: string; kind: "ticket" | "settings"; guild?: string; subject: string; summary: string } | null = null;
+				if (settings?.payload) {
+					const { subject, summary, payload } = settings;
+					// Se dice siempre dónde se aplicaría, con independencia de lo que escriba el modelo.
+					text = `${text.trim() || DEFAULT_SETTINGS_TEXT}\n\nServidor: **${payload.guildName.replace(/[<>*_`]/g, "")}**`;
+					const id = createProposal({ conversationId: conversation, userId: user.id, kind: "settings", subject, summary, payload });
+					proposal = { id, kind: "settings", guild: payload.guildName, subject, summary };
+				} else if (draft) {
 					if (!text.trim()) text = DEFAULT_TICKET_TEXT;
-					proposalId = createProposal({ conversationId: conversation, userId: user.id, ...draft });
+					const id = createProposal({ conversationId: conversation, userId: user.id, ...draft });
+					proposal = { id, kind: "ticket", ...draft };
 				}
 
 				const units = recordUsage(user.id, usage ?? estimateUsage(promptChars, text.length));
-				addMessage({ conversationId: conversation, role: "assistant", content: text, units, proposalId });
+				addMessage({ conversationId: conversation, role: "assistant", content: text, units, proposalId: proposal?.id ?? null });
 
 				sendHtml();
-				if (draft && proposalId) send("proposal", { id: proposalId, ...draft });
+				if (proposal) send("proposal", proposal);
 				send("done", { usage: usageState(user.id) });
 			} catch (error) {
 				const aborted = abort.signal.aborted;

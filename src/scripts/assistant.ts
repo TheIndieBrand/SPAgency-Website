@@ -14,6 +14,9 @@ interface Usage {
 
 interface Proposal {
 	id: string;
+	kind?: "ticket" | "settings";
+	// Solo en cambios de configuración: el servidor donde se aplicarían.
+	guild?: string | null;
 	subject: string;
 	summary: string;
 	status: "pending" | "confirmed" | "dismissed" | "expired";
@@ -59,6 +62,7 @@ async function init(root: HTMLElement) {
 	let controller: AbortController | null = null;
 	let busy = false;
 	let routes: Routes = {};
+	let chosenGuild = false; // el último /servidor se resolvió bien
 
 	// Las rutas de la web que cita el asistente se convierten en botones.
 	const decorate = (el: Element | null) => {
@@ -66,6 +70,17 @@ async function init(root: HTMLElement) {
 	};
 
 	const setStatus = (text: string) => (statusEl.textContent = text);
+
+	// El servidor sobre el que actúa la conversación, siempre a la vista.
+	let guildName: string | null = null;
+	const guildChip = root.querySelector<HTMLElement>("#guild-chip");
+	function setGuild(name: string | null | undefined) {
+		guildName = name ?? null;
+		if (!guildChip) return;
+		guildChip.hidden = !guildName;
+		const label = guildChip.querySelector("#guild-name");
+		if (label) label.textContent = guildName ?? "";
+	}
 	const login = () => (window.location.href = `/auth/discord/login?next=${encodeURIComponent("/support/assistant")}`);
 
 	// ── Uso diario ─────────────────────────────────────────────────────────────
@@ -94,26 +109,45 @@ async function init(root: HTMLElement) {
 		`<div class="text-text-faint msg-prose mx-auto max-w-[90%] rounded-lg border border-border-soft px-3.5 py-2 text-center text-[13px]">${html}</div>`;
 
 	function proposalCard(p: Proposal): string {
-		const head = `<div class="text-text-faint mb-1.5 text-[11px] font-bold tracking-[0.08em] uppercase">Propuesta de ticket</div>
+		const settings = p.kind === "settings";
+		const where = settings && p.guild ? escapeHtml(p.guild) : "";
+		const head = `<div class="text-text-faint mb-1.5 text-[11px] font-bold tracking-[0.08em] uppercase">${settings ? "Cambios propuestos" : "Propuesta de ticket"}</div>
+			${where ? `<div class="text-brand mb-1.5 text-[13px] font-bold"><i class="bi bi-hdd-network mr-1"></i>Servidor: ${where}</div>` : ""}
 			<div data-subject class="text-text text-sm font-bold">${escapeHtml(p.subject)}</div>
 			<p data-summary class="text-text-dim mt-1 text-[13px] leading-relaxed whitespace-pre-line">${escapeHtml(p.summary)}</p>`;
 
 		let foot: string;
-		if (p.status === "confirmed" && p.ticketId) {
+		if (p.status === "confirmed" && settings) {
+			foot = `<p class="text-text-faint mt-3 text-[13px]"><i class="bi bi-check2-circle"></i> Confirmados${where ? ` en ${where}` : ""} (el resultado está debajo).</p>`;
+		} else if (p.status === "confirmed" && p.ticketId) {
 			foot = `<a href="/support/tickets/${encodeURIComponent(p.ticketId)}" target="_blank" rel="noopener" class="route-chip mt-3"><i class="bi bi-ticket-perforated"></i><span>Ir al ticket</span><i class="bi bi-box-arrow-up-right"></i></a>`;
 		} else if (p.status === "dismissed") {
 			foot = `<p class="text-text-faint mt-3 text-[13px]">Descartada.</p>`;
 		} else if (p.status === "expired") {
 			foot = `<p class="text-text-faint mt-3 text-[13px]">Esta propuesta ha caducado. Pídeme que la prepare de nuevo.</p>`;
 		} else {
-			foot = `<p class="text-text-faint mt-2.5 text-[12px] leading-snug"><i class="bi bi-stars"></i> El primer mensaje del ticket lo escribirá la IA con este resumen, y así se indicará.</p>
+			const note = settings
+				? `Se aplican${where ? ` en <strong>${where}</strong>` : " a tu servidor"} en cuanto confirmes, y puedes revertirlos desde el dashboard.`
+				: "El primer mensaje del ticket lo escribirá la IA con este resumen, y así se indicará.";
+			foot = `<p class="text-text-faint mt-2.5 text-[12px] leading-snug"><i class="bi bi-stars"></i> ${note}</p>
 				<div class="mt-3 flex gap-2">
-					<button type="button" data-act="confirm" class="bg-brand hover:bg-brand-hover rounded-lg px-4 py-2 text-[13px] font-bold text-white transition-colors disabled:opacity-50">Abrir ticket</button>
+					<button type="button" data-act="confirm" class="bg-brand hover:bg-brand-hover rounded-lg px-4 py-2 text-[13px] font-bold text-white transition-colors disabled:opacity-50">${settings ? (where ? `Aplicar en ${where}` : "Aplicar cambios") : "Abrir ticket"}</button>
 					<button type="button" data-act="dismiss" class="border-border text-text-dim hover:text-text rounded-lg border px-4 py-2 text-[13px] font-bold transition-colors disabled:opacity-50">Ahora no</button>
 				</div>
 				<p data-proposal-status class="mt-2 min-h-4 text-[12.5px] text-red-400"></p>`;
 		}
-		return `<div class="border-border bg-bg-soft mt-3 rounded-xl border p-4" data-proposal="${escapeHtml(p.id)}">${head}${foot}</div>`;
+		return `<div class="border-border bg-bg-soft mt-3 rounded-xl border p-4" data-proposal="${escapeHtml(p.id)}" data-kind="${settings ? "settings" : "ticket"}" data-guild="${escapeHtml(p.guild ?? "")}">${head}${foot}</div>`;
+	}
+
+	// Un botón por servidor. `retry` es la petición que el usuario acababa de hacer: se repite
+	// en cuanto elige, para que no tenga que escribirla otra vez.
+	function serverChips(guilds: { id: string; name: string; current?: boolean }[], retry?: string): string {
+		return `<div class="mt-3 flex flex-wrap gap-2" ${retry ? `data-retry="${escapeHtml(retry)}"` : ""}>${guilds
+			.map(
+				(g) =>
+					`<button type="button" data-server="${escapeHtml(g.id)}" class="${g.current ? "border-brand text-brand" : "border-border text-text-dim hover:text-text"} rounded-lg border px-3.5 py-1.5 text-[13px] font-semibold transition-colors">${escapeHtml(g.name)}</button>`,
+			)
+			.join("")}</div>`;
 	}
 
 	function showMessage(m: MessageView) {
@@ -165,9 +199,10 @@ async function init(root: HTMLElement) {
 		if (busy) return;
 		const res = await fetch(`/api/chat/conversations/${encodeURIComponent(id)}`, { headers: { Accept: "application/json" } });
 		if (!res.ok) return setStatus("No se pudo abrir la conversación.");
-		const data = (await res.json()) as { id: string; messages: MessageView[] };
+		const data = (await res.json()) as { id: string; messages: MessageView[]; guild?: { name: string } | null };
 
 		conversationId = data.id;
+		setGuild(data.guild?.name);
 		resetMessages();
 		emptyEl.hidden = true;
 		data.messages.forEach(showMessage);
@@ -179,6 +214,7 @@ async function init(root: HTMLElement) {
 	function newConversation() {
 		if (busy) return;
 		conversationId = null;
+		setGuild(null);
 		resetMessages();
 		emptyEl.hidden = false;
 		renderList();
@@ -196,8 +232,8 @@ async function init(root: HTMLElement) {
 
 	async function send(text: string) {
 		if (busy || !text.trim()) return;
-		const command = /^\/(usage|ticket)(?:\s+([\s\S]*))?$/i.exec(text.trim());
-		if (command) return runCommand(command[1].toLowerCase() as "usage" | "ticket", (command[2] ?? "").trim(), text.trim());
+		const command = /^\/(usage|ticket|servidor|config|panico|registros)(?:\s+([\s\S]*))?$/i.exec(text.trim());
+		if (command) return runCommand(command[1].toLowerCase() as CommandName, (command[2] ?? "").trim(), text.trim());
 		setStatus("");
 		controller = new AbortController();
 
@@ -237,6 +273,8 @@ async function init(root: HTMLElement) {
 			await readEvents(res, (event, data) => {
 				const stick = nearBottom();
 				if (event === "meta") conversationId = data.conversationId;
+				else if (event === "guild") setGuild(data.name);
+				else if (event === "servers") extras.innerHTML = serverChips(data.guilds, data.retry);
 				else if (event === "html") {
 					body.innerHTML = data.html;
 					decorate(body);
@@ -262,12 +300,41 @@ async function init(root: HTMLElement) {
 		input.focus();
 	}
 
-	// ── Comandos (/usage, /ticket) ─────────────────────────────────────────────
-	// Se resuelven en el servidor. /usage no llama al modelo, así que no gasta nada;
-	// /ticket sí (una llamada para redactar el ticket) y cuenta en el cupo.
-	const COMMANDS = [
-		{ name: "/usage", hint: "", desc: "Tu consumo de hoy, con detalle" },
-		{ name: "/ticket", hint: " [descripción]", desc: "Prepara un ticket con lo que hemos hablado" },
+	// ── Comandos ───────────────────────────────────────────────────────────────
+	// Se resuelven en el servidor. Solo /ticket llama al modelo (una llamada para
+	// redactar el ticket) y cuenta en el cupo; el resto no gasta nada.
+	type CommandName = "usage" | "ticket" | "servidor" | "config" | "panico" | "registros";
+	// Como los slash commands de Discord: cada comando declara sus parámetros (nombre,
+	// si son obligatorios, qué piden y, si procede, valores sugeridos).
+	interface Param {
+		name: string;
+		required: boolean;
+		desc: string;
+		choices?: string[];
+	}
+	const COMMANDS: { name: string; desc: string; params: Param[] }[] = [
+		{
+			name: "/servidor",
+			desc: "Elige el servidor sobre el que actúo",
+			params: [{ name: "servidor", required: false, desc: "Nombre, número o ID. Sin él te muestro tus servidores para elegir." }],
+		},
+		{
+			name: "/config",
+			desc: "Ajustes actuales de tu servidor",
+			params: [{ name: "sección", required: false, desc: "Qué parte ver. Sin ella, todas.", choices: ["protección", "automoderación", "alertas", "general"] }],
+		},
+		{
+			name: "/panico",
+			desc: "Propone activar o apagar el Modo Pánico",
+			params: [{ name: "estado", required: false, desc: "Sin él, propongo lo contrario del estado actual.", choices: ["on", "off"] }],
+		},
+		{ name: "/registros", desc: "Últimos eventos del servidor", params: [] },
+		{ name: "/usage", desc: "Tu consumo de hoy, con detalle", params: [] },
+		{
+			name: "/ticket",
+			desc: "Prepara un ticket con lo que hemos hablado",
+			params: [{ name: "descripción", required: false, desc: "Qué necesitas. Sin ella uso la conversación." }],
+		},
 	];
 
 	const menu = root.querySelector<HTMLElement>("#cmd-menu");
@@ -276,16 +343,58 @@ async function init(root: HTMLElement) {
 		if (menu) menu.hidden = true;
 	}
 
-	// El menú sale mientras se escribe el nombre del comando (sin espacios aún).
+	// Un parámetro se dibuja como en Discord: una caja con su nombre. Discontinua si es
+	// opcional, con el color de la marca si es obligatoria, y rellena cuando ya tiene valor.
+	function paramBox(p: Param, value = ""): string {
+		const tone = value
+			? "border-brand bg-brand/10 text-text"
+			: p.required
+				? "border-brand/60 text-brand"
+				: "border-dashed border-border text-text-dim";
+		return `<span class="${tone} inline-flex max-w-full items-center gap-1.5 rounded-md border px-2 py-0.5 font-sans text-[12.5px]"><span class="font-semibold">${escapeHtml(p.name)}</span>${
+			value ? `<span class="text-text truncate font-mono">${escapeHtml(value.slice(0, 40))}</span>` : p.required ? "" : '<span class="text-text-faint text-[11px]">opcional</span>'
+		}</span>`;
+	}
+
+	// Mientras se escribe el nombre: la lista de comandos, cada uno con sus parámetros.
+	// Al escribir un comando y un espacio: el panel de sus parámetros.
 	function updateMenu() {
 		if (!menu) return;
 		const typed = input.value;
+
+		const withArgs = /^(\/\S+)\s([\s\S]*)$/.exec(typed);
+		const active = withArgs ? COMMANDS.find((c) => c.name === withArgs[1].toLowerCase()) : undefined;
+		if (active?.params.length) {
+			const value = withArgs![2].trim();
+			menu.innerHTML = `<div class="px-3.5 py-3">
+				<div class="flex flex-wrap items-center gap-2"><span class="text-text font-mono text-[13px] font-semibold">${active.name}</span>${active.params.map((p) => paramBox(p, value)).join("")}</div>
+				${active.params
+					.map(
+						(p) => `<p class="text-text-faint mt-2 text-[12.5px] leading-snug"><span class="text-text-dim font-semibold">${escapeHtml(p.name)}</span> · ${p.required ? "obligatorio" : "opcional"} — ${escapeHtml(p.desc)}</p>
+						${
+							p.choices
+								? `<div class="mt-2 flex flex-wrap gap-1.5">${p.choices
+										.map(
+											(c) => `<button type="button" data-choice="${escapeHtml(active.name)} ${escapeHtml(c)}" class="border-border text-text-dim hover:border-brand hover:text-brand rounded-md border px-2 py-0.5 font-mono text-[12px] transition-colors">${escapeHtml(c)}</button>`,
+										)
+										.join("")}</div>`
+								: ""
+						}`,
+					)
+					.join("")}
+				<p class="text-text-faint mt-2 text-[11.5px]"><kbd class="font-mono">Enter</kbd> para enviar · <kbd class="font-mono">Esc</kbd> para cerrar</p>
+			</div>`;
+			menu.hidden = false;
+			return;
+		}
+
 		const matches = /^\/\S*$/.test(typed) ? COMMANDS.filter((c) => c.name.startsWith(typed.toLowerCase())) : [];
 		if (!matches.length) return hideMenu();
 		menu.innerHTML = matches
 			.map(
-				(c) => `<button type="button" data-pick="${c.name}" class="hover:bg-card-hover flex w-full items-baseline gap-3 px-3.5 py-2 text-left transition-colors">
-					<span class="text-text font-mono text-[13px] font-semibold">${c.name}<span class="text-text-faint font-normal">${escapeHtml(c.hint)}</span></span>
+				(c) => `<button type="button" data-pick="${c.name}" class="hover:bg-card-hover flex w-full flex-wrap items-center gap-x-3 gap-y-1 px-3.5 py-2 text-left transition-colors">
+					<span class="text-text font-mono text-[13px] font-semibold">${c.name}</span>
+					${c.params.map((p) => paramBox(p)).join("")}
 					<span class="text-text-faint min-w-0 flex-1 truncate text-[12.5px]">${escapeHtml(c.desc)}</span>
 				</button>`,
 			)
@@ -299,13 +408,14 @@ async function init(root: HTMLElement) {
 		hideMenu();
 	}
 
-	// Elegir un comando: /usage no lleva argumentos y se ejecuta; /ticket se deja
-	// escrito para que se pueda añadir una descripción.
+	// Elegir un comando: los que no tienen parámetros se ejecutan; los demás se dejan
+	// escritos con el panel de parámetros abierto (todos son opcionales: Enter los envía tal cual).
 	function pickCommand(name: string) {
-		if (name === "/usage") return void send("/usage");
+		const command = COMMANDS.find((c) => c.name === name);
+		if (!command?.params.length) return void send(name);
 		input.value = `${name} `;
 		autosize();
-		hideMenu();
+		updateMenu();
 		input.focus();
 	}
 
@@ -320,7 +430,7 @@ async function init(root: HTMLElement) {
 		return { body: bubble.querySelector<HTMLElement>("[data-body]")!, extras: bubble.querySelector<HTMLElement>("[data-extras]")! };
 	}
 
-	async function runCommand(name: "usage" | "ticket", note: string, text: string) {
+	async function runCommand(name: CommandName, note: string, text: string) {
 		setStatus("");
 		if (name === "ticket" && !conversationId && !note) {
 			return setStatus("Cuéntame primero qué necesitas, o escribe /ticket seguido de una descripción.");
@@ -339,11 +449,17 @@ async function init(root: HTMLElement) {
 			const res =
 				name === "usage"
 					? await fetch("/api/chat/usage", { headers: { Accept: "application/json" } })
-					: await fetch("/api/chat/ticket", {
-							method: "POST",
-							headers: { "Content-Type": "application/json" },
-							body: JSON.stringify({ conversationId, note }),
-						});
+					: name === "ticket"
+						? await fetch("/api/chat/ticket", {
+								method: "POST",
+								headers: { "Content-Type": "application/json" },
+								body: JSON.stringify({ conversationId, note }),
+							})
+						: await fetch("/api/chat/command", {
+								method: "POST",
+								headers: { "Content-Type": "application/json" },
+								body: JSON.stringify({ name, arg: note, conversationId }),
+							});
 			if (res.status === 401) return login();
 			const data = await res.json().catch(() => ({}));
 
@@ -364,14 +480,23 @@ async function init(root: HTMLElement) {
 				body.innerHTML = usageCardHtml(data);
 				setUsage(data);
 			} else {
-				conversationId = data.conversationId;
+				if (data.conversationId) conversationId = data.conversationId;
+				if (data.guild) {
+					setGuild(data.guild.name ?? data.guild);
+					chosenGuild = true;
+				}
 				body.innerHTML = data.html;
-				extras.innerHTML = proposalCard({ ...data.proposal, status: "pending", ticketId: null });
-				setUsage(data.usage);
-				const fresh = await fetchState();
-				if (fresh) {
-					state = fresh;
-					renderList();
+				decorate(body);
+				if (data.proposal) extras.innerHTML = proposalCard({ ...data.proposal, status: "pending", ticketId: null });
+				// /servidor: un botón por servidor.
+				if (Array.isArray(data.guilds) && data.guilds.length) extras.innerHTML = serverChips(data.guilds);
+				if (data.usage) setUsage(data.usage);
+				if (data.proposal || data.conversationId) {
+					const fresh = await fetchState();
+					if (fresh) {
+						state = fresh;
+						renderList();
+					}
 				}
 			}
 		} catch {
@@ -406,6 +531,16 @@ async function init(root: HTMLElement) {
 
 	// ── Propuestas de ticket ───────────────────────────────────────────────────
 	messagesEl.addEventListener("click", async (event) => {
+		const server = (event.target as HTMLElement).closest<HTMLElement>("[data-server]");
+		if (server) {
+			const retry = server.closest<HTMLElement>("[data-retry]")?.dataset.retry;
+			chosenGuild = false;
+			await send(`/servidor ${server.dataset.server}`);
+			// Si venía de «¿en qué servidor?», se repite lo que había pedido, ya con servidor.
+			if (retry && chosenGuild) await send(retry);
+			return;
+		}
+
 		const button = (event.target as HTMLElement).closest<HTMLButtonElement>("[data-act]");
 		const card = button?.closest<HTMLElement>("[data-proposal]");
 		if (!button || !card) return;
@@ -414,7 +549,8 @@ async function init(root: HTMLElement) {
 		const status = card.querySelector<HTMLElement>("[data-proposal-status]")!;
 		const buttons = card.querySelectorAll("button");
 		buttons.forEach((b) => (b.disabled = true));
-		status.textContent = button.dataset.act === "confirm" ? "Abriendo el ticket…" : "";
+		const isSettings = card.dataset.kind === "settings";
+		status.textContent = button.dataset.act === "confirm" ? (isSettings ? `Aplicando los cambios${card.dataset.guild ? ` en ${card.dataset.guild}` : ""}…` : "Abriendo el ticket…") : "";
 		status.className = "text-text-faint mt-2 min-h-4 text-[12.5px]";
 
 		const res = await fetch(`/api/chat/proposals/${encodeURIComponent(id)}`, {
@@ -433,12 +569,19 @@ async function init(root: HTMLElement) {
 
 		const title = card.querySelector("[data-subject]")?.textContent ?? "";
 		const summary = card.querySelector("[data-summary]")?.textContent ?? "";
+		const kind = isSettings ? "settings" : "ticket";
 		const done: Proposal =
 			button.dataset.act === "confirm"
-				? { id, subject: title, summary, status: "confirmed", ticketId: data.ticketId }
-				: { id, subject: title, summary, status: "dismissed", ticketId: null };
+				? { id, kind, guild: card.dataset.guild || null, subject: title, summary, status: "confirmed", ticketId: data.ticketId ?? null }
+				: { id, kind, guild: card.dataset.guild || null, subject: title, summary, status: "dismissed", ticketId: null };
 		card.outerHTML = proposalCard(done);
-		if (button.dataset.act === "confirm") {
+		// El resultado de los cambios (qué se aplicó y qué no) va como nota debajo.
+		if (isSettings && data.html) {
+			messagesEl.insertAdjacentHTML("beforeend", noteBubble(data.html));
+			decorate(messagesEl.lastElementChild);
+			scrollDown();
+		}
+		if (button.dataset.act === "confirm" && !isSettings) {
 			const fresh = await fetchState();
 			if (fresh) {
 				state = fresh;
@@ -498,9 +641,7 @@ async function init(root: HTMLElement) {
 				const first = menu.querySelector<HTMLElement>("[data-pick]");
 				if (first) {
 					event.preventDefault();
-					input.value = `${first.dataset.pick} `;
-					autosize();
-					hideMenu();
+					pickCommand(first.dataset.pick!);
 					return;
 				}
 			}
@@ -522,6 +663,14 @@ async function init(root: HTMLElement) {
 		chip.addEventListener("click", () => void send(chip.dataset.suggest!)),
 	);
 	menu?.addEventListener("click", (event) => {
+		const choice = (event.target as HTMLElement).closest<HTMLElement>("[data-choice]");
+		if (choice) {
+			input.value = choice.dataset.choice!;
+			autosize();
+			updateMenu();
+			input.focus();
+			return;
+		}
 		const item = (event.target as HTMLElement).closest<HTMLElement>("[data-pick]");
 		if (item) pickCommand(item.dataset.pick!);
 	});

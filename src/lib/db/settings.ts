@@ -227,3 +227,68 @@ export async function changeSetting(guildId: string, input: ChangeInput): Promis
 		return fail(503, "unavailable", "No se pudo guardar: la base de datos no responde. Inténtalo de nuevo.");
 	}
 }
+
+// ── Para el asistente ───────────────────────────────────────────────────────
+// Validación y texto de un cambio SIN tocar la base: el asistente propone y el
+// usuario confirma, y la propuesta debe salir ya normalizada y legible. La
+// escritura real sigue siendo `changeSetting` (que vuelve a validar todo).
+
+export type CheckedChange = { key: string; label: string; value: unknown; op?: "add" | "remove" };
+
+export function checkChange(input: { key?: unknown; value?: unknown; op?: unknown }): { ok: true; change: CheckedChange } | { ok: false; message: string } {
+	const key = typeof input.key === "string" ? input.key : "";
+	const spec = Object.hasOwn(SETTINGS, key) ? SETTINGS[key] : undefined;
+	if (!spec) return { ok: false, message: `El ajuste «${key.slice(0, 40)}» no existe.` };
+
+	if (spec.kind === "list") {
+		if (input.op !== "add" && input.op !== "remove") return { ok: false, message: `${spec.label}: indica si añadir o quitar un elemento.` };
+		const item = parseItem(spec, input.value);
+		return item.ok ? { ok: true, change: { key, label: spec.label, value: item.value, op: input.op } } : { ok: false, message: `${spec.label}: ${item.message}` };
+	}
+	const parsed = parseValue(spec, input.value);
+	return parsed.ok ? { ok: true, change: { key, label: spec.label, value: parsed.value } } : { ok: false, message: `${spec.label}: ${parsed.message}` };
+}
+
+export function formatSettingValue(value: unknown): string {
+	if (value === true) return "activado";
+	if (value === false) return "desactivado";
+	if (value === null || value === undefined || value === "") return "sin definir";
+	if (Array.isArray(value)) return value.length ? `${value.length} elemento${value.length === 1 ? "" : "s"}` : "vacía";
+	return String(value);
+}
+
+// Una línea por ajuste para el contexto del modelo: `clave=valor pista # etiqueta`.
+// Es lo único que necesita para proponer (claves exactas, opciones y rangos).
+export function settingsLegend(read: (key: string) => unknown): string {
+	const rows: string[] = [];
+	for (const [key, spec] of Object.entries(SETTINGS)) {
+		const value = read(key);
+		let shown: string;
+		if (Array.isArray(value)) {
+			const items = value.slice(0, 15).map((v) => String(v).replace(/[\s"<>]+/g, " ").slice(0, 40));
+			shown = `[${items.join(", ")}${value.length > 15 ? ` +${value.length - 15} más` : ""}]`;
+		} else shown = value === null || value === undefined ? "null" : String(value);
+		const hint =
+			spec.kind === "enum" ? ` [${spec.values.join("|")}]`
+			: spec.kind === "int" ? ` (${spec.min}-${spec.max})`
+			: spec.kind === "duration" ? ` (${humanShort(spec.minSeconds)}-${humanShort(spec.maxSeconds)}, ${spec.units.join("/")})`
+			: spec.kind === "list" ? ` (op add/remove, máx ${spec.max})`
+			: "";
+		rows.push(`${key}=${shown}${hint} # ${spec.label}`);
+	}
+	return rows.join("\n");
+}
+
+function humanShort(s: number): string {
+	return s % day === 0 ? `${s / day}d` : s % 3600 === 0 ? `${s / 3600}h` : `${Math.round(s / 60)}m`;
+}
+
+// Secciones de la configuración por ajuste, para /config.
+export const SETTING_SECTIONS: Record<string, string[]> = {
+	proteccion: ["antiraidEnable", "antibotsEnable", "antibotsType", "selfbotAction", "selfbotMinAccountAge", "maliciousMemberAction", "verificationEnable", "verificationRole", "intelligentSosEnable", "raidmodeEnable", "raidmodeTimeToDisable"],
+	automoderacion: ["antiflood", "antiWebhooksFlood", "ghostpingEnable", "capsLockEnable", "capsLockThreshold", "manyEmojisEnable", "manyEmojisThreshold", "manyWordsEnable", "manyWordsThreshold", "automodMuteAt", "automodMuteMinutes", "automodFinalAction", "automodFinalActionAt", "forceReasons"],
+	alertas: ["logsChannel", "whitelist"],
+	general: ["prefix", "language"],
+};
+
+export const settingLabel = (key: string): string => (Object.hasOwn(SETTINGS, key) ? SETTINGS[key].label : key);
