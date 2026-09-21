@@ -85,3 +85,45 @@ export function deltaText(current: number, previous: number, versus: string): st
 }
 
 export { ZERO as EMPTY_OVERVIEW };
+
+// ── Tarjetas de la lista de servidores ──────────────────────────────────────
+// Dos cifras por servidor, de una sola consulta para todos: ataques frenados hoy (día de
+// Madrid, como en General) y cuántos módulos de protección hay activos. Los módulos son
+// los mismos seis que lista la página General.
+
+export const MODULES_TOTAL = 6;
+
+export interface GuildCardStats {
+	raidsToday: number;
+	modulesOn: number;
+}
+
+// Un servidor sin filas de configuración (el bot aún no las ha creado) no aparece.
+export async function getGuildCardStats(guildIds: string[]): Promise<Map<string, GuildCardStats> | null> {
+	if (!guildIds.length) return new Map();
+	try {
+		const sql = getSql();
+		const rows = await sql`
+			select
+				g.id,
+				(
+					p.antiraid_enable::int + p.antibots_enable::int + (p.selfbot_action <> 'none')::int
+					+ p.verification_enable::int + m.antiflood::int + (c.logs_channel is not null)::int
+				) as modules_on,
+				(
+					select count(*) from server_event_logs e
+					where e.guild_id = g.id and e.type = 'raidDetected'
+						and (e.created_at at time zone 'UTC') >= date_trunc('day', now() at time zone 'Europe/Madrid') at time zone 'Europe/Madrid'
+				) as raids_today
+			from guilds g
+			join guild_protection p on p.guild_id = g.id
+			join guild_moderation m on m.guild_id = g.id
+			join guild_configuration c on c.guild_id = g.id
+			where g.id in ${sql(guildIds)}
+		`;
+		return new Map(rows.map((r) => [r.id as string, { raidsToday: Number(r.raidsToday), modulesOn: Number(r.modulesOn) }]));
+	} catch (error) {
+		console.error("[db] no se pudieron calcular las tarjetas:", error instanceof Error ? error.message : error);
+		return null;
+	}
+}

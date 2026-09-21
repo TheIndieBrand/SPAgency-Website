@@ -84,29 +84,19 @@ const skeletons = Array.from({ length: 8 });
 				<span class="sr-only" role="status">Cargando tus servidores…</span>
 				{
 					skeletons.map((_, i) => (
-						<div
-							class="border-border-soft bg-card flex h-full flex-col justify-between rounded-[14px] border p-5"
-							aria-hidden="true"
-							data-skeleton
-							style={`--i:${i}`}
-						>
-							<div>
-								<div class="mb-4 flex items-start justify-between gap-2">
-									<div class="flex min-w-0 flex-1 items-center gap-3">
-										<div class="skeleton h-11 w-11 shrink-0 rounded-full" />
-										<div class="min-w-0 flex-1 space-y-2">
-											<div class="skeleton h-3.5 w-3/4 rounded" />
-											<div class="skeleton h-3 w-1/2 rounded" />
-										</div>
-									</div>
-									<div class="skeleton h-6 w-20 shrink-0 rounded-full" />
-								</div>
-								<div class="border-border-soft flex items-center gap-4 border-t pt-4">
-									<div class="skeleton h-3 w-28 rounded" />
-									<div class="skeleton h-3 w-20 rounded" />
+						<div class="border-border-soft bg-card flex h-full flex-col gap-4 rounded-[14px] border p-5" aria-hidden="true" data-skeleton style={`--i:${i}`}>
+							<div class="flex items-center gap-3.5">
+								<div class="skeleton h-12 w-12 shrink-0 rounded-xl" />
+								<div class="min-w-0 flex-1 space-y-2">
+									<div class="skeleton h-3.5 w-3/4 rounded" />
+									<div class="skeleton h-3 w-1/2 rounded" />
 								</div>
 							</div>
-							<div class="skeleton mt-4 h-[42px] w-full rounded-[10px]" />
+							<div class="flex min-h-[30px] items-center gap-4">
+								<div class="skeleton h-3 w-14 rounded" />
+								<div class="skeleton h-3 w-24 rounded" />
+								<div class="skeleton h-3 w-16 rounded" />
+							</div>
 						</div>
 					))
 				}
@@ -157,25 +147,10 @@ const skeletons = Array.from({ length: 8 });
 		}
 	}
 
-	/* Al llegar, cada tarjeta aparece con un leve ascenso. */
-	.card-in {
-		animation: card-in 0.35s ease-out both;
-	}
-
-	@keyframes card-in {
-		from {
-			opacity: 0;
-			transform: translateY(8px);
-		}
-	}
-
 	@media (prefers-reduced-motion: reduce) {
 		.skeleton {
 			animation: none;
 			background-image: none;
-		}
-		.card-in {
-			animation: none;
 		}
 	}
 </style>
@@ -190,6 +165,8 @@ const skeletons = Array.from({ length: 8 });
 		members: number | null;
 		protected: boolean;
 		inviteUrl: string | null;
+		// null: sin datos todavía (la base no responde o el servidor aún no tiene configuración).
+		stats: { raidsToday: number; modulesOn: number; modulesTotal: number } | null;
 	}
 
 	const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
@@ -200,38 +177,46 @@ const skeletons = Array.from({ length: 8 });
 
 	let activeFilter = "all";
 
-	function cardHtml(g: Guild, i: number): string {
-		const avatar = g.icon
-			? `<img src="${escapeHtml(g.icon)}" alt="" class="h-11 w-11 shrink-0 rounded-full object-cover" />`
-			: `<div class="bg-bg-soft text-text-dim border-border flex h-11 w-11 shrink-0 items-center justify-center rounded-full border text-base font-bold">${escapeHtml(g.name.charAt(0).toUpperCase())}</div>`;
+	function cardHtml(g: Guild): string {
+		// Icono cuadrado como en Discord; sin icono, la inicial en un tono suave. Sin el bot, apagado.
+		const tone = g.protected ? "" : " opacity-60 grayscale";
+		const icon = g.icon
+			? `<img src="${escapeHtml(g.icon)}" alt="" class="h-12 w-12 shrink-0 rounded-xl object-cover${tone}" />`
+			: `<div class="bg-brand-soft text-brand-hover flex h-12 w-12 shrink-0 items-center justify-center rounded-xl text-lg font-bold${tone}">${escapeHtml(g.name.charAt(0).toUpperCase())}</div>`;
 
-		const badge = g.protected
-			? `<span class="border-border bg-bg-soft text-text-dim inline-flex shrink-0 items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10px] font-bold whitespace-nowrap"><span class="bg-emerald animate-status-pulse inline-block h-1.5 w-1.5 rounded-full"></span>Protegido 24/7</span>`
-			: `<span class="border-border text-text-faint inline-flex shrink-0 items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10px] font-bold whitespace-nowrap"><span class="bg-text-faint inline-block h-1.5 w-1.5 rounded-full"></span>Sin invitar</span>`;
-
-		const stats = g.protected
-			? `<div class="border-border-soft flex items-center gap-4 border-t pt-4 text-xs"><span class="text-text-dim"><span class="text-text font-bold">0</span> ataques bloqueados hoy</span><span class="text-text-dim"><span class="text-text font-bold">4/4</span> filtros activos</span></div>`
-			: `<div class="border-border-soft border-t pt-4 text-xs"><span class="text-text-faint">El bot aún no está en este servidor</span></div>`;
-
-		const action = g.protected
-			? `<a href="/dashboard/${encodeURIComponent(g.id)}" class="border-border hover:border-brand hover:text-brand block rounded-[10px] border px-4 py-2.5 text-center text-sm font-bold transition-colors">Gestionar</a>`
-			: `<a href="${escapeHtml(g.inviteUrl ?? "#")}" class="bg-brand hover:bg-brand-hover block rounded-[10px] px-4 py-2.5 text-center text-sm font-bold text-white transition-colors">Invitar bot</a>`;
-
-		return `<div class="server-card card-in group border-border-soft bg-card hover:border-brand/50 flex h-full flex-col justify-between rounded-[14px] border p-5 transition-all duration-200 hover:-translate-y-[2px]" style="animation-delay:${Math.min(i, 11) * 40}ms" data-name="${escapeHtml(g.name.toLowerCase())}" data-status="${g.protected ? "protected" : "pending"}">
-			<div>
-				<div class="mb-4 flex items-start justify-between gap-2">
-					<div class="flex min-w-0 flex-1 items-center gap-3">
-						${avatar}
-						<div class="min-w-0 flex-1">
-							<h3 class="text-text truncate text-sm font-bold">${escapeHtml(g.name)}</h3>
-							<p class="text-text-faint truncate text-xs">${g.members ? `${g.members.toLocaleString("es")} miembros` : escapeHtml(g.id)}</p>
-						</div>
-					</div>
-					${badge}
-				</div>
-				${stats}
+		const head = `<div class="flex items-center gap-3.5">
+			${icon}
+			<div class="min-w-0 flex-1">
+				<h3 class="${g.protected ? "text-text" : "text-text-dim"} truncate text-sm font-bold">${escapeHtml(g.name)}</h3>
+				<p class="text-text-faint truncate text-xs">${g.members ? `${g.members.toLocaleString("es")} miembros` : escapeHtml(g.id)}</p>
 			</div>
-			<div class="mt-4">${action}</div>
+			${g.protected ? '<i class="bi bi-chevron-right text-text-faint group-hover:text-brand shrink-0 text-sm transition-colors"></i>' : ""}
+		</div>`;
+
+		const data = `data-name="${escapeHtml(g.name.toLowerCase())}" data-status="${g.protected ? "protected" : "pending"}"`;
+
+		// Con el bot: toda la tarjeta es el enlace. Estado y cifras en una sola fila; sin datos
+		// (base sin respuesta o servidor sin configurar) las cifras van apagadas con «—».
+		if (g.protected) {
+			const st = g.stats;
+			const dim = st ? "" : " opacity-45";
+			return `<a href="/dashboard/${encodeURIComponent(g.id)}" class="server-card group border-border-soft bg-card hover:border-brand/60 focus-visible:border-brand flex h-full flex-col gap-4 rounded-[14px] border p-5 outline-none transition-colors" ${data}>
+				${head}
+				<p class="flex min-h-[30px] flex-wrap items-center gap-x-4 gap-y-1 text-xs">
+					<span class="text-emerald inline-flex items-center gap-1.5 font-semibold"><span class="bg-emerald inline-block h-1.5 w-1.5 rounded-full"></span>Activo</span>
+					<span class="text-text-dim${dim}"><span class="text-text font-semibold">${st ? st.raidsToday.toLocaleString("es") : "—"}</span> ataques hoy</span>
+					<span class="text-text-dim${dim}"><span class="text-text font-semibold">${st ? `${st.modulesOn}/${st.modulesTotal}` : "—"}</span> módulos</span>
+				</p>
+			</a>`;
+		}
+
+		// Sin el bot: tarjeta apagada, sin enlace; la única acción es invitarlo.
+		return `<div class="server-card border-border-soft flex h-full flex-col gap-4 rounded-[14px] border border-dashed p-5" ${data}>
+			${head}
+			<div class="flex min-h-[30px] items-center justify-between gap-3">
+				<span class="text-text-faint text-xs">El bot aún no está aquí</span>
+				<a href="${escapeHtml(g.inviteUrl ?? "#")}" class="bg-brand hover:bg-brand-hover shrink-0 rounded-lg px-3.5 py-1.5 text-xs font-bold text-white transition-colors">Invitar bot</a>
+			</div>
 		</div>`;
 	}
 

@@ -22,10 +22,10 @@ const activity = (rows ?? []).map(describeActivity);
 const show = (n: number) => (overview ? String(n) : "—");
 
 const kpis = [
-	{ label: "Ataques bloqueados hoy", value: show(stats.raidsToday), delta: overview ? deltaText(stats.raidsToday, stats.raidsYesterday, "vs ayer") : "", icon: "bi-shield-fill-check" },
-	{ label: "Cuentas maliciosas detectadas (7d)", value: show(stats.maliciousWeek), delta: overview ? deltaText(stats.maliciousWeek, stats.maliciousPrevWeek, "vs semana pasada") : "", icon: "bi-person-fill-x" },
-	{ label: "Advertencias emitidas (7d)", value: show(stats.warnsWeek), delta: overview ? deltaText(stats.warnsWeek, stats.warnsPrevWeek, "vs semana pasada") : "", icon: "bi-exclamation-triangle" },
-	{ label: "Respuestas automáticas (7d)", value: show(stats.autoActionsWeek), delta: overview ? deltaText(stats.autoActionsWeek, stats.autoActionsPrevWeek, "vs semana pasada") : "", icon: "bi-activity" },
+	{ label: "Ataques bloqueados hoy", value: show(stats.raidsToday), delta: overview ? deltaText(stats.raidsToday, stats.raidsYesterday, "vs ayer") : "" },
+	{ label: "Cuentas maliciosas detectadas (7d)", value: show(stats.maliciousWeek), delta: overview ? deltaText(stats.maliciousWeek, stats.maliciousPrevWeek, "vs semana pasada") : "" },
+	{ label: "Advertencias emitidas (7d)", value: show(stats.warnsWeek), delta: overview ? deltaText(stats.warnsWeek, stats.warnsPrevWeek, "vs semana pasada") : "" },
+	{ label: "Respuestas automáticas (7d)", value: show(stats.autoActionsWeek), delta: overview ? deltaText(stats.autoActionsWeek, stats.autoActionsPrevWeek, "vs semana pasada") : "" },
 ];
 
 const modules = [
@@ -47,19 +47,14 @@ const toneClass: Record<string, string> = {
 
 <Layout title={`${guild.name} — SP Agency`}>
 	<DashboardShell guild={guild} active="general" title="General" subtitle="Estado general de la protección de tu servidor." raidmodeActive={config.protection.raidmodeEnable}>
-		<!-- KPI cards -->
-		<div class="mb-6 grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-4">
+		<!-- Cifras: una sola pieza con separadores finos, sin iconos -->
+		<div class="border-border-soft bg-border-soft mb-6 grid grid-cols-2 gap-px overflow-hidden rounded-[14px] border xl:grid-cols-4">
 			{
 				kpis.map((kpi) => (
-					<div class="border-border-soft bg-card rounded-[14px] border p-5">
-						<div class="text-text-faint mb-3 flex items-center gap-2 text-xs font-semibold">
-							<i class={`bi ${kpi.icon} text-brand`} />
-							{kpi.label}
-						</div>
-						<div class="flex items-end justify-between">
-							<span class="font-display text-3xl font-bold tracking-tight">{kpi.value}</span>
-							<span class="text-text-faint text-xs">{kpi.delta}</span>
-						</div>
+					<div class="bg-card p-5">
+						<p class="text-text-faint text-xs">{kpi.label}</p>
+						<p class="font-display mt-2 text-3xl font-bold tracking-tight">{kpi.value}</p>
+						<p class="text-text-faint mt-1 min-h-4 text-xs">{kpi.delta}</p>
 					</div>
 				))
 			}
@@ -68,42 +63,36 @@ const toneClass: Record<string, string> = {
 		<div class="grid grid-cols-1 gap-6 lg:grid-cols-5">
 			<!-- Module status -->
 			<div class="border-border-soft bg-card rounded-[14px] border p-5 lg:col-span-2">
-				<h2 class="text-text mb-4 text-sm font-bold">Estado de los módulos</h2>
-				<div class="divide-border-soft divide-y">
+				<h2 class="text-text mb-2 text-sm font-bold">Módulos</h2>
+				<div>
 					{
 						modules.map((m) => (
-							<a href={m.href} class="hover:bg-bg-soft -mx-2 flex items-center justify-between gap-3 rounded-lg px-2 py-3 transition-colors">
-								<span class="text-text-dim text-sm font-medium">{m.label}</span>
-								<span
-									class:list={[
-										"inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10px] font-bold whitespace-nowrap",
-										m.enabled ? "border-emerald/30 bg-emerald/10 text-emerald" : "border-border text-text-faint",
-									]}
-								>
-									<span class:list={["inline-block h-1.5 w-1.5 rounded-full", m.enabled ? "bg-emerald" : "bg-text-faint"]} />
-									{m.enabled ? "Activo" : "Inactivo"}
-								</span>
+							<a href={m.href} class="group hover:bg-bg-soft -mx-2 flex items-center gap-3 rounded-lg px-2 py-2.5 transition-colors">
+								<span class:list={["inline-block h-1.5 w-1.5 shrink-0 rounded-full", m.enabled ? "bg-emerald" : "bg-text-faint/40"]} />
+								<span class:list={["min-w-0 flex-1 text-sm", m.enabled ? "text-text" : "text-text-dim"]}>{m.label}</span>
+								<span class="text-text-faint text-xs">{m.enabled ? "Activo" : "Desactivado"}</span>
+								<i class="bi bi-chevron-right text-text-faint group-hover:text-brand -ml-1 text-[11px] transition-colors" />
 							</a>
 						))
 					}
 				</div>
 			</div>
 
-			<!-- Live activity console -->
-			<div class="border-border-soft bg-bg-soft rounded-[14px] border lg:col-span-3">
-				<div class="border-border-soft flex items-center gap-2.5 border-b px-4 py-3.5">
-					<i class="bi bi-terminal text-text-dim text-sm" />
-					<span class="text-text text-sm font-semibold">Actividad reciente</span>
+			<!-- Recent activity -->
+			<div class="border-border-soft bg-card rounded-[14px] border lg:col-span-3">
+				<div class="border-border-soft flex items-center justify-between gap-3 border-b px-5 py-3.5">
+					<h2 class="text-text text-sm font-bold">Actividad reciente</h2>
+					<a href={`/dashboard/${guild.id}/logs`} class="text-text-faint hover:text-brand text-xs font-semibold transition-colors">Ver todo</a>
 				</div>
 				<div class="divide-border-soft divide-y">
 					{
 						activity.length === 0 && (
-							<p class="text-text-faint px-4 py-8 text-center text-[13px]">Aún no hay actividad registrada en este servidor.</p>
+							<p class="text-text-faint px-5 py-8 text-center text-[13px]">Aún no hay actividad registrada en este servidor.</p>
 						)
 					}
 					{
 						activity.map((event) => (
-							<div class="flex items-start gap-3 px-4 py-2.5 text-[13px]">
+							<div class="flex items-start gap-3 px-5 py-2.5 text-[13px]">
 								<time datetime={event.at} data-local class="text-text-faint shrink-0 tabular-nums">{event.at.slice(11, 16)}</time>
 								<i class={`bi ${event.icon} ${toneClass[event.tone]} mt-0.5 shrink-0 text-xs`} />
 								<span class="text-text-dim leading-relaxed">{event.label}</span>
@@ -111,9 +100,6 @@ const toneClass: Record<string, string> = {
 						))
 					}
 				</div>
-				<a href={`/dashboard/${guild.id}/logs`} class="text-brand hover:text-brand-hover block border-t border-border-soft px-4 py-3 text-center text-xs font-bold transition-colors">
-					Ver todos los registros
-				</a>
 			</div>
 		</div>
 	</DashboardShell>

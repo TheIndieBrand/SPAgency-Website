@@ -1,5 +1,6 @@
 import type { APIRoute } from "astro";
 import { botInviteUrl, getBotGuildIds, getUserGuilds, guildIconUrl, hasAdminAccess } from "../../../lib/discord";
+import { MODULES_TOTAL, getGuildCardStats } from "../../../lib/db/overview";
 import { json } from "../../../lib/session";
 
 export const prerender = false;
@@ -28,10 +29,15 @@ export const GET: APIRoute = async ({ cookies }) => {
 			return json({ error: "unauthorized" }, 401);
 		}
 
-		const guilds = userGuilds
-			.filter(hasAdminAccess)
+		const admin = userGuilds.filter(hasAdminAccess);
+		// Cifras de las tarjetas: una consulta para todos los servidores con el bot. Si la base
+		// no responde, las tarjetas quedan sin cifras (no se inventan).
+		const stats = await getGuildCardStats(admin.filter((g) => botGuildIds.has(g.id)).map((g) => g.id));
+
+		const guilds = admin
 			.map((guild) => {
 				const isProtected = botGuildIds.has(guild.id);
+				const own = stats?.get(guild.id);
 				return {
 					id: guild.id,
 					name: guild.name,
@@ -39,6 +45,7 @@ export const GET: APIRoute = async ({ cookies }) => {
 					members: guild.approximate_member_count ?? null,
 					protected: isProtected,
 					inviteUrl: isProtected ? null : botInviteUrl(guild.id),
+					stats: own ? { ...own, modulesTotal: MODULES_TOTAL } : null,
 				};
 			})
 			.sort((a, b) => a.name.localeCompare(b.name));

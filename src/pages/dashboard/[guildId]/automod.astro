@@ -28,7 +28,7 @@ const { moderation, protection } = loaded.config;
 		raidmodeActive={protection.raidmodeEnable}
 	>
 		<div class="flex flex-col gap-6">
-			<SettingCard title="Flood" description="Límites fijos de frecuencia (no configurables): 5 mensajes/5s por usuario, 4 webhooks/10s por canal." icon="bi-lightning-charge">
+			<SettingCard title="Flood" description="Límites fijos de frecuencia (no configurables): 5 mensajes/5s por usuario, 4 webhooks/10s por canal.">
 				<div class="divide-border-soft divide-y">
 					<Toggle name="antiflood" label="Anti-flood de mensajes" checked={moderation.antiflood} />
 					<Toggle name="antiWebhooksFlood" label="Anti-flood de webhooks" checked={moderation.antiWebhooksFlood} />
@@ -36,9 +36,8 @@ const { moderation, protection } = loaded.config;
 				</div>
 			</SettingCard>
 
-			<SettingCard title="Mayúsculas (Caps Lock)" description="Marca mensajes con un porcentaje alto de mayúsculas." icon="bi-type-bold">
+			<SettingCard title="Mayúsculas (Caps Lock)" description="Marca mensajes con un porcentaje alto de mayúsculas." name="capsLockEnable" checked={moderation.capsLockEnable}>
 				<div class="divide-border-soft divide-y">
-					<Toggle name="capsLockEnable" label="Activar filtro" checked={moderation.capsLockEnable} />
 					<FieldRow label="Umbral" description="Porcentaje mínimo de mayúsculas para considerarlo infracción.">
 						<div class="flex items-center gap-2">
 							<input type="number" name="capsLockThreshold" data-depends="capsLockEnable" min="1" max="100" value={moderation.capsLockThreshold} class={inputClass + " !w-20 !min-w-0 sm:!w-20"} disabled={!moderation.capsLockEnable} />
@@ -48,25 +47,23 @@ const { moderation, protection } = loaded.config;
 				</div>
 			</SettingCard>
 
-			<SettingCard title="Exceso de emojis" description="Marca mensajes con demasiados emojis." icon="bi-emoji-smile">
+			<SettingCard title="Exceso de emojis" description="Marca mensajes con demasiados emojis." name="manyEmojisEnable" checked={moderation.manyEmojisEnable}>
 				<div class="divide-border-soft divide-y">
-					<Toggle name="manyEmojisEnable" label="Activar filtro" checked={moderation.manyEmojisEnable} />
 					<FieldRow label="Umbral" description="Cantidad de emojis en un mismo mensaje.">
 						<input type="number" name="manyEmojisThreshold" data-depends="manyEmojisEnable" min="1" value={moderation.manyEmojisThreshold} class={inputClass + " !w-20 !min-w-0 sm:!w-20"} disabled={!moderation.manyEmojisEnable} />
 					</FieldRow>
 				</div>
 			</SettingCard>
 
-			<SettingCard title="Mensajes largos" description="Marca mensajes con demasiadas palabras." icon="bi-file-text">
+			<SettingCard title="Mensajes largos" description="Marca mensajes con demasiadas palabras." name="manyWordsEnable" checked={moderation.manyWordsEnable}>
 				<div class="divide-border-soft divide-y">
-					<Toggle name="manyWordsEnable" label="Activar filtro" checked={moderation.manyWordsEnable} />
 					<FieldRow label="Umbral" description="Cantidad de palabras en un mismo mensaje.">
 						<input type="number" name="manyWordsThreshold" data-depends="manyWordsEnable" min="1" value={moderation.manyWordsThreshold} class={inputClass + " !w-20 !min-w-0 sm:!w-20"} disabled={!moderation.manyWordsEnable} />
 					</FieldRow>
 				</div>
 			</SettingCard>
 
-			<SettingCard title="Escalado de sanciones" description="Qué pasa cuando un mismo usuario acumula infracciones de cualquiera de los filtros anteriores (o del AutoMod nativo de Discord)." icon="bi-bar-chart-steps">
+			<SettingCard title="Escalado de sanciones" description="Qué pasa cuando un mismo usuario acumula infracciones de cualquiera de los filtros anteriores (o del AutoMod nativo de Discord).">
 				<div class="divide-border-soft divide-y">
 					<FieldRow label="Silenciar (timeout) a partir de" description="Número de infracciones acumuladas.">
 						<div class="flex items-center gap-2">
@@ -96,7 +93,7 @@ const { moderation, protection } = loaded.config;
 				</div>
 			</SettingCard>
 
-			<SettingCard title="Razones predefinidas" description="Lista de razones rápidas que el staff puede usar al moderar." icon="bi-list-check">
+			<SettingCard title="Razones predefinidas" description="Lista de razones rápidas que el staff puede usar al moderar.">
 				<div class="mb-4 flex flex-wrap gap-2" data-list="forceReasons" data-empty="Sin razones predefinidas: los comandos de moderación aceptan cualquier razón.">
 					{
 						moderation.forceReasons.length === 0 ? (

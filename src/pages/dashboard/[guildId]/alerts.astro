@@ -27,7 +27,7 @@ const { configuration, protection } = loaded.config;
 		raidmodeActive={protection.raidmodeEnable}
 	>
 		<div class="flex flex-col gap-6">
-			<SettingCard title="Canal de logs" description="Todas las acciones de moderación y eventos de seguridad se guardan siempre en la base de datos; este canal es solo para verlos en vivo en Discord." icon="bi-journal-text">
+			<SettingCard title="Canal de logs" description="Todas las acciones de moderación y eventos de seguridad se guardan siempre en la base de datos; este canal es solo para verlos en vivo en Discord.">
 				<FieldRow label="Canal" description="Si lo dejas vacío, los logs no se envían a ningún canal (pero se siguen registrando).">
 					<div class="flex items-center gap-2">
 						<span class="text-text-faint text-sm">ID</span>
@@ -44,7 +44,7 @@ const { configuration, protection } = loaded.config;
 				}
 			</SettingCard>
 
-			<SettingCard title="Lista blanca (Whitelist)" description="Usuarios y bots exentos de Anti-Raid, Anti-Bots y demás protecciones automáticas." icon="bi-shield-lock">
+			<SettingCard title="Lista blanca (Whitelist)" description="Usuarios y bots exentos de Anti-Raid, Anti-Bots y demás protecciones automáticas.">
 				<div class="mb-4 flex flex-wrap gap-2" data-list="whitelist" data-icon="bi-person-check" data-empty="Ningún usuario o bot en la lista blanca todavía.">
 					{
 						configuration.whitelist.length === 0 ? (

@@ -2,19 +2,45 @@
 interface Props {
 	title: string;
 	description?: string;
-	icon?: string;
+	// Interruptor principal del bloque: va en la cabecera, a la derecha, en vez de repetir
+	// el título en una fila aparte. El resto de ajustes cuelgan debajo.
+	name?: string;
+	checked?: boolean;
+	danger?: boolean;
 }
 
-const { title, description, icon } = Astro.props;
+const { title, description, name, checked = false, danger = false } = Astro.props;
+const hasBody = Astro.slots.has("default");
 ---
 
-<div class="border-border-soft bg-card rounded-[14px] border p-5">
-	<div class="mb-4 flex items-start gap-3">
-		{icon && <i class={`bi ${icon} text-brand mt-0.5 text-base`} />}
+<div class:list={["rounded-[14px] border", danger && checked ? "border-[#ef4444]/40 bg-[#ef4444]/5" : "border-border-soft bg-card"]}>
+	<div class="flex items-start justify-between gap-4 p-5">
 		<div class="min-w-0">
 			<h2 class="text-text text-sm font-bold">{title}</h2>
-			{description && <p class="text-text-faint mt-0.5 text-xs">{description}</p>}
+			{description && <p class="text-text-faint mt-1 text-xs leading-relaxed">{description}</p>}
 		</div>
+		{
+			name && (
+				<label class="mt-0.5 shrink-0 cursor-pointer" aria-label={title}>
+					<input type="checkbox" name={name} checked={checked} class="peer sr-only" />
+					<div
+						class:list={[
+							"peer-focus-visible:outline-brand relative h-6 w-11 rounded-full transition-colors peer-checked:[&>div]:translate-x-5 peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2",
+							"bg-border-soft",
+							danger ? "peer-checked:bg-[#ef4444]" : "peer-checked:bg-brand",
+						]}
+					>
+						<div class="absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white transition-transform" />
+					</div>
+				</label>
+			)
+		}
 	</div>
-	<slot />
+	{
+		hasBody && (
+			<div class:list={["border-t px-5 py-4", danger && checked ? "border-[#ef4444]/25" : "border-border-soft"]}>
+				<slot />
+			</div>
+		)
+	}
 </div>

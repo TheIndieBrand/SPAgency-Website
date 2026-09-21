@@ -18,16 +18,20 @@ const icon = guildIconUrl(guild);
 const base = `/dashboard/${guild.id}`;
 
 
-const panelNav = [{ key: "general" as const, label: "General", href: base, icon: "bi-grid" }];
-
-const logsNav = [{ key: "logs" as const, label: "Registros de actividad", href: `${base}/logs`, icon: "bi-journal-text" }];
-
-const configNav = [
-	{ key: "antiraid" as const, label: "Anti-Raid & Bots", href: `${base}/antiraid`, icon: "bi-shield-check" },
-	{ key: "automod" as const, label: "Automoderación", href: `${base}/automod`, icon: "bi-funnel" },
-	{ key: "alerts" as const, label: "Alertas y Canales", href: `${base}/alerts`, icon: "bi-bell" },
-	{ key: "settings" as const, label: "Ajustes", href: `${base}/settings`, icon: "bi-gear" },
+// Dos grupos separados por una línea, sin rótulos: lo del servidor y lo que se configura.
+const groups = [
+	[
+		{ key: "general" as const, label: "General", href: base, icon: "bi-grid" },
+		{ key: "logs" as const, label: "Registros", href: `${base}/logs`, icon: "bi-journal-text" },
+	],
+	[
+		{ key: "antiraid" as const, label: "Anti-Raid & Bots", href: `${base}/antiraid`, icon: "bi-shield-check" },
+		{ key: "automod" as const, label: "Automoderación", href: `${base}/automod`, icon: "bi-funnel" },
+		{ key: "alerts" as const, label: "Alertas y canales", href: `${base}/alerts`, icon: "bi-bell" },
+		{ key: "settings" as const, label: "Ajustes", href: `${base}/settings`, icon: "bi-gear" },
+	],
 ];
+const allItems = groups.flat();
 ---
 
 <div class="bg-bg min-h-screen">
@@ -35,13 +39,13 @@ const configNav = [
 
 	<div class="mx-auto flex max-w-[1400px] items-start">
 		<!-- ============ SIDEBAR ============ -->
-		<aside class="border-border-soft sticky top-[73px] hidden h-[calc(100vh-73px)] w-64 shrink-0 overflow-y-auto border-r px-4 py-6 md:block">
-			<div class="border-border-soft mb-6 flex items-center gap-3 border-b px-3 pb-5">
+		<aside class="border-border-soft sticky top-[73px] hidden h-[calc(100vh-73px)] w-60 shrink-0 flex-col overflow-y-auto border-r px-3 py-5 md:flex">
+			<div class="mb-5 flex items-center gap-3 px-2">
 				{
 					icon ? (
-						<img src={icon} alt="" class="h-9 w-9 shrink-0 rounded-full object-cover" />
+						<img src={icon} alt="" class="h-10 w-10 shrink-0 rounded-xl object-cover" />
 					) : (
-						<div class="bg-bg-soft text-text-dim border-border flex h-9 w-9 shrink-0 items-center justify-center rounded-full border text-sm font-bold">
+						<div class="bg-brand-soft text-brand-hover flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-base font-bold">
 							{guild.name.charAt(0).toUpperCase()}
 						</div>
 					)
@@ -49,61 +53,43 @@ const configNav = [
 				<div class="min-w-0">
 					<div class="text-text truncate text-sm font-bold" title={guild.name}>{guild.name}</div>
 					{
-						raidmodeActive && (
-							<span class="mt-1 inline-flex items-center gap-1.5 text-[10px] font-bold whitespace-nowrap text-[#ef4444]">
-								<span class="inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-[#ef4444]" />
-								Modo Pánico Activo
+						raidmodeActive ? (
+							<span class="mt-0.5 inline-flex items-center gap-1.5 text-xs font-semibold text-[#ef4444]">
+								<span class="inline-block h-1.5 w-1.5 rounded-full bg-[#ef4444]" />
+								Modo Pánico activo
 							</span>
+						) : (
+							<a href="/dashboard" class="text-text-faint hover:text-brand mt-0.5 inline-flex items-center gap-1 text-xs transition-colors">
+								<i class="bi bi-arrow-left-short -ml-1 text-sm" />Cambiar de servidor
+							</a>
 						)
 					}
 				</div>
 			</div>
 
-			<div class="mb-6">
-				<div class="text-text-faint mb-2 px-3 text-[11px] font-bold tracking-[0.08em] uppercase">Panel</div>
-				<nav class="flex flex-col gap-1">
-					{
-						[...panelNav, ...logsNav].map((item) => (
-							<a
-								href={item.href}
-								class:list={[
-									"flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-semibold transition-colors",
-									active === item.key
-										? "bg-brand/10 border-brand/40 text-brand border"
-										: "text-text-dim hover:bg-bg-soft hover:text-text border border-transparent",
-								]}
-							>
-								<i class={`bi ${item.icon}`} />
-								{item.label}
-							</a>
-						))
-					}
-				</nav>
-			</div>
-
-			<div>
-				<div class="text-text-faint mb-2 px-3 text-[11px] font-bold tracking-[0.08em] uppercase">
-					Configuración
-				</div>
-				<nav class="flex flex-col gap-1">
-					{
-						configNav.map((item) => (
-							<a
-								href={item.href}
-								class:list={[
-									"flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-semibold transition-colors",
-									active === item.key
-										? "bg-brand/10 border-brand/40 text-brand border"
-										: "text-text-dim hover:bg-bg-soft hover:text-text border border-transparent",
-								]}
-							>
-								<i class={`bi ${item.icon}`} />
-								{item.label}
-							</a>
-						))
-					}
-				</nav>
-			</div>
+			<nav class="flex flex-col">
+				{
+					groups.map((group, i) => (
+						<div class:list={["flex flex-col gap-0.5", i > 0 && "border-border-soft mt-3 border-t pt-3"]}>
+							{group.map((item) => (
+								<a
+									href={item.href}
+									aria-current={active === item.key ? "page" : undefined}
+									class:list={[
+										"relative flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors",
+										active === item.key
+											? "bg-bg-soft text-text before:bg-brand font-semibold before:absolute before:top-2 before:bottom-2 before:left-0 before:w-0.5 before:rounded-full"
+											: "text-text-dim hover:bg-bg-soft/60 hover:text-text font-medium",
+									]}
+								>
+									<i class:list={[`bi ${item.icon} text-[15px]`, active === item.key ? "text-brand" : "text-text-faint"]} />
+									{item.label}
+								</a>
+							))}
+						</div>
+					))
+				}
+			</nav>
 		</aside>
 
 		<!-- ============ MOBILE NAV ============ -->
@@ -111,15 +97,15 @@ const configNav = [
 			<span class="text-text border-border flex shrink-0 items-center gap-2 border-r pr-3 text-xs font-bold whitespace-nowrap">
 				{icon ? <img src={icon} alt="" class="h-5 w-5 rounded-full object-cover" /> : <i class="bi bi-hdd-network text-text-faint" />}
 				{guild.name}
-				{raidmodeActive && <span class="inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-[#ef4444]" title="Modo Pánico Activo" />}
+				{raidmodeActive && <span class="inline-block h-1.5 w-1.5 rounded-full bg-[#ef4444]" title="Modo Pánico activo" />}
 			</span>
 			{
-				[...panelNav, ...logsNav, ...configNav].map((item) => (
+				allItems.map((item) => (
 					<a
 						href={item.href}
 						class:list={[
 							"shrink-0 rounded-full px-3 py-1.5 text-xs font-bold whitespace-nowrap transition-colors",
-							active === item.key ? "bg-brand text-white" : "border-border text-text-dim border",
+							active === item.key ? "border-brand/50 bg-brand/10 text-brand border" : "border-border text-text-dim border",
 						]}
 					>
 						{item.label}

@@ -22,7 +22,7 @@ const lastBackup = await getLastBackup(guild.id);
 <Layout title={`Ajustes — ${guild.name}`}>
 	<DashboardShell guild={guild} active="settings" title="Ajustes" subtitle="Preferencias generales del bot y copias de seguridad del servidor." raidmodeActive={protection.raidmodeEnable}>
 		<div class="flex flex-col gap-6">
-			<SettingCard title="General" icon="bi-sliders">
+			<SettingCard title="General">
 				<div class="divide-border-soft divide-y">
 					<FieldRow label="Prefijo de comandos" description="Prefijo para los comandos de texto del bot (los slash commands no lo necesitan).">
 						<input type="text" name="prefix" maxlength="5" value={core.prefix} class={inputClass + " !w-24 !min-w-0 sm:!w-24"} />
@@ -36,7 +36,7 @@ const lastBackup = await getLastBackup(guild.id);
 				</div>
 			</SettingCard>
 
-			<SettingCard title="Copias de seguridad" description="Snapshot de canales, roles, bans, emojis y stickers. Se usa para restaurar el servidor tras un ataque." icon="bi-archive">
+			<SettingCard title="Copias de seguridad" description="Snapshot de canales, roles, bans, emojis y stickers. Se usa para restaurar el servidor tras un ataque.">
 				<div class="border-border-soft flex flex-col items-start justify-between gap-4 border-b pb-4 sm:flex-row sm:items-center">
 					<div>
 						<p class="text-text text-sm font-semibold">Último backup</p>
