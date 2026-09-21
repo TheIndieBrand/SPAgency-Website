@@ -1,0 +1,295 @@
+---
+export const prerender = false;
+export const knowledge = false; // página posterior a la invitación: el asistente no la necesita
+
+import Layout from "../layouts/Layout.astro";
+import Navbar from "../components/Navbar.astro";
+import Footer from "../components/Footer.astro";
+import BlackHole from "../components/BlackHole.astro";
+import CommunityBackdrop from "../components/CommunityBackdrop.astro";
+import { getGuildPreview } from "../lib/discord";
+import { site } from "../lib/site";
+
+// Aquí llega quien acaba de invitar al bot: Discord redirige con ?guild_id=<servidor>
+// (y un `code` que no usamos). Si canceló la invitación llega ?error=…, y no hay nada
+// que celebrar: se le devuelve al inicio.
+if (Astro.url.searchParams.has("error")) return Astro.redirect("/");
+
+const rawGuild = Astro.url.searchParams.get("guild_id") ?? "";
+const guildId = /^\d{15,25}$/.test(rawGuild) ? rawGuild : "";
+const guild = guildId ? await getGuildPreview(guildId) : null;
+const dashboardHref = guildId ? `/dashboard/${guildId}` : site.dashboardUrl;
+
+const steps = [
+	{
+		title: "Sube el rol de SP Agency",
+		text: "En los ajustes del servidor, en Roles, arrástralo hasta arriba. Si hay otro rol por encima, el Anti-Raid no puede banear a quien lo tenga.",
+		href: "/docs/permisos",
+		link: "Permisos y jerarquía",
+	},
+	{
+		title: "Elige dónde ver lo que pasa",
+		text: "En Alertas y Canales, indica un canal de logs y verás en directo todo lo que haga el bot. Sin canal se guarda igual, pero no lo ves en Discord.",
+		href: "/docs/registros",
+		link: "Sobre los registros",
+	},
+	{
+		title: "Ajusta la protección",
+		text: "Viene con una configuración prudente. Desde el dashboard activas Anti-Bots, selfbots o la verificación con un interruptor, sin escribir comandos.",
+		href: dashboardHref,
+		link: "Abrir el dashboard",
+	},
+];
+---
+
+<Layout
+	title="¡Gracias por invitar a SP Agency!"
+	description="SP Agency ya está en tu servidor. Estos son los primeros pasos."
+	customScrollbar={false}
+>
+	<Fragment slot="head">
+		<!-- Con «reducir movimiento» no hay escena: la página queda estática y legible. -->
+		<script is:inline>
+			if (!matchMedia("(prefers-reduced-motion: reduce)").matches) document.documentElement.dataset.thanks = "on";
+		</script>
+	</Fragment>
+
+	<Navbar />
+
+	<div id="thanks" class="relative isolate bg-black">
+		<!-- Cielo fijo y, delante de él, el agujero negro (también fijo: la escena lo mueve). -->
+		<div class="pointer-events-none fixed inset-0 z-0" aria-hidden="true">
+			<CommunityBackdrop />
+		</div>
+		<div id="t-bh" class="pointer-events-none fixed inset-0 z-0 overflow-hidden" style="mix-blend-mode: screen" aria-hidden="true">
+			<div id="t-bh-inner" class="absolute top-1/2 left-1/2">
+				<BlackHole size={640} />
+			</div>
+		</div>
+
+		<!-- ============ ESCENA: el agujero negro y el logo ============ -->
+		<section id="t-hero" class="relative z-10">
+			<div id="t-stage" class="mx-auto flex max-w-[760px] flex-col items-center gap-10 px-5 py-24 text-center">
+				<div class="t-intro pointer-events-none absolute inset-x-0 bottom-[9%] z-10 text-center">
+					<div id="t-eyebrow" class="text-text-faint text-[12px] font-bold tracking-[0.28em] uppercase">Instalación completada</div>
+					<div id="t-hint" class="text-text-dim mt-6 flex flex-col items-center gap-3 text-xs font-semibold">
+						<span class="t-mouse" aria-hidden="true"><span class="t-mouse-dot"></span></span>
+						<span>Desliza para continuar</span>
+					</div>
+				</div>
+
+				<img
+					id="t-logo"
+					class="t-init t-abs h-24 w-24 rounded-[25%] shadow-[0_0_70px_rgba(0,121,187,0.5)]"
+					src="/logo.png"
+					alt="SP Agency"
+					width="96"
+					height="96"
+				/>
+
+				<div id="t-headline" class="t-init t-abs w-full max-w-[720px] px-5">
+					<h1 class="font-display text-[38px] leading-[1.06] font-bold tracking-tight sm:text-[60px]">
+						SP Agency ya vigila
+						<span class="text-brand mt-2 block">
+							{
+								guild?.iconUrl && (
+									<img src={guild.iconUrl} alt="" class="mr-3 inline-block h-8 w-8 rounded-[10px] align-[-0.12em] sm:h-11 sm:w-11" />
+								)
+							}
+							{guild ? guild.name : "tu servidor"}
+						</span>
+					</h1>
+					<p class="text-text-dim mx-auto mt-6 max-w-[520px] text-base leading-relaxed sm:text-lg">
+						Antes de nada, dale un vistazo al dashboard: son un par de minutos y dejas la protección a tu gusto.
+					</p>
+					<div class="mt-8 flex flex-wrap items-center justify-center gap-x-6 gap-y-3">
+						<a
+							href={dashboardHref}
+							class="bg-brand hover:bg-brand-hover inline-flex items-center gap-2 rounded-xl px-7 py-3.5 text-base font-bold text-white transition-colors"
+						>
+							{guildId ? "Configurar mi servidor" : "Ir al dashboard"}
+							<i class="bi bi-arrow-right"></i>
+						</a>
+						<a href="/docs/primeros-pasos" class="text-text-dim hover:text-brand text-sm font-semibold transition-colors">
+							Leer los primeros pasos
+						</a>
+					</div>
+				</div>
+			</div>
+		</section>
+
+		<!-- ============ LO SIGUIENTE ============ -->
+		<section id="t-rest" class="relative z-10 mx-auto max-w-[900px] px-5 pt-[16vh] pb-[16vh] sm:px-8">
+			<div class="text-brand mb-4 text-[13px] font-bold tracking-[0.1em] uppercase">Lo siguiente</div>
+			<h2 class="font-display max-w-[560px] text-[34px] leading-[1.1] font-bold tracking-tight sm:text-[46px]">
+				Tres cosas y tu servidor queda listo.
+			</h2>
+
+			<ol id="t-steps" class="relative mt-16 ml-1.5 border-l border-[var(--color-border)]">
+				<span id="t-rail-fill" class="bg-brand absolute top-0 -left-px h-full w-[2px]" aria-hidden="true"></span>
+				{
+					steps.map((step, i) => (
+						<li class="t-step relative pb-16 pl-8 last:pb-0 sm:pl-12">
+							<span class="t-node" aria-hidden="true" />
+							<div class="t-num font-display mb-2 text-[44px] leading-none font-bold tracking-tight sm:text-[64px]">0{i + 1}</div>
+							<h3 class="font-display text-text text-[22px] font-bold tracking-tight sm:text-[26px]">{step.title}</h3>
+							<p class="text-text-dim mt-3 max-w-[520px] text-base leading-relaxed">{step.text}</p>
+							<a href={step.href} class="text-brand hover:text-brand-hover mt-4 inline-block text-sm font-semibold transition-colors">
+								{step.link} <span aria-hidden="true">→</span>
+							</a>
+						</li>
+					))
+				}
+			</ol>
+
+			<div class="mt-28 max-w-[560px]">
+				<h2 class="font-display text-[30px] leading-[1.12] font-bold tracking-tight sm:text-[40px]">
+					Si algo no cuadra, aquí estamos.
+				</h2>
+				<p class="text-text-dim mt-4 text-base leading-relaxed">
+					Pregúntale al <a href={site.assistantUrl} class="text-brand hover:text-brand-hover font-semibold">asistente</a> o abre un
+					ticket en <a href={site.supportUrl} class="text-brand hover:text-brand-hover font-semibold">soporte</a>. Y si tu servidor
+					sufre un ataque, <code class="border-border-soft bg-bg-soft rounded border px-1.5 py-0.5 font-mono text-[0.85em]">/sos</code> avisa
+					al equipo al momento.
+				</p>
+				<a
+					href={dashboardHref}
+					class="bg-brand hover:bg-brand-hover mt-8 inline-flex items-center gap-2 rounded-xl px-7 py-3.5 text-base font-bold text-white transition-colors"
+				>
+					{guildId ? "Configurar mi servidor" : "Ir al dashboard"}
+					<i class="bi bi-arrow-right"></i>
+				</a>
+			</div>
+		</section>
+	</div>
+
+	<Footer />
+</Layout>
+
+<style is:global>
+	/* Sin barra de scroll (se sigue pudiendo hacer scroll con rueda, teclado y táctil),
+	   ni la nativa ni la superpuesta de Layout (customScrollbar={false}). */
+	html {
+		scrollbar-width: none;
+	}
+	html::-webkit-scrollbar {
+		display: none;
+	}
+
+	/* ── Sin escena (reducir movimiento o sin JS): todo en el flujo normal ─────── */
+	html:not([data-thanks="on"]) #t-bh,
+	html:not([data-thanks="on"]) .t-intro {
+		display: none;
+	}
+
+	/* ── Con escena: el escenario queda fijo mientras se hace scroll ─────────── */
+	html[data-thanks="on"] #t-hero {
+		height: 380vh;
+	}
+	html[data-thanks="on"] #t-stage {
+		position: sticky;
+		top: 73px;
+		height: calc(100vh - 73px);
+		max-width: none;
+		padding: 0;
+	}
+	html[data-thanks="on"] .t-abs {
+		position: absolute;
+		top: 50%;
+		left: 50%;
+	}
+	html[data-thanks="on"] .t-init {
+		opacity: 0;
+	}
+
+	/* Indicador de scroll: un ratón con la ruedecilla bajando. */
+	.t-mouse {
+		display: block;
+		position: relative;
+		width: 24px;
+		height: 38px;
+		border: 2px solid rgb(255 255 255 / 0.55);
+		border-radius: 999px;
+	}
+	.t-mouse-dot {
+		position: absolute;
+		top: 7px;
+		left: 50%;
+		width: 4px;
+		height: 8px;
+		margin-left: -2px;
+		border-radius: 999px;
+		background: #4cc3ff;
+		animation: t-wheel 1.8s ease-in-out infinite;
+	}
+	@keyframes t-wheel {
+		0% {
+			transform: translateY(0);
+			opacity: 1;
+		}
+		70% {
+			transform: translateY(12px);
+			opacity: 0;
+		}
+		100% {
+			transform: translateY(12px);
+			opacity: 0;
+		}
+	}
+
+	/* ── Pasos: línea con nodos, como el changelog ───────────────────────────── */
+	.t-node {
+		position: absolute;
+		top: 1.05rem;
+		left: -6.5px;
+		width: 12px;
+		height: 12px;
+		border-radius: 999px;
+		background: var(--color-bg);
+		border: 2px solid var(--color-text-faint);
+		transition:
+			background-color 0.5s,
+			border-color 0.5s,
+			box-shadow 0.5s;
+	}
+	.t-num {
+		color: rgb(255 255 255 / 0.14);
+		transition: color 0.6s;
+	}
+	.t-step {
+		transition:
+			opacity 0.6s,
+			transform 0.6s;
+	}
+	.t-step.is-on .t-node {
+		background: var(--color-brand);
+		border-color: var(--color-brand);
+		box-shadow: 0 0 0 4px var(--color-brand-soft);
+	}
+	.t-step.is-on .t-num {
+		color: var(--color-brand);
+	}
+	html[data-thanks="on"] .t-step:not(.is-on) {
+		opacity: 0.3;
+		transform: translateY(14px);
+	}
+	html[data-thanks="on"] #t-rail-fill {
+		transform: scaleY(0);
+		transform-origin: top;
+	}
+	html:not([data-thanks="on"]) #t-rail-fill {
+		display: none;
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.t-mouse-dot,
+		.t-step {
+			animation: none;
+			transition: none;
+		}
+	}
+</style>
+
+<script>
+	import "../scripts/thanks-scene";
+</script>

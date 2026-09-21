@@ -109,6 +109,36 @@ export function userAvatarUrl(user: DiscordUser): string {
 	return `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.${ext}`;
 }
 
+// A dónde vuelve Discord tras invitar al bot: la página de agradecimiento (/gracias),
+// en el mismo dominio que el login. Esa URL tiene que estar entre los Redirects de la
+// aplicación en el Developer Portal (OAuth2), como la del login. Con INVITE_REDIRECT="off"
+// la invitación se hace sin redirección (Discord se queda en su pantalla de "Autorizado").
+function thanksRedirect(): Record<string, string> {
+	const login = process.env.DISCORD_REDIRECT_URI;
+	if (!login || process.env.INVITE_REDIRECT === "off") return {};
+	try {
+		return { redirect_uri: `${new URL(login).origin}/gracias`, response_type: "code" };
+	} catch {
+		return {};
+	}
+}
+
+// Invitación general (botón «Añadir a Discord»): el usuario elige el servidor en Discord.
+// Conserva el client_id que ya tenía el botón (el de la invitación pública del bot), que
+// no coincide con DISCORD_CLIENT_ID (el del login): la redirección a /gracias hay que
+// registrarla en ESA aplicación. INVITE_CLIENT_ID lo cambia sin tocar el código.
+const PUBLIC_INVITE_CLIENT_ID = "1038614901394002020";
+
+export function generalInviteUrl(): string {
+	const params = new URLSearchParams({
+		client_id: process.env.INVITE_CLIENT_ID || PUBLIC_INVITE_CLIENT_ID,
+		permissions: "8",
+		scope: "bot applications.commands",
+		...thanksRedirect(),
+	});
+	return `https://discord.com/oauth2/authorize?${params.toString()}`;
+}
+
 export function botInviteUrl(guildId: string): string {
 	const params = new URLSearchParams({
 		client_id: process.env.DISCORD_CLIENT_ID!,
@@ -116,6 +146,7 @@ export function botInviteUrl(guildId: string): string {
 		permissions: BOT_PERMISSIONS,
 		guild_id: guildId,
 		disable_guild_select: "true",
+		...thanksRedirect(),
 	});
 	return `https://discord.com/oauth2/authorize?${params.toString()}`;
 }

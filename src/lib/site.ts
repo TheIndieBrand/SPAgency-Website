@@ -6,7 +6,8 @@ export const site = {
 	title: "SP Agency — Seguridad anti-raid para Discord",
 	description:
 		"SP Agency detecta y bloquea raids, spam y cuentas falsas en tu servidor de Discord en tiempo real.",
-	inviteUrl: "#",
+	// Redirige a la invitación de Discord y, al terminar, a /gracias (ver pages/invite.ts).
+	inviteUrl: "/invite",
 	discordUrl: "https://discord.gg/mG5CaDvKsk",
 	githubUrl: "https://github.com/devEthan6737/SPAgency",
 	docsUrl: "/docs",
@@ -38,7 +39,8 @@ export const footerColumns = [
 		title: "Producto",
 		links: [
 			{ label: "Dashboard", href: site.dashboardUrl },
-			{ label: "Comandos", href: "#" },
+			{ label: "Invitar bot", href: site.inviteUrl },
+			{ label: "Comandos", href: "/docs/comandos" },
 			{ label: "Changelog", href: site.changelogUrl },
 		],
 	},
