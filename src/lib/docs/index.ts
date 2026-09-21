@@ -2,6 +2,7 @@ import { gettingStarted } from "./getting-started.ts";
 import { protection } from "./protection.ts";
 import { moderation } from "./moderation.ts";
 import { recovery, help } from "./recovery.ts";
+import { web } from "./web.ts";
 import type { DocGroup, DocPage } from "./types.ts";
 
 export type { DocBlock, DocGroup, DocPage } from "./types.ts";
@@ -12,6 +13,7 @@ export const docGroups: DocGroup[] = [
 	{ title: "Protección", pages: protection },
 	{ title: "Moderación", pages: moderation },
 	{ title: "Recuperación y registros", pages: recovery },
+	{ title: "La web", pages: web },
 	{ title: "Ayuda", pages: help },
 ];
 

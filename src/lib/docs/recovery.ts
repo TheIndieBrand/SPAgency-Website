@@ -177,10 +177,30 @@ export const help: DocPage[] = [
 				type: "p",
 				text: "Español o inglés. Se elige en **Ajustes → Idioma** y afecta a las respuestas, los registros y los avisos del servidor.",
 			},
+			{ type: "h", text: "No veo mi servidor en el dashboard" },
+			{
+				type: "p",
+				text: "Solo salen los servidores donde eres administrador y SP Agency ya está dentro. Invita al bot si falta y vuelve a abrir el [Dashboard](/docs/dashboard). Los cambios de permisos se reconocen en unos segundos.",
+			},
+			{ type: "h", text: "¿Puedo cambiar la configuración hablando con el asistente?" },
+			{
+				type: "p",
+				text: "Sí, pero el [Asistente de IA](/docs/asistente-ia) solo propone los cambios: no se aplica nada hasta que los confirmas, y solo si eres administrador del servidor.",
+			},
+			{ type: "h", text: "¿Puedo dejar una opinión sobre el bot?" },
+			{
+				type: "p",
+				text: "Sí, en [Testimonios](/testimonios), con tu cuenta de Discord. El staff aprueba cada comentario antes de publicarlo, y solo puedes tener uno publicado.",
+			},
+			{ type: "h", text: "¿Qué datos guardáis?" },
+			{
+				type: "p",
+				text: "Lo que guardamos, para qué y durante cuánto tiempo está detallado en la [Política de privacidad](/privacidad); las condiciones de uso, en los [Términos del servicio](/terminos).",
+			},
 			{ type: "h", text: "¿Necesitas más ayuda?" },
 			{
 				type: "p",
-				text: "Escríbenos desde la página de **Soporte**. Si estás en plena emergencia, `/sos` avisa al equipo de SP Agency al momento.",
+				text: "Abre un ticket desde [Soporte](/docs/soporte). Si estás en plena emergencia, `/sos` avisa al equipo de SP Agency al momento.",
 			},
 		],
 	},
