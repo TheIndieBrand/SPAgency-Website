@@ -35,6 +35,9 @@ export function safeAvatar(url: unknown): string | null {
 const MESSAGES: Record<string, string> = {
 	too_many_open_tickets: "Ya tienes un ticket abierto. Ciérralo antes de abrir otro.",
 	cooldown: "Espera unos segundos antes de volver a intentarlo.",
+	closing: "Este ticket se está cerrando.",
+	ticket_full: "Este ticket ha alcanzado su límite de mensajes. Ciérralo y abre uno nuevo.",
+	daily_limit: "Has alcanzado el límite de tickets de hoy. Inténtalo mañana.",
 	support_full: "Soporte está saturado ahora mismo. Inténtalo de nuevo más tarde.",
 	invalid_body: "Revisa el asunto y el mensaje.",
 	not_found: "Este ticket ya no existe.",

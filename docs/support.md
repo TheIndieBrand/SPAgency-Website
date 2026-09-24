@@ -73,6 +73,7 @@ Cuerpo: `{ userId, username, avatarUrl, subject, message }`. `subject` ≤ 100 c
 - `429 too_many_open_tickets` — el usuario ya tiene un ticket abierto (máximo **uno** a la vez; hasta que se cierre no puede abrir otro).
 - `429 cooldown` — creó otro ticket hace menos de 60 s.
 - `503 support_full` — la categoría no admite más canales.
+- `429 daily_limit` — el usuario alcanzó el límite de tickets del día.
 - `502` — el bot no pudo crear el canal (permisos, límite de Discord). Error genérico.
 
 ### `GET /support/tickets?userId=` — tickets abiertos del usuario
@@ -93,6 +94,10 @@ Cuerpo: `{ userId, content }`, `content` ≤ 2000. El bot lo publica en el canal
 - `200 { id }`
 - `400 invalid_body`, `404 not_found`
 - `429 cooldown` — más de un mensaje cada 2 s.
+- `409 closing` — el ticket se está cerrando y ya no admite mensajes.
+- `409 ticket_full` — el ticket alcanzó su límite de mensajes.
+
+> `daily_limit`, `closing` y `ticket_full` se añadieron después del contrato original. Estados según el código del bot (`SupportApi.ts`). La web solo mira el **código** (`error`) para elegir el mensaje que ve el usuario. Si llegara un código que la web no conoce, el usuario ve un mensaje genérico («No se pudo completar la acción»).
 
 ### `POST /support/tickets/:ticketId/close` — el usuario cierra
 
