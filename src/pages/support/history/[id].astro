@@ -8,7 +8,7 @@ import SupportMessage from "../../../components/support/SupportMessage.astro";
 import { formatChangelogDate } from "../../../lib/ChangelogRepository";
 import { getSessionUser } from "../../../lib/session";
 import { renderMessageHtml } from "../../../lib/support-format";
-import { getTranscript } from "../../../lib/support-transcripts";
+import { supportTranscriptRepository } from "../../../lib/SupportTranscriptRepository";
 
 const id = Astro.params.id ?? "";
 
@@ -16,7 +16,7 @@ const user = await getSessionUser(Astro.cookies);
 if (!user) return Astro.redirect(`/auth/discord/login?next=${encodeURIComponent(Astro.url.pathname)}`);
 
 // Solo el dueño lo ve; el de otro usuario es como si no existiera.
-const transcript = getTranscript(id, user.id);
+const transcript = supportTranscriptRepository.getTranscript(id, user.id);
 if (!transcript) return Astro.redirect("/support");
 
 const messages = transcript.messages.map((m) => ({ ...m, html: renderMessageHtml(m.content) }));

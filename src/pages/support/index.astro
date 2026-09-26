@@ -7,7 +7,7 @@ import Footer from "../../components/Footer.astro";
 import { formatChangelogDate } from "../../lib/ChangelogRepository";
 import { getSessionUser } from "../../lib/session";
 import { listOpenTickets } from "../../lib/support-bot";
-import { listTranscripts } from "../../lib/support-transcripts";
+import { supportTranscriptRepository } from "../../lib/SupportTranscriptRepository";
 
 const user = await getSessionUser(Astro.cookies);
 
@@ -24,7 +24,7 @@ const result = await listOpenTickets(user.id);
 if (result.ok) openTicket = result.data.tickets[0] ?? null;
 else botDown = true;
 
-const transcripts = listTranscripts(user.id);
+const transcripts = supportTranscriptRepository.listTranscripts(user.id);
 ---
 
 <Layout
