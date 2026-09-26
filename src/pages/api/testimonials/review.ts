@@ -1,5 +1,5 @@
 import type { APIRoute } from "astro";
-import { setStatus, type CommentStatus } from "../../../lib/community-testimonials";
+import { communityTestimonialsRepository, type CommentStatus } from "../../../lib/CommunityTestimonialsRepository";
 import { requireStaff } from "../../../lib/chat/staff";
 import { json } from "../../../lib/session";
 
@@ -22,7 +22,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
 		return json({ error: "invalid_body", message: "Petición no válida." }, 400);
 	}
 
-	return setStatus(id, status, auth.user.id)
+	return communityTestimonialsRepository.setStatus(id, status, auth.user.id)
 		? json({ ok: true })
 		: json({ error: "not_found", message: "Ese comentario no existe." }, 404);
 };

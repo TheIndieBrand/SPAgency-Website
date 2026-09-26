@@ -7,7 +7,7 @@ import Footer from "../../components/Footer.astro";
 import ChangelogEntry from "../../components/changelog/ChangelogEntry.astro";
 import { changelogRepository } from "../../lib/ChangelogRepository";
 import { isOwner } from "../../lib/changelog-auth";
-import { likeStates, likeTarget, noLikes } from "../../lib/likes";
+import { likeTarget, likesRepository, noLikes } from "../../lib/LikesRepository";
 import { getSessionUser } from "../../lib/session";
 
 const entries = changelogRepository.listChangelogs();
@@ -18,7 +18,7 @@ const user = await getSessionUser(Astro.cookies);
 const owner = isOwner(user);
 
 // Me gusta de todas las entradas de una vez (y cuáles ha dado quien mira).
-const likes = likeStates("changelog:", user?.id);
+const likes = likesRepository.likeStates("changelog:", user?.id);
 ---
 
 <Layout

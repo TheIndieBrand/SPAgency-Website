@@ -4,7 +4,8 @@ export const prerender = false;
 import Layout from "../../layouts/Layout.astro";
 import Navbar from "../../components/Navbar.astro";
 import { isStaff } from "../../lib/chat/staff";
-import { listByStatus, MAX_LENGTH, type CommunityComment } from "../../lib/community-testimonials";
+import { MaxCommentLength } from "../../lib/CommunityTestimonials.constants";
+import { communityTestimonialsRepository, type CommunityComment } from "../../lib/CommunityTestimonialsRepository";
 import { getSessionUser } from "../../lib/session";
 import { safeAvatar } from "../../lib/support-format";
 
@@ -13,9 +14,9 @@ if (!user) return Astro.redirect("/auth/discord/login?next=/staff/testimonials")
 // Quien no es staff no debe ni saber que esta página existe.
 if (!isStaff(user)) return Astro.redirect("/");
 
-const pending = listByStatus("pending");
-const approved = listByStatus("approved");
-const rejected = listByStatus("rejected", 50);
+const pending = communityTestimonialsRepository.listByStatus("pending");
+const approved = communityTestimonialsRepository.listByStatus("approved");
+const rejected = communityTestimonialsRepository.listByStatus("rejected", 50);
 
 const sections: Array<{
 	key: string;
@@ -121,7 +122,7 @@ const fmt = (iso: string) =>
 			))
 		}
 
-		<p class="text-text-faint text-xs">Los comentarios admiten hasta {MAX_LENGTH} caracteres, en texto plano.</p>
+		<p class="text-text-faint text-xs">Los comentarios admiten hasta {MaxCommentLength} caracteres, en texto plano.</p>
 	</main>
 </Layout>
 

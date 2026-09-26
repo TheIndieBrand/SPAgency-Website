@@ -7,20 +7,21 @@ import Footer from "../components/Footer.astro";
 import CommunityBackdrop from "../components/CommunityBackdrop.astro";
 import LikeButton from "../components/LikeButton.astro";
 import TestimonialCard from "../components/TestimonialCard.astro";
-import { hasPublishedTestimonial, latestForUser, listApproved, MAX_LENGTH, MIN_LENGTH } from "../lib/community-testimonials";
+import { MaxCommentLength, MinCommentLength } from "../lib/CommunityTestimonials.constants";
+import { communityTestimonialsRepository } from "../lib/CommunityTestimonialsRepository";
 import { userAvatarUrl } from "../lib/discord";
 import { sections } from "../lib/home-content";
-import { likeStates, likeTarget, noLikes } from "../lib/likes";
+import { likeTarget, likesRepository, noLikes } from "../lib/LikesRepository";
 import { getSessionUser } from "../lib/session";
 import { safeAvatar } from "../lib/support-format";
 import { testimonials } from "../lib/testimonials";
 
 const user = await getSessionUser(Astro.cookies);
-const mine = user ? latestForUser(user.id) : null;
+const mine = user ? communityTestimonialsRepository.latestForUser(user.id) : null;
 // Quien ya tiene un testimonio publicado (uno de los de siempre o uno aprobado) no puede enviar otro.
-const alreadyPublished = user ? hasPublishedTestimonial(user.id) : false;
+const alreadyPublished = user ? communityTestimonialsRepository.hasPublishedTestimonial(user.id) : false;
 const isCurated = user ? testimonials.some((t) => t.userId === user.id) : false;
-const likes = likeStates("testimonial:", user?.id);
+const likes = likesRepository.likeStates("testimonial:", user?.id);
 
 // El muro: los testimonios de siempre (los del home) y, a continuación, los de la
 // comunidad ya aprobados por el staff, del más reciente al más antiguo. Los de la
@@ -28,7 +29,7 @@ const likes = likeStates("testimonial:", user?.id);
 const defaultAvatar = "https://cdn.discordapp.com/embed/avatars/0.png";
 const wall = [
 	...testimonials.map((t) => ({ ...t, like: { target: likeTarget.curated(t.userId), ownerId: t.userId } })),
-	...listApproved().map((c) => ({
+	...communityTestimonialsRepository.listApproved().map((c) => ({
 		username: c.displayName,
 		role: `@${c.username}`,
 		avatar: safeAvatar(c.avatar) ?? defaultAvatar,
@@ -112,7 +113,7 @@ const STATUS_NOTE = {
 								)}
 
 								{mine?.status !== "pending" && !alreadyPublished && (
-									<form id="comment-form" class="flex flex-col gap-4" data-min={MIN_LENGTH} data-max={MAX_LENGTH}>
+									<form id="comment-form" class="flex flex-col gap-4" data-min={MinCommentLength} data-max={MaxCommentLength}>
 										<div class="flex items-center gap-3">
 											<img
 												src={userAvatarUrl(user)}
@@ -133,8 +134,8 @@ const STATUS_NOTE = {
 												name="comment"
 												required
 												rows="4"
-												minlength={MIN_LENGTH}
-												maxlength={MAX_LENGTH}
+												minlength={MinCommentLength}
+												maxlength={MaxCommentLength}
 												class="border-border text-text focus-visible:border-brand resize-y rounded-lg border bg-black/40 px-3.5 py-2.5 text-sm leading-relaxed outline-none transition-colors"
 											/>
 										</label>

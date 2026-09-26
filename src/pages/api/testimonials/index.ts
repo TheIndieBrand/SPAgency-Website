@@ -1,5 +1,5 @@
 import type { APIRoute } from "astro";
-import { normalizeComment, submitComment } from "../../../lib/community-testimonials";
+import { communityTestimonialsRepository, normalizeComment } from "../../../lib/CommunityTestimonialsRepository";
 import { userAvatarUrl } from "../../../lib/discord";
 import { json, requireUser } from "../../../lib/session";
 import { safeAvatar } from "../../../lib/support-format";
@@ -25,7 +25,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
 	if (!checked.ok) return json({ error: "invalid_comment", message: checked.message }, 400);
 
 	const { user } = auth;
-	const result = submitComment(
+	const result = communityTestimonialsRepository.submitComment(
 		{
 			id: user.id,
 			username: user.username,
