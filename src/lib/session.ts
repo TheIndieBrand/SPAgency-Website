@@ -3,56 +3,65 @@ import { createHash } from "node:crypto";
 import { getCurrentUser, type DiscordUser } from "./discord";
 import { sessionCookieService } from "./SessionCookieService";
 
-// the session cookie only stores discord's tokens, so knowing who the user is
-// costs a call to /users/@me. the support chat polls every few seconds:
-// without a cache, every poll would also be a discord call (with its latency
-// and its rate limits). the identity is remembered for a while, per token.
-//
-// only in the process's own memory, and keyed by a hash. cost: a token
-// revoked on discord can still be valid for up to USER_TTL_MS. failures
-// (an invalid token) are remembered for less time, so a bad token doesn't
-// hammer discord while still recovering quickly.
-const USER_TTL_MS = 60_000;
-const MISS_TTL_MS = 10_000;
-const MAX_ENTRIES = 500;
+const UserTtlMs = 60_000;
+const MissTtlMs = 10_000;
+const MaxEntries = 500;
 
-const identityCache = new Map<string, { user: DiscordUser | null; expires: number }>();
-const inFlight = new Map<string, Promise<DiscordUser | null>>();
+/**
+ * caches a discord user's identity by access token, so knowing who a
+ * session belongs to doesn't cost a discord call on every request.
+ *
+ * the session cookie only stores discord's tokens, so knowing who the user is
+ * costs a call to /users/@me. the support chat polls every few seconds:
+ * without a cache, every poll would also be a discord call (with its latency
+ * and its rate limits). the identity is remembered for a while, per token.
+ *
+ * only in the process's own memory, and keyed by a hash. cost: a token
+ * revoked on discord can still be valid for up to UserTtlMs. failures
+ * (an invalid token) are remembered for less time, so a bad token doesn't
+ * hammer discord while still recovering quickly.
+ */
+class DiscordIdentityCache {
+	private readonly entries = new Map<string, { user: DiscordUser | null; expires: number }>();
+	private readonly inFlight = new Map<string, Promise<DiscordUser | null>>();
 
-function lookupUser(accessToken: string): Promise<DiscordUser | null> {
-	const key = createHash("sha256").update(accessToken).digest("hex");
+	lookupUser(accessToken: string): Promise<DiscordUser | null> {
+		const key = createHash("sha256").update(accessToken).digest("hex");
 
-	const cached = identityCache.get(key);
-	if (cached && cached.expires > Date.now()) return Promise.resolve(cached.user);
+		const cached = this.entries.get(key);
+		if (cached && cached.expires > Date.now()) return Promise.resolve(cached.user);
 
-	// Varias peticiones a la vez del mismo usuario comparten una sola llamada.
-	const pending = inFlight.get(key);
-	if (pending) return pending;
+		// several requests for the same user at once share a single call.
+		const pending = this.inFlight.get(key);
+		if (pending) return pending;
 
-	const request = getCurrentUser(accessToken)
-		.then((user) => {
-			if (identityCache.size >= MAX_ENTRIES) {
-				const now = Date.now();
-				for (const [k, v] of identityCache) if (v.expires <= now) identityCache.delete(k);
-				if (identityCache.size >= MAX_ENTRIES) identityCache.clear();
-			}
-			identityCache.set(key, { user, expires: Date.now() + (user ? USER_TTL_MS : MISS_TTL_MS) });
-			return user;
-		})
-		// Un fallo de red no es una respuesta de Discord: no se cachea.
-		.catch(() => null)
-		.finally(() => inFlight.delete(key));
+		const request = getCurrentUser(accessToken)
+			.then((user) => {
+				if (this.entries.size >= MaxEntries) {
+					const now = Date.now();
+					for (const [k, v] of this.entries) if (v.expires <= now) this.entries.delete(k);
+					if (this.entries.size >= MaxEntries) this.entries.clear();
+				}
+				this.entries.set(key, { user, expires: Date.now() + (user ? UserTtlMs : MissTtlMs) });
+				return user;
+			})
+			// a network failure isn't a response from discord: it isn't cached.
+			.catch(() => null)
+			.finally(() => this.inFlight.delete(key));
 
-	inFlight.set(key, request);
-	return request;
+		this.inFlight.set(key, request);
+		return request;
+	}
 }
+
+const discordIdentityCache = new DiscordIdentityCache();
 
 // reuses the session from the discord login (cookie with the access_token).
 // doesn't delete the cookie on failure: these checks are also used on public
 // pages, where having no session is the normal case.
 export async function getSessionUser(cookies: AstroCookies): Promise<DiscordUser | null> {
 	const accessToken = sessionCookieService.readAccessToken(cookies);
-	return accessToken ? lookupUser(accessToken) : null;
+	return accessToken ? discordIdentityCache.lookupUser(accessToken) : null;
 }
 
 export function json(data: unknown, status = 200): Response {
@@ -81,8 +90,8 @@ export async function requireUser(
 	return { user };
 }
 
-// Ruta interna a la que volver tras el login (?next=/support). Solo rutas
-// relativas del propio sitio: nada de "//otro.com" ni "\" (open redirect).
+// internal route to return to after login (?next=/support). only routes
+// relative to the site itself: nothing like "//other.com" or "\" (open redirect).
 export function safeNextPath(value: string | null | undefined): string | null {
 	if (!value || !value.startsWith("/") || value.startsWith("//") || value.includes("\\")) return null;
 	return /^\/[\w\-./%?=&]*$/.test(value) ? value : null;

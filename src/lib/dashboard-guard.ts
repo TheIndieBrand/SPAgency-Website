@@ -12,77 +12,87 @@ import { sessionCookieService } from "./SessionCookieService";
 // is asked again (at least 3s apart), so someone who just got permissions or
 // just invited the bot doesn't have to wait.
 
-const TTL_MS = 60_000;
-const REFRESH_AFTER_MS = 3_000;
-const MAX_ENTRIES = 500;
+const TtlMs = 60_000;
+const RefreshAfterMs = 3_000;
+const MaxEntries = 500;
 
 interface Cached<T> {
 	value: T;
 	at: number;
 }
 
-const guildsByToken = new Map<string, Cached<DiscordGuild[]>>();
-const pendingGuilds = new Map<string, Promise<Cached<DiscordGuild[]> | null>>();
-let botGuilds: Cached<Set<string>> | null = null;
-let pendingBot: Promise<Cached<Set<string>>> | null = null;
+/**
+ * caches, per access token, which guilds a user can manage and which guilds
+ * the bot is in — the two discord calls behind every guild access check.
+ */
+class GuildAccessCache {
+	private readonly guildsByToken = new Map<string, Cached<DiscordGuild[]>>();
+	private readonly pendingGuilds = new Map<string, Promise<Cached<DiscordGuild[]> | null>>();
+	private botGuilds: Cached<Set<string>> | null = null;
+	private pendingBot: Promise<Cached<Set<string>>> | null = null;
 
-const keyOf = (token: string) => createHash("sha256").update(token).digest("hex");
+	private keyOf(token: string): string {
+		return createHash("sha256").update(token).digest("hex");
+	}
 
-async function userGuilds(token: string, fresh = false): Promise<Cached<DiscordGuild[]> | null> {
-	const key = keyOf(token);
-	const hit = guildsByToken.get(key);
-	if (hit && !fresh && Date.now() - hit.at < TTL_MS) return hit;
+	async userGuilds(token: string, fresh = false): Promise<Cached<DiscordGuild[]> | null> {
+		const key = this.keyOf(token);
+		const hit = this.guildsByToken.get(key);
+		if (hit && !fresh && Date.now() - hit.at < TtlMs) return hit;
 
-	// Varias peticiones a la vez del mismo usuario comparten una sola llamada.
-	const pending = pendingGuilds.get(key);
-	if (pending) return pending;
+		// several requests for the same user at once share a single call.
+		const pending = this.pendingGuilds.get(key);
+		if (pending) return pending;
 
-	const request = getUserGuilds(token)
-		.then((guilds) => {
-			if (!guilds) return null; // Discord rechazó el token: la sesión ya no vale
-			if (guildsByToken.size >= MAX_ENTRIES) guildsByToken.clear();
-			const entry = { value: guilds, at: Date.now() };
-			guildsByToken.set(key, entry);
-			return entry;
-		})
-		.finally(() => pendingGuilds.delete(key));
+		const request = getUserGuilds(token)
+			.then((guilds) => {
+				if (!guilds) return null; // discord rejected the token: the session is no longer valid
+				if (this.guildsByToken.size >= MaxEntries) this.guildsByToken.clear();
+				const entry = { value: guilds, at: Date.now() };
+				this.guildsByToken.set(key, entry);
+				return entry;
+			})
+			.finally(() => this.pendingGuilds.delete(key));
 
-	pendingGuilds.set(key, request);
-	return request;
+		this.pendingGuilds.set(key, request);
+		return request;
+	}
+
+	async botGuildIds(fresh = false): Promise<Cached<Set<string>>> {
+		if (this.botGuilds && !fresh && Date.now() - this.botGuilds.at < TtlMs) return this.botGuilds;
+		this.pendingBot ??= getBotGuildIds()
+			.then((ids) => (this.botGuilds = { value: ids, at: Date.now() }))
+			.finally(() => (this.pendingBot = null));
+		return this.pendingBot;
+	}
 }
 
-async function botGuildIds(fresh = false): Promise<Cached<Set<string>>> {
-	if (botGuilds && !fresh && Date.now() - botGuilds.at < TTL_MS) return botGuilds;
-	pendingBot ??= getBotGuildIds()
-		.then((ids) => (botGuilds = { value: ids, at: Date.now() }))
-		.finally(() => (pendingBot = null));
-	return pendingBot;
-}
+const guildAccessCache = new GuildAccessCache();
 
-// Servidores que el usuario puede gestionar (administrador y con el bot dentro), con la
+// guilds the user can manage (administrator, with the bot inside), from the
 // same cache as everything else. null if discord rejects the session.
 export async function listAccessibleGuilds(accessToken: string): Promise<DiscordGuild[] | null> {
-	const guilds = await userGuilds(accessToken);
+	const guilds = await guildAccessCache.userGuilds(accessToken);
 	if (!guilds) return null;
-	const bots = await botGuildIds();
+	const bots = await guildAccessCache.botGuildIds();
 	return guilds.value.filter((g) => hasAdminAccess(g) && bots.value.has(g.id)).sort((a, b) => a.name.localeCompare(b.name));
 }
 
 export type AccessResult = { guild: DiscordGuild } | { error: "unauthorized" | "forbidden" };
 
 export async function resolveGuildAccess(accessToken: string, guildId: string | undefined): Promise<AccessResult> {
-	let guilds = await userGuilds(accessToken);
+	let guilds = await guildAccessCache.userGuilds(accessToken);
 	if (!guilds) return { error: "unauthorized" };
 
 	let guild = guilds.value.find((g) => g.id === guildId);
-	if ((!guild || !hasAdminAccess(guild)) && Date.now() - guilds.at > REFRESH_AFTER_MS) {
-		guilds = (await userGuilds(accessToken, true)) ?? guilds;
+	if ((!guild || !hasAdminAccess(guild)) && Date.now() - guilds.at > RefreshAfterMs) {
+		guilds = (await guildAccessCache.userGuilds(accessToken, true)) ?? guilds;
 		guild = guilds.value.find((g) => g.id === guildId);
 	}
 	if (!guild || !hasAdminAccess(guild)) return { error: "forbidden" };
 
-	let bots = await botGuildIds();
-	if (!bots.value.has(guild.id) && Date.now() - bots.at > REFRESH_AFTER_MS) bots = await botGuildIds(true);
+	let bots = await guildAccessCache.botGuildIds();
+	if (!bots.value.has(guild.id) && Date.now() - bots.at > RefreshAfterMs) bots = await guildAccessCache.botGuildIds(true);
 	if (!bots.value.has(guild.id)) return { error: "forbidden" };
 
 	return { guild };
