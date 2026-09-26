@@ -1,4 +1,4 @@
-// Acto 1: el hero se desvanece y las estadísticas suben y cuentan hasta su valor.
+// act 1: the hero fades out and the stats rise and count up to their value.
 import type { SceneRefs } from "../dom";
 import type { Measurements } from "../prepare";
 
@@ -14,34 +14,34 @@ export function addHeroStatsAct(tl: gsap.core.Timeline, r: SceneRefs, m: Measure
 		statNumbers,
 	} = r;
 	const { STATS_TOP_REST } = m;
-	// El header se desvanece apenas arranca el scroll y no vuelve a aparecer
-	// durante el resto de la escena (nada más lo vuelve a tocar después de
-	// este tramo) — se saca de circulación también para clics, no solo visual.
+	// the header fades out as soon as scroll starts and never reappears for
+	// the rest of the scene (nothing touches it again after this stretch) —
+	// it's taken out of circulation for clicks too, not just visually.
 	tl.to(navbar, { opacity: 0, y: -16, duration: 1.2, ease: "power1.inOut" }, 0).set(
 		navbar,
 		{ pointerEvents: "none" },
 		1.2,
 	);
 
-	// El subtítulo y los botones se desvanecen de forma gradual (ocupan buena
-	// parte del recorrido, no un golpe seco) — al final solo quedan el título,
-	// las letras matemáticas de fondo y el radar.
+	// the subtitle and buttons fade out gradually (spanning a good chunk of
+	// the scroll, not an abrupt cut) — by the end only the title, the
+	// background math letters, and the radar remain.
 	tl.to([heroSubtitle, heroActions], { opacity: 0, y: -16, duration: 2.2, ease: "power1.inOut" }, 0)
-		// El título baja un poco (en vez de subir pegado al radar) para quedar
-		// mejor centrado en el espacio que deja el subtítulo/botones al
-		// desvanecerse, en vez de quedar pegado arriba del hero.
+		// the title drops down a bit (instead of rising flush with the
+		// radar) so it stays better centered in the space the
+		// subtitle/buttons leave as they fade, rather than sitting stuck to
+		// the hero's top.
 		.to(heroTitle, { y: 50, duration: 3, ease: "power1.inOut" }, 0)
-		// El radar sube y se achica un poco para dejarle sitio a las
-		// estadísticas en vez de quedar pegado al título.
+		// the radar rises and shrinks a little to make room for the stats
+		// instead of staying flush against the title.
 		.to(radarWrapper, { y: -70, scale: 0.94, duration: 3, ease: "power1.inOut" }, 0)
-		// El radar cambia de rotación a lo largo de todo el scroll.
+		// the radar's rotation changes over the whole scroll.
 		.to(radarPlane, { rotationZ: 15, rotationX: 72, duration: 3, ease: "none" }, 0)
-		// Las estadísticas suben y se asientan un poco después del centro (se
-		// anima `top`, no un transform — ver el gsap.set inicial de statsSection).
+		// the stats rise and settle a bit past center (`top` is animated,
+		// not a transform — see statsSection's initial gsap.set).
 		.to(statsSection, { top: STATS_TOP_REST, opacity: 1, duration: 2, ease: "power2.out" }, 0.8);
 
-	// Cada número cuenta de 0 a su valor real mientras las stats terminan de
-	// asentarse.
+	// each number counts from 0 to its real value as the stats finish settling.
 	statNumbers.forEach((el) => {
 		const target = parseFloat(el.dataset.target || "0");
 		const decimals = parseInt(el.dataset.decimals || "0", 10);

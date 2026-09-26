@@ -1,6 +1,7 @@
-// El acto final como un mundo con cámara: estela de la asíntota, fondo estelar,
-// pasos, agujero negro, inmersión y CTA. renderOutro(t) lo pinta todo a partir del
-// tiempo; layoutOutro() recalcula las medidas (al montar y en cada resize).
+// the final act as a world with a camera: the asymptote's trail, the star
+// background, the steps, the black hole, the immersion, and the cta.
+// renderOutro(t) paints everything from the time; layoutOutro()
+// recalculates the measurements (on mount and on every resize).
 import { gsap } from "gsap";
 import type { SceneRefs } from "../dom";
 import { createStarField } from "../../star-field";
@@ -70,12 +71,12 @@ export function createOutro(r: SceneRefs) {
 		spaceStarsCanvas,
 	} = r;
 	const { buildCamera, cameraAt, tipScreenAt, zoomAt } = createCamera();
-	// "Agrega el tuyo": cuelga de la pista tras la última tarjeta, pero no es una tarjeta
-	// (ni cuenta para centrar la última ni para el foco).
+	// "add your own": hangs off the track after the last card, but isn't a
+	// card itself (doesn't count toward centering the last one or toward focus).
 	const communityAction = communityTrack!.querySelector<HTMLElement>("[data-community-action]");
-	// Estela: la punta en coordenadas del MUNDO (cámara + posición en pantalla),
-	// muestreada en el tiempo y guardada como polilínea; con la longitud
-	// acumulada se revela con stroke-dashoffset hasta donde va la punta.
+	// trail: the tip in WORLD coordinates (camera + on-screen position),
+	// sampled over time and stored as a polyline; with the accumulated
+	// length it's revealed via stroke-dashoffset up to wherever the tip is.
 	const OUTRO_PATH_DT = 0.05;
 	const outroPathEl = outroPath!;
 	const outroGeo = {
@@ -86,14 +87,14 @@ export function createOutro(r: SceneRefs) {
 		winH: 0,
 		cardsTurnEndY: 0,
 		cardEls: [] as HTMLElement[],
-		cardMids: new Float64Array(0), // centro de cada tarjeta dentro de la pista
+		cardMids: new Float64Array(0), // center of each card inside the track
 		lastMid: 0,
-		bhWorldX: 0, // posición del agujero negro en el mundo (parte B)
+		bhWorldX: 0, // black hole's position in the world (part B)
 		bhWorldY: 0,
 	};
 	const outroClock = { t: OUTRO_LINE_AT };
-	// Fondo estelar infinito: lo dibuja un canvas a partir de la cámara (y del
-	// estado de opacidad/bajada que ya animan los tweens sobre #space-stars).
+	// infinite star background: drawn by a canvas from the camera (and
+	// from the opacity/descent state the tweens already animate on #space-stars).
 	const starField = createStarField(spaceStarsCanvas!, spaceStars!);
 	const outroWorldEl = outroWorld!;
 	const routeDotsEl = routeDots!;
@@ -107,8 +108,8 @@ export function createOutro(r: SceneRefs) {
 	const ctaLinks = [...ctaSceneEl.querySelectorAll<HTMLAnchorElement>("a")];
 	const ctaScrim = document.getElementById("cta-scene-scrim");
 	const renderCta = createCtaRenderer(ctaSceneEl);
-	// Envía al shader del agujero negro la distancia y el ángulo de la caída (solo
-	// si cambian: renderOutro se llama cada frame).
+	// sends the fall's distance and angle to the black hole shader (only
+	// when they change: renderOutro is called every frame).
 	const lastDive = { dist: Number.NaN, pitch: Number.NaN };
 	const sendDive = (dist: number, pitch: number) => {
 		if (Math.abs(dist - lastDive.dist) < 1e-4 && Math.abs(pitch - lastDive.pitch) < 1e-5) return;
@@ -116,16 +117,18 @@ export function createOutro(r: SceneRefs) {
 		lastDive.pitch = pitch;
 		outroBlackholeCanvas?.dispatchEvent(new CustomEvent("blackhole:orbit", { detail: { dist, pitch } }));
 	};
-	// Los pasos: nodos del camino en coordenadas del mundo (steps-act.ts). Sus
-	// efectos son en tiempo real; requestRender re-pinta la escena en el instante
-	// actual cuando lo que cambia no es el scroll sino el shake o la estrella.
+	// the steps: path nodes in world coordinates (steps-act.ts). their
+	// effects run in real time; requestRender repaints the scene at the
+	// current instant when what changes isn't scroll but the shake or the star.
 	const stepsAct = createStepsAct(stepNodes, () => renderOutro(outroClock.t));
-	// Retumbo del agujero negro: temblor CONTINUO y leve (en tiempo real, no atado
-	// al scroll) cuyo volumen crece desde RUMBLE_START hasta que el agujero negro
-	// llega al centro. Ruido determinista sobre el reloj → mismo carácter siempre.
-	// Avance de la caída (0 → 1) y su versión acelerada (power2.in: cae cada vez
-	// más rápido). El retumbo sube hasta DIVE_RUMBLE_AMP durante la caída y se
-	// CORTA en seco justo antes del negro total: el silencio es parte del efecto.
+	// black hole rumble: a CONTINUOUS, slight tremor (in real time, not
+	// tied to scroll) whose volume grows from RUMBLE_START until the
+	// black hole reaches the center. deterministic noise over the clock →
+	// same character every time.
+	// fall progress (0 → 1) and its accelerated version (power2.in: falls
+	// faster and faster). the rumble climbs to DIVE_RUMBLE_AMP during the
+	// fall and CUTS OUT sharply right before full black: the silence is
+	// part of the effect.
 	const diveU = (t: number) => Math.min(Math.max((t - DIVE_START) / DIVE_DUR, 0), 1);
 	const diveK = (t: number) => diveU(t) ** 2;
 	const rumbleAt = (t: number) => {
@@ -142,15 +145,15 @@ export function createOutro(r: SceneRefs) {
 		const W = window.innerWidth;
 		const H = window.innerHeight;
 		const rawCam = cameraAt(t);
-		// Shake de cámara de los impactos y retumbo del agujero negro: se suman a la
-		// cámara para que tiemble TODO el mundo (fondo, línea, nodos) a la vez.
+		// camera shake from the impacts and the black hole's rumble: added
+		// to the camera so the WHOLE world trembles (background, line, nodes) together.
 		const rumble = rumbleAt(t);
 		const shakeX = stepsAct.shake.x + rumble.x;
 		const shakeY = stepsAct.shake.y + rumble.y;
 		const cam = { x: rawCam.x + shakeX, y: rawCam.y + shakeY };
 		const tip = tipScreenAt(t);
-		// Zoom de la cámara respecto al centro de la pantalla (c): mundo → pantalla
-		// es  c + (mundo − cámara + settle − c) · zoom.
+		// camera zoom relative to the screen's center (c): world → screen
+		// is  c + (world − camera + settle − c) · zoom.
 		const z = zoomAt(t);
 		const cx = W / 2;
 		const cy = H / 2;
@@ -158,8 +161,8 @@ export function createOutro(r: SceneRefs) {
 		const u = Math.min(Math.max((t - OUTRO_LINE_AT) / OUTRO_PATH_DT, 0), g.cum.length - 1);
 		const i = Math.min(Math.floor(u), g.cum.length - 2);
 		const revealed = g.prepend + g.cum[i] + (g.cum[i + 1] - g.cum[i]) * (u - i);
-		// Remate: la asíntota entera (trazo y punta, en bloque) se desplaza del sitio
-		// donde cayó al centro de la pantalla.
+		// finish: the whole asymptote (stroke and tip, as one block) shifts
+		// from where it landed to the screen's center.
 		const settle = smoothstep01((t - OUTRO_SETTLE_AT) / OUTRO_SETTLE_DUR);
 		const dx = (OUTRO_TIP_CENTER_X - OUTRO_TIP_FINAL_X) * W * settle;
 		const dy = (OUTRO_TIP_CENTER_Y - OUTRO_TIP_FINAL_Y) * H * settle;
@@ -169,9 +172,10 @@ export function createOutro(r: SceneRefs) {
 			`translate(${cx} ${cy}) scale(${z}) translate(${-cam.x + dx - cx} ${-cam.y + dy - cy})`,
 		);
 
-		// La estrellita va en el extremo dibujado del trazo (con el shake ya
-		// aplicado al trazo, hay que restarlo aquí). Al tocar el primer paso se
-		// absorbe dentro del aro: baja hasta su centro mientras se encoge y se apaga.
+		// the little star sits at the stroke's drawn end (since the shake
+		// is already applied to the stroke, it needs to be subtracted
+		// here). on touching the first step it's absorbed into the ring:
+		// it sinks to its center while shrinking and fading out.
 		const absorb = stepsAct.starAbsorb.k;
 		gsap.set(outroLineStar, {
 			x: cx + (tip.x + dx - shakeX - cx) * z,
@@ -182,15 +186,16 @@ export function createOutro(r: SceneRefs) {
 
 		starField.setCamera(cam.x, cam.y, z);
 
-		// Pasos: nodos del mundo; su estado "completado" es función del tiempo.
+		// steps: world nodes; their "completed" state is a function of time.
 		stepsAct.setTime(t - LINE_CENTER_AT);
 		stepsAct.render({ W, H, camX: cam.x, camY: cam.y, dx, dy, zoom: z, cx, cy });
 
-		// Agujero negro. Primero su cruce guionizado de siempre (misma fórmula que
-		// tenían sus tweens: entra por la derecha con el centro en el borde
-		// inferior y sale por la izquierda). Después, ya como cuerpo del mundo,
-		// vuelve por debajo: su posición sale de la cámara y del zoom, así que
-		// asoma con el zoom out y sube hasta el centro al seguir bajando la cámara.
+		// black hole. first its usual scripted crossing (same formula its
+		// tweens used to have: enters from the right with its center on
+		// the bottom edge and exits to the left). afterward, now as a
+		// body of the world, it comes back from below: its position comes
+		// from the camera and the zoom, so it peeks in with the zoom out
+		// and rises to the center as the camera keeps descending.
 		const bhStart = LINE_CENTER_AT + BLACKHOLE_START_OFFSET;
 		let bhX: number;
 		let bhY: number;
@@ -205,37 +210,37 @@ export function createOutro(r: SceneRefs) {
 		} else {
 			bhX = cx + (g.bhWorldX - cam.x + dx - cx) * z - cx;
 			bhY = cy + (g.bhWorldY - cam.y + dy - cy) * z - cy;
-			// El zoom out (0.78) y, en la caída, el crecimiento hasta cubrir la pantalla.
+			// the zoom out (0.78) and, during the fall, growth until it covers the screen.
 			bhScale = z + (DIVE_BH_SCALE_END - z) * diveK(t);
 		}
 		gsap.set(outroBlackhole, { x: bhX, y: bhY, scale: bhScale, opacity: bhOpacity });
 
-		// ---- Parte C: inmersión y salida a la CTA ----
+		// ---- Part C: immersion and emergence into the cta ----
 		const diveProgress = diveU(t);
 		const kDive = diveK(t);
-		// El agujero negro crece hasta cubrir la pantalla y su shader CAE: la
-		// distancia de cámara baja en geométrica (zoom constante en log) y el
-		// ángulo sube, mirando cada vez más desde arriba al disco.
+		// the black hole grows to cover the screen and its shader FALLS:
+		// the camera distance decreases geometrically (constant zoom in
+		// log scale) and the angle rises, looking more and more from above onto the disk.
 		sendDive(
 			DIVE_DIST_FAR * Math.pow(DIVE_DIST_NEAR / DIVE_DIST_FAR, kDive),
 			DIVE_PITCH_START + (DIVE_PITCH_END - DIVE_PITCH_START) * kDive,
 		);
 
-		// La asíntota y los pasos se apagan al empezar la caída. (El fundido de
-		// entrada del trazo, que antes era un tween, también sale de aquí: así
-		// una sola función es dueña de esas opacidades.)
+		// the asymptote and the steps fade out as the fall starts. (the
+		// stroke's entrance fade, which used to be a tween, also comes
+		// from here: this way a single function owns those opacities.)
 		const lineIn = Math.min(Math.max((t - OUTRO_LINE_AT) / 0.35, 0), 1);
 		const diveFade = smoothstep01((diveProgress - 0.05) / 0.4);
 		outroLineEl.style.opacity = String(lineIn * (1 - diveFade));
 		outroStarLayerEl.style.opacity = String(lineIn * (1 - diveFade));
 		stepsWorldEl.style.opacity = String(1 - diveFade);
 
-		// Viñeta que se cierra y negro total al llegar dentro.
+		// vignette closing in and full black once inside.
 		diveVignetteEl.style.opacity = String(0.7 * smoothstep01((diveProgress - 0.35) / 0.6));
 		diveBlackEl.style.opacity = String(smoothstep01((t - DIVE_BLACK_AT) / (DIVE_BLACK_DONE - DIVE_BLACK_AT)));
 
-		// Del negro: punto de luz → expansión → CTA. El punto se apaga dentro del
-		// resplandor que crece; el resplandor cede y deja la tarjeta.
+		// from black: point of light → expansion → cta. the point fades
+		// out inside the growing glow; the glow recedes and leaves the card.
 		const sparkIn = smoothstep01((t - SPARK_AT) / 0.5);
 		const bloomK = smoothstep01((t - BLOOM_AT) / BLOOM_DUR);
 		const ctaP = smoothstep01((t - CTA_AT) / CTA_DUR);
@@ -254,26 +259,27 @@ export function createOutro(r: SceneRefs) {
 		ctaSceneEl.style.pointerEvents = ctaLive ? "auto" : "none";
 		for (const a of ctaLinks) a.tabIndex = ctaLive ? 0 : -1;
 
-		// Tarjetas: son del mundo, así que suben lo que baja la cámara desde que
-		// acaba el giro (a la misma velocidad que el fondo). La pista arranca justo
-		// debajo de la ventana y se asienta con la última tarjeta CENTRADA en la
-		// pantalla (así todas, la última incluida, pasan por el centro y ganan foco).
+		// cards: they belong to the world, so they rise as much as the
+		// camera descends once the turn ends (at the same speed as the
+		// background). the track starts right below the window and
+		// settles with the last card CENTERED on screen (so all of them,
+		// the last included, pass through the center and gain focus).
 		const yRest = H * 0.5 - g.winTop - g.lastMid;
 		const travelled = Math.max(0, cam.y - g.cardsTurnEndY);
 		const trackY = Math.max(yRest, g.winH - travelled);
 		gsap.set(communityTrack, { y: trackY });
 
-		// Solo se puede pulsar (y enfocar) con el carrusel visible: como con la CTA final,
-		// un elemento interactivo dentro de la escena no debe recibir clics ni tabulador
-		// cuando ya no se ve.
+		// only clickable (and focusable) while the carousel is visible: as
+		// with the final cta, an interactive element inside the scene
+		// shouldn't receive clicks or tab focus once it's out of view.
 		if (communityAction) {
 			const actionLive = Number(gsap.getProperty(community, "opacity")) > 0.5;
 			communityAction.style.pointerEvents = actionLive ? "auto" : "none";
 			communityAction.tabIndex = actionLive ? 0 : -1;
 		}
 
-		// Foco: escala según lo cerca que está el centro de cada tarjeta del centro
-		// de la pantalla (0 → tamaño normal, 1 → agrandada), suavizado.
+		// focus: scales based on how close each card's center is to the
+		// screen's center (0 → normal size, 1 → enlarged), smoothed.
 		const radius = H * CARD_FOCUS_RADIUS_VH;
 		for (let c = 0; c < g.cardEls.length; c++) {
 			const d = Math.abs(g.winTop + trackY + g.cardMids[c] - H * 0.5) / radius;
@@ -286,24 +292,24 @@ export function createOutro(r: SceneRefs) {
 		const W = window.innerWidth;
 		const H = window.innerHeight;
 
-		// 1) Medidas de las tarjetas.
+		// 1) card measurements.
 		g.winTop = communityWindow!.offsetTop;
 		g.winH = communityWindow!.offsetHeight;
 		g.cardEls = Array.from(communityTrack!.children).filter((el) => !el.hasAttribute("data-community-action")) as HTMLElement[];
 		g.cardMids = Float64Array.from(g.cardEls, (el) => el.offsetTop + el.offsetHeight / 2);
 		g.lastMid = g.cardMids[g.cardMids.length - 1];
 
-		// 2) Velocidad vertical de la cámara tras el giro: la que hace que la
-		// pista recorra lo que necesita (hasta centrar la última tarjeta) justo
-		// entre OUTRO_TURN_END y OUTRO_CARDS_REST_AT. r es su cociente con la
-		// velocidad horizontal (la del agujero negro); ~1 en 1280×800.
+		// 2) camera's vertical speed after the turn: the one that makes
+		// the track travel what it needs to (until the last card is
+		// centered) exactly between OUTRO_TURN_END and OUTRO_CARDS_REST_AT.
+		// r is its ratio to the horizontal speed (the black hole's); ~1 at 1280×800.
 		const needed = g.winH - (H * 0.5 - g.winTop - g.lastMid);
 		const vDown = Math.max(needed, 1) / (OUTRO_CARDS_REST_AT - OUTRO_TURN_END);
 		const r = Math.min(Math.max(vDown / (W * BLACKHOLE_SPEED), 0.6), 1.5);
 		buildCamera(r);
 		g.cardsTurnEndY = cameraAt(OUTRO_TURN_END).y;
 
-		// 3) La estela.
+		// 3) the trail.
 		const n = Math.ceil((OUTRO_END - OUTRO_LINE_AT) / OUTRO_PATH_DT) + 1;
 		const cum = new Float64Array(n);
 		const segs: string[] = [];
@@ -316,7 +322,7 @@ export function createOutro(r: SceneRefs) {
 			const px = cam.x + tip.x;
 			const py = cam.y + tip.y;
 			if (i === 0) {
-				// Empieza mucho más a la izquierda de la pantalla: el extremo nunca entra en cuadro.
+				// starts much further left than the screen: the tail end never enters frame.
 				segs.push(`M ${px - 2.5 * W} ${py} L ${px} ${py}`);
 			} else {
 				cum[i] = cum[i - 1] + Math.hypot(px - prevX, py - prevY);
@@ -332,19 +338,20 @@ export function createOutro(r: SceneRefs) {
 		outroPathEl.setAttribute("stroke-width", String(W * 0.003));
 		outroPathEl.style.strokeDasharray = `${g.total}`;
 
-		// 4) Los pasos sobre el eje de la asíntota, y el camino punteado que los
-		// une. El eje es la vertical por la que cae la punta (tras el giro la
-		// cámara ya no se mueve en x); cada paso queda a la altura donde su aro
-		// toca la punta en su instante de contacto. El degradado blanco→azul del
-		// trazo cambia justo en el primer paso.
+		// 4) the steps along the asymptote's axis, and the dotted path
+		// linking them. the axis is the vertical line the tip falls
+		// along (after the turn the camera no longer moves in x); each
+		// step sits at the height where its ring touches the tip at its
+		// contact instant. the stroke's white→blue gradient switches
+		// right at the first step.
 		const axisWorldX = cameraAt(OUTRO_TURN_END).x + OUTRO_TIP_FINAL_X * W;
 		stepsAct.layout(
 			axisWorldX,
 			(k) => cameraAt(LINE_CENTER_AT + StepContactOffsets[k]).y + H * OUTRO_TIP_FINAL_Y + StepRadius,
 		);
-		// El agujero negro (parte B) está en el mismo eje, a la altura a la que la
-		// punta llega cuando la cámara frena en BH_CENTER_AT: queda EXACTAMENTE bajo
-		// el extremo de la asíntota. El camino punteado sigue hasta él.
+		// the black hole (part B) sits on the same axis, at the height
+		// the tip reaches when the camera brakes at BH_CENTER_AT: it ends
+		// up EXACTLY below the asymptote's end. the dotted path continues to it.
 		g.bhWorldX = axisWorldX;
 		g.bhWorldY = cameraAt(BH_CENTER_AT).y + H * OUTRO_TIP_FINAL_Y;
 		const firstY = stepsAct.worldY(0);

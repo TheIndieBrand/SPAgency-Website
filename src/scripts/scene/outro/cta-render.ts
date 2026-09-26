@@ -1,5 +1,5 @@
-// Render de la CTA final por piezas (título palabra a palabra, texto, botones y
-// recap), en función del tiempo desde CTA_AT.
+// renders the final cta piece by piece (title word by word, text, buttons
+// and recap), as a function of the time since CTA_AT.
 import { gsap } from "gsap";
 import { smoothstep01 } from "./camera";
 
@@ -12,15 +12,15 @@ export function createCtaRenderer(ctaSceneEl: HTMLElement) {
 	const ctaRings = [...ctaSceneEl.querySelectorAll<SVGCircleElement>("[data-cta-ring]")];
 	const ctaChecks = [...ctaSceneEl.querySelectorAll<SVGPathElement>("[data-cta-check]")];
 	const RING_LEN = 62.83;
-	// Rebote de salida del botón principal (easeOutBack).
+	// exit bounce for the main button (easeOutBack).
 	const outBack = (k: number) => {
 		const c1 = 1.9;
 		const c3 = c1 + 1;
 		return 1 + c3 * Math.pow(k - 1, 3) + c1 * Math.pow(k - 1, 2);
 	};
-	// La CTA se compone por piezas, cada una con su retardo (en unidades del
-	// timeline desde CTA_AT): título palabra a palabra, texto, botones, recap.
-	// (Arranca en true para que el primer render deje todas las piezas ocultas.)
+	// the cta is composed piece by piece, each with its own delay (in
+	// timeline units since CTA_AT): title word by word, text, buttons, recap.
+	// (starts as true so the first render leaves every piece hidden.)
 	let ctaAnimated = true;
 	const renderCta = (ctaT: number) => {
 		if (ctaT <= 0 && !ctaAnimated) return;

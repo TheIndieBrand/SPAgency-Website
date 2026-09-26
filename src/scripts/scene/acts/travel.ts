@@ -1,4 +1,4 @@
-// El viaje de la curva por el plano, los titulares y el salto al espacio.
+// the curve's travel across the plane, the captions, and the jump into space.
 import { gsap } from "gsap";
 import type { SceneRefs } from "../dom";
 import type { Measurements } from "../prepare";
@@ -25,50 +25,50 @@ export function addTravelAct(tl: gsap.core.Timeline, r: SceneRefs, m: Measuremen
 		travelCaption2,
 	} = r;
 	const { curveLength } = m;
-	// 5. EL VIAJE. La curva/función se dibuja a RITMO CONSTANTE (ease "none") y
-	//    durante MUCHÍSIMO scroll; nunca termina de dibujarse (FRAC_C_END < 1)
-	//    → siempre "sigue creciendo hacia el infinito".
+	// 5. THE TRAVEL. the curve/function draws at a CONSTANT PACE (ease
+	//    "none") over A LOT of scroll; it never finishes drawing
+	//    (FRAC_C_END < 1) → it always "keeps growing toward infinity".
 	//
-	//    Fase A (frac ≤ FRAC_A_END): la cámara NO sigue de entrada; solo cuando
-	//    la punta pasa ~media pantalla (FOLLOW_START_X) engancha con smoothstep
-	//    (sin tirón), clava la punta ahí en X y en Y sigue su desplazamiento
-	//    amortiguado (VERT_FOLLOW).
-	//    Fase B (≤ FRAC_B_END): la curva se dispara casi vertical — la cámara la
-	//    SIGUE hacia arriba (X estable, Y casi 1:1) → subimos al "espacio".
-	//    Fase C (> FRAC_B_END): la cámara CLAVA la punta en un punto fijo
-	//    arriba-izquierda (TIP_SCREEN_X/Y) → el extremo se ve siempre y el trazo
-	//    fluye hacia abajo dando sensación de crecer. La mitad derecha queda
-	//    libre para la sección Funciones.
-	const FOLLOW_START_X = 500; // viewBox X (~media pantalla) a partir del cual sigue
-	const FOLLOW_RAMP = 220; // units sobre los que engancha (smoothstep)
-	const VERT_FOLLOW = 0.6; // amortiguación del seguimiento vertical en fase A (sutil)
-	const VERT_FOLLOW_B = 0.9; // seguimiento vertical en fase B (subida al espacio)
-	// Fracciones de curva DIBUJADA que delimitan cada fase del viaje:
-	const FRAC_A_END = 0.32; // fin de fase A (viaje por el plano)
-	const FRAC_B_END = 0.43; // fin de fase B (subida al espacio)
-	const FRAC_C_END = 0.97; // hasta aquí se dibuja (nunca 1 → "sigue creciendo hacia el ∞")
-	// En fase C la punta se CLAVA en este punto de la pantalla (viewBox 1000x600):
-	// arriba-izquierda, para que se vea siempre y deje libre la mitad derecha.
+	//    phase A (frac ≤ FRAC_A_END): the camera does NOT follow at first;
+	//    only once the tip passes ~half the screen (FOLLOW_START_X) does it
+	//    engage via smoothstep (no jerk), pinning the tip there on X while
+	//    following its vertical movement, damped (VERT_FOLLOW), on Y.
+	//    phase B (≤ FRAC_B_END): the curve shoots up nearly vertical — the
+	//    camera FOLLOWS it upward (X stable, Y nearly 1:1) → we rise into "space".
+	//    phase C (> FRAC_B_END): the camera PINS the tip at a fixed
+	//    top-left point (TIP_SCREEN_X/Y) → the tip is always visible and
+	//    the stroke flows downward, giving the sense of continued growth.
+	//    the right half stays free for the features section.
+	const FOLLOW_START_X = 500; // viewBox X (~half screen) past which it follows
+	const FOLLOW_RAMP = 220; // units over which it engages (smoothstep)
+	const VERT_FOLLOW = 0.6; // damping of the vertical follow in phase A (subtle)
+	const VERT_FOLLOW_B = 0.9; // vertical follow in phase B (rising into space)
+	// fractions of DRAWN curve that mark the boundaries of each travel phase:
+	const FRAC_A_END = 0.32; // end of phase A (travel across the plane)
+	const FRAC_B_END = 0.43; // end of phase B (rise into space)
+	const FRAC_C_END = 0.97; // drawn up to here (never 1 → "keeps growing toward ∞")
+	// in phase C the tip is PINNED at this screen point (viewBox 1000x600):
+	// top-left, so it's always visible and leaves the right half free.
 	const TIP_SCREEN_X = 150;
 	const TIP_SCREEN_Y = 200;
-	const C_TURN = 0.12; // tramo inicial de la fase C en el que la cámara engancha
-	const GLYPH_PARALLAX = 0.62; // el fondo de letras se mueve menos que la cámara
+	const C_TURN = 0.12; // initial stretch of phase C where the camera engages
+	const GLYPH_PARALLAX = 0.62; // the background letters move less than the camera
 	const curvePath = asymptoteCurve as unknown as SVGPathElement;
 	const smoothstep = (k: number) => (k <= 0 ? 0 : k >= 1 ? 1 : k * k * (3 - 2 * k));
 
-	// Proyecciones de la punta a los ejes. El eje X del plano está en y=560 y el
-	// eje Y en x=40 (viewBox). X_UNIT/Y_UNIT convierten unidades de viewBox a
-	// los "números reales" que se muestran en cada eje.
+	// projections of the tip onto the axes. the plane's X axis sits at
+	// y=560 and the Y axis at x=40 (viewBox). X_UNIT/Y_UNIT convert
+	// viewBox units into the "real numbers" shown on each axis.
 	const AXIS_X_Y = 560;
 	const AXIS_Y_X = 40;
 	const X_UNIT = 46;
 	const Y_UNIT = 24;
-	// La etiqueta X se aparta a un lado (a la derecha de la línea vertical) y
-	// por encima del eje; la Y se sube por encima de la línea horizontal.
+	// the X label is offset to the side (to the right of the vertical
+	// line) and above the axis; the Y label sits above the horizontal line.
 	gsap.set(curveProjXLabel, { xPercent: 0, yPercent: -100 });
 	gsap.set(curveProjYLabel, { xPercent: -100, yPercent: -100 });
 
-	// y de la curva en x = FOLLOW_START_X (referencia para el follow vertical).
+	// curve's y at x = FOLLOW_START_X (reference for the vertical follow).
 	let followStartY = 0;
 	for (let i = 0; i <= 240; i++) {
 		const pt = curvePath.getPointAtLength((curveLength * i) / 240);
@@ -78,7 +78,7 @@ export function addTravelAct(tl: gsap.core.Timeline, r: SceneRefs, m: Measuremen
 		}
 	}
 
-	// Punta de la curva al final de la fase A (para seguirla sin salto en B).
+	// curve tip at the end of phase A (to follow it without a jump in B).
 	const headA0 = curvePath.getPointAtLength(curveLength * FRAC_A_END);
 
 	let camAEndTx = 0;
@@ -87,9 +87,9 @@ export function addTravelAct(tl: gsap.core.Timeline, r: SceneRefs, m: Measuremen
 	let camBEndTy = 0;
 
 
-	// Proxy: fracción de curva dibujada. Un onUpdate común lo lee y reparte
-	// cámara / dibujo según la fase. Nunca llega a 1 (FRAC_C_END) → siempre
-	// queda curva por dibujar y la punta se sigue moviendo.
+	// proxy: fraction of curve drawn. a shared onUpdate reads it and splits
+	// camera / drawing according to the phase. never reaches 1
+	// (FRAC_C_END) → there's always curve left to draw and the tip keeps moving.
 	const reveal = { drawn: 0 };
 
 	const revealUpdate = () => {
@@ -102,7 +102,7 @@ export function addTravelAct(tl: gsap.core.Timeline, r: SceneRefs, m: Measuremen
 		let tx: number;
 		let ty: number;
 		if (frac <= FRAC_A_END) {
-			// Fase A: la cámara engancha al pasar media pantalla y sigue la punta.
+			// phase A: the camera engages past half-screen and follows the tip.
 			const engage = smoothstep((head.x - FOLLOW_START_X) / FOLLOW_RAMP);
 			tx = (FOLLOW_START_X - head.x) * engage;
 			ty = (followStartY - head.y) * VERT_FOLLOW * engage;
@@ -111,22 +111,22 @@ export function addTravelAct(tl: gsap.core.Timeline, r: SceneRefs, m: Measuremen
 			camBEndTx = tx;
 			camBEndTy = ty;
 		} else if (frac <= FRAC_B_END) {
-			// Fase B: subida al espacio siguiendo la punta hacia arriba.
+			// phase B: rise into space, following the tip upward.
 			tx = camAEndTx - (head.x - headA0.x);
 			ty = camAEndTy - (head.y - headA0.y) * VERT_FOLLOW_B;
 			camBEndTx = tx;
 			camBEndTy = ty;
 		} else {
-			// Fase C: la cámara CLAVA la punta en un punto fijo de la pantalla
-			// (arriba-izquierda). El extremo se ve siempre; la sensación de
-			// crecimiento la da el trazo, que va fluyendo hacia abajo por debajo
-			// de la punta a medida que "ascendemos". Se engancha desde la fase B
-			// con un smoothstep corto para que no pegue tirón.
+			// phase C: the camera PINS the tip at a fixed screen point
+			// (top-left). the tip is always visible; the sense of growth
+			// comes from the stroke, which flows down below the tip as we
+			// "rise". engages from phase B with a short smoothstep so it
+			// doesn't jerk.
 			const fc = (frac - FRAC_B_END) / (FRAC_C_END - FRAC_B_END);
 			const k = smoothstep(Math.min(fc / C_TURN, 1));
-			// La punta se queda CLAVADA en (TIP_SCREEN_X, TIP_SCREEN_Y) toda la
-			// fase C. El tumbado de la línea NO se hace aquí: al final, el outro
-			// rota #curve-tilt 90° a la vez que la sección Funciones.
+			// the tip stays PINNED at (TIP_SCREEN_X, TIP_SCREEN_Y) for all
+			// of phase C. tilting the line is NOT done here: at the end,
+			// the outro rotates #curve-tilt 90° together with the features section.
 			const targetTx = TIP_SCREEN_X - head.x;
 			const targetTy = TIP_SCREEN_Y - head.y;
 			tx = camBEndTx + (targetTx - camBEndTx) * k;
@@ -135,13 +135,13 @@ export function addTravelAct(tl: gsap.core.Timeline, r: SceneRefs, m: Measuremen
 		gsap.set(asymptoteDrift, { x: tx, y: ty });
 		gsap.set(asymptoteCurveHead, { x: head.x, y: head.y });
 
-		// Las letras matemáticas del fondo acompañan a la cámara con parallax.
+		// the background math letters follow the camera with parallax.
 		gsap.set(asymptoteGlyphLayer, {
 			x: ((tx * vw) / 1000) * GLYPH_PARALLAX,
 			y: ((ty * vh) / 600) * GLYPH_PARALLAX,
 		});
 
-		// Proyecciones a los ejes: solo en fase A (luego su grupo ya se apaga).
+		// projections onto the axes: only in phase A (afterward that group fades out).
 		if (frac <= FRAC_A_END) {
 			gsap.set(curveProjX, { attr: { x1: head.x, y1: head.y, x2: head.x, y2: AXIS_X_Y } });
 			gsap.set(curveProjY, { attr: { x1: head.x, y1: head.y, x2: AXIS_Y_X, y2: head.y } });
@@ -166,29 +166,29 @@ export function addTravelAct(tl: gsap.core.Timeline, r: SceneRefs, m: Measuremen
 
 	tl.to(reveal, { drawn: FRAC_B_END + 0.02, duration: AB_DUR, ease: "none", onUpdate: revealUpdate }, TRAVEL_START)
 		.to(reveal, { drawn: FRAC_C_END, duration: C_DUR, ease: "none", onUpdate: revealUpdate }, TRAVEL_START + AB_DUR)
-		// El círculo de la punta y las proyecciones aparecen al arrancar el viaje
-		// y se retiran antes de la subida al espacio.
+		// the tip's dot and the projections appear as the travel starts and
+		// retreat before the rise into space.
 		.to(asymptoteCurveHead, { opacity: 1, duration: 0.3, ease: "power1.out" }, TRAVEL_START)
 		.to([curveProj, curveProjLabels], { opacity: 1, duration: 0.5, ease: "power1.out" }, TRAVEL_START + 0.4)
 		.to([curveProj, curveProjLabels], { opacity: 0, duration: 0.6, ease: "power1.in" }, TRAVEL_START + 9);
 
-	// Titulares en la esquina sup-izq mientras la función crece. Aparecen en
-	// secuencia (primero "SP Agency, obra de ingeniería.", luego "Latencia
-	// estudiada al milisegundo"), con un leve deslizamiento. Fondo gris opaco
-	// (en el markup) para que la rejilla no se transparente por detrás.
+	// captions in the top-left corner as the function grows. they appear
+	// in sequence (first "SP Agency, obra de ingeniería.", then "Latencia
+	// estudiada al milisegundo"), with a slight slide. opaque gray
+	// background (in the markup) so the grid doesn't show through behind them.
 	gsap.set([travelCaption1, travelCaption2], { y: 14, opacity: 0 });
 	tl.to(travelCaption1, { opacity: 1, y: 0, duration: 0.8, ease: "power2.out" }, TRAVEL_START + 1)
 		.to(travelCaption1, { opacity: 0, y: -14, duration: 0.7, ease: "power1.in" }, TRAVEL_START + 5)
 		.to(travelCaption2, { opacity: 1, y: 0, duration: 0.8, ease: "power2.out" }, TRAVEL_START + 5.6)
 		.to(travelCaption2, { opacity: 0, y: -14, duration: 0.9, ease: "power1.in" }, TRAVEL_START + 9.6);
 
-	// ---- SALTO AL ESPACIO (fase B del viaje: la curva se dispara vertical) ----
-	// El plano y las letras se apagan, el fondo gris pasa a negro, la curva vira
-	// a blanco, la punta hace crossfade a estrellita y aparecen las estrellas.
-	// (frac cruza FRAC_A_END ~a los 10s del tramo A+B.)
+	// ---- JUMP INTO SPACE (travel's phase B: the curve shoots up vertical) ----
+	// the plane and the letters fade out, the gray background turns black,
+	// the curve shifts to white, the tip crossfades into a little star and
+	// the stars appear. (frac crosses FRAC_A_END ~10s into the A+B stretch.)
 	const PHASE_B_START = TRAVEL_START + 10;
-	// Se apaga SOLO la rejilla+ejes (#grid-lines) y las letras — la CURVA no,
-	// que la función no desaparece nunca.
+	// ONLY the grid+axes (#grid-lines) and the letters fade out — not the
+	// CURVE, since the function never disappears.
 	tl.to([gridLines, asymptoteGlyphLayer], { opacity: 0, duration: 2, ease: "power1.in" }, PHASE_B_START)
 		.to(spaceBg, { opacity: 1, duration: 2.2, ease: "power1.inOut" }, PHASE_B_START)
 		.to(asymptoteCurve, { stroke: "#eeeeee", duration: 2.4, ease: "none" }, PHASE_B_START)

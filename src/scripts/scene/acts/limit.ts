@@ -1,5 +1,5 @@
-// Acto 2: el límite hacia el infinito; el título "89K+ Raids bloqueados" se forma
-// a partir de la grilla de stats y el número viaja hasta la "x".
+// act 2: the limit toward infinity; the "89K+ Raids bloqueados" title forms
+// from the stats grid and the number travels to the "x".
 import { gsap } from "gsap";
 import type { SceneRefs } from "../dom";
 import type { Measurements } from "../prepare";
@@ -32,44 +32,47 @@ export function addLimitAct(tl: gsap.core.Timeline, r: SceneRefs, m: Measurement
 		numberFinalTop,
 		NUMBER_ON_X_SIZE,
 	} = m;
-	// ============ ACTO 2: el límite hacia el infinito ============
-	// Paso 1: el título antiguo del hero se desvanece y, SOLAPÁNDOSE con él,
-	// entra el límite "lim / x ⟶ ∞" (ya posicionado sobre el rect que ocupaba
-	// el título). Enseguida —sin pausa— arranca la formación del título (Paso
-	// 2), para que la aparición del límite y lo que viene se sientan como un
-	// solo gesto y no como dos beats separados.
+	// ============ ACT 2: the limit toward infinity ============
+	// step 1: the hero's old title fades out and, OVERLAPPING with it, the
+	// "lim / x ⟶ ∞" limit comes in (already positioned over the rect the
+	// title occupied). right after — without a pause — the title's
+	// formation kicks off (step 2), so the limit's appearance and what
+	// follows feel like one single gesture, not two separate beats.
 	//
-	// El contenedor #asymptote-scene se hace visible solo para poder mostrar
-	// el bloque del límite; la cuadrícula (#asymptote-grid) sigue recortada a
-	// nada hasta el desenlace.
+	// the #asymptote-scene container is made visible only so the limit
+	// block can show; the grid (#asymptote-grid) stays clipped to nothing
+	// until the finale.
 	tl.to(asymptoteScene, { opacity: 1, duration: 0.5, ease: "none" }, 3.2)
 		.to(heroTitle, { opacity: 0, duration: 0.6, ease: "power1.out" }, 3.2)
-		// Solapa el final del fundido del título (no espera a que termine).
+		// overlaps the end of the title's fade (doesn't wait for it to finish).
 		.to(limitBlock, { opacity: 1, duration: 0.7, ease: "none" }, 3.6);
 
-	// ---- El título "89K+ Raids bloqueados" se FORMA a partir de la grilla ----
-	// La segunda celda suelta sus dos piezas REALES: el número "89K+" se
-	// despega de su sitio y, a la vez, la etiqueta "Raids bloqueados" se
-	// agranda y se coloca justo a su lado, ya debajo del límite. Como son los
-	// elementos reales de <Stats/>, el título se "forma" en vez de aparecer de
-	// la nada. (El resto de la grilla se separa y se desvanece — ver (c) más
-	// abajo. El radar sigue en pantalla, solo rota un poco más.)
+	// ---- the "89K+ Raids bloqueados" title FORMS from the grid ----
+	// the second cell releases its two REAL pieces: the "89K+" number
+	// detaches from its spot and, at the same time, the "Raids bloqueados"
+	// label grows and positions itself right next to it, already below the
+	// limit. since these are <Stats/>'s real elements, the title "forms"
+	// instead of appearing out of nowhere. (the rest of the grid separates
+	// and fades out — see (c) below. the radar stays on screen, just
+	// rotating a bit more.)
 
-	// PENDIENTE — el radar sigue visible por ahora (se apagará en un paso
-	// posterior). Código conservado:
+	// PENDING — the radar stays visible for now (it'll fade out in a later
+	// step). code kept for reference:
 	// tl.to(radarWrapper, { opacity: 0, duration: 0.6, ease: "power1.out" }, 5.4);
 
-	// Al despegar (4.2) el número y la etiqueta salen del DOM de su celda y se
-	// cuelgan de #asymptote-scene. Hace falta porque en (c) la celda ya vacía
-	// se mueve con un transform, y un ancestro transformado pasaría a ser el
-	// bloque contenedor de estos elementos `position: fixed`, descolocándolos.
+	// on detaching (4.2) the number and label leave their cell's dom and
+	// get attached to #asymptote-scene instead. this is needed because in
+	// (c) the now-empty cell moves with a transform, and a transformed
+	// ancestor would become the containing block for these `position:
+	// fixed` elements, throwing them off.
 	//
-	// El reparent y el paso a `fixed` van JUNTOS en el mismo callback (y a la
-	// misma posición 4.2) para que no exista ni un frame con el elemento ya
-	// reparentado pero aún en flujo normal — eso lo pintaba un instante en la
-	// esquina superior izquierda de #asymptote-scene. `reattach` a 4.1 deshace
-	// el reparent y limpia estilos para volver a la grilla. Ambos callbacks
-	// están guardados: idempotentes y válidos en cualquier sentido del scroll.
+	// the reparent and the switch to `fixed` happen TOGETHER in the same
+	// callback (at the same position, 4.2) so there's never a frame with
+	// the element already reparented but still in normal flow — that used
+	// to flash it for an instant in #asymptote-scene's top-left corner.
+	// `reattach` at 4.1 undoes the reparent and clears styles to go back
+	// to the grid. both callbacks are kept idempotent and valid in either
+	// scroll direction.
 	const numberDetachVars = {
 		position: "fixed",
 		display: "inline-block",
@@ -89,7 +92,7 @@ export function addLimitAct(tl: gsap.core.Timeline, r: SceneRefs, m: Measurement
 		whiteSpace: "nowrap",
 		fontFamily: "var(--font-display)",
 		fontWeight: 400,
-		color: "#6e6e6e", // = --color-text-faint (punto de partida explícito para GSAP)
+		color: "#6e6e6e", // = --color-text-faint (explicit starting point for GSAP)
 		lineHeight: "1",
 	};
 	const detachPieces = () => {
@@ -113,13 +116,13 @@ export function addLimitAct(tl: gsap.core.Timeline, r: SceneRefs, m: Measurement
 
 	tl.call(reattachPieces, undefined, 4.1)
 		.call(detachPieces, undefined, 4.2)
-		// "primero: el 89K+ sale de su posición" — viaja hasta debajo del límite.
+		// "first: the 89K+ leaves its position" — travels to below the limit.
 		.to(
 			raidsNumber,
 			{ left: numberTargetLeft, top: numberTargetTop, duration: 1.8, ease: "power2.inOut" },
 			4.2,
 		)
-		// "a la vez: la etiqueta se convierte en grande y se reposiciona al lado".
+		// "at the same time: the label grows large and repositions next to it".
 		.to(
 			raidsLabel,
 			{
@@ -131,20 +134,21 @@ export function addLimitAct(tl: gsap.core.Timeline, r: SceneRefs, m: Measurement
 			},
 			4.2,
 		)
-		// Transición suave de "Raids bloqueados" tenue → título: el peso sube
-		// 400→700 (GSAP lo escalona por 500/600, no da el salto seco) y el color
-		// pasa de tenue a pleno. Dura menos que el viaje, así llega ya formado.
+		// smooth transition from muted "Raids bloqueados" → title: weight
+		// rises 400→700 (gsap steps it through 500/600, no abrupt jump) and
+		// the color goes from faint to full. shorter than the travel, so it
+		// arrives already formed.
 		.to(
 			raidsLabel,
 			{ fontWeight: 700, color: "#eeeeee", duration: 1, ease: "power1.inOut" },
 			4.2,
 		);
 
-	// Mientras el título se está recolocando (≈4.2–6.0) pasan tres cosas más:
+	// while the title is repositioning (≈4.2–6.0) three more things happen:
 
-	// (a) Aparecen más símbolos matemáticos repartidos por toda la pantalla,
-	//     con un pequeño stagger aleatorio y entrando desde algo más abajo y
-	//     encogidos, para que "broten" en vez de encenderse de golpe.
+	// (a) more math symbols appear scattered across the whole screen, with
+	//     a small random stagger and entering from a bit lower and
+	//     shrunk, so they "sprout" instead of switching on all at once.
 	if (asymptoteGlyphs.length) {
 		gsap.set(asymptoteGlyphs, { y: 12, scale: 0.8 });
 		tl.to(
@@ -161,19 +165,19 @@ export function addLimitAct(tl: gsap.core.Timeline, r: SceneRefs, m: Measurement
 		);
 	}
 
-	// (b) El radar gira un poco más (sigue desde donde lo dejó el Acto 1).
+	// (b) the radar spins a bit more (continuing from where act 1 left it).
 	tl.to(
 		radarPlane,
 		{ rotationZ: "+=14", rotationX: "+=7", duration: 1.8, ease: "power1.inOut" },
 		4.2,
 	);
 
-	// (c) Las CUATRO casillas de stats se abren en abanico desde el centro y
-	//     caen hacia abajo, con arranque escalonado para que no se vayan a la
-	//     vez. La segunda (ya con su contenido despegado) va también, con un
-	//     desplazamiento pequeño, para que no quede parada mientras las demás
-	//     se mueven. El desvanecimiento lo hace el fundido de toda la sección
-	//     (justo debajo), así se va también el marco de la grilla.
+	// (c) the FOUR stat cells fan out from the center and fall downward,
+	//     with a staggered start so they don't all leave at once. the
+	//     second one (already with its content detached) moves too, with a
+	//     small offset, so it doesn't sit still while the others move. the
+	//     fade-out is handled by the whole section's fade (right below),
+	//     which also takes the grid's frame with it.
 	if (statCells.length) {
 		tl.to(
 			statCells,
@@ -187,14 +191,14 @@ export function addLimitAct(tl: gsap.core.Timeline, r: SceneRefs, m: Measurement
 			4.2,
 		);
 	}
-	// Fundido largo de toda la sección de stats (marco + casillas + hueco
-	// vacío) — "que tarden en desvanecer".
+	// long fade of the whole stats section (frame + cells + empty gap) —
+	// "let them take their time fading out".
 	tl.to(statsSection, { opacity: 0, duration: 3, ease: "power1.in" }, 4.2);
 
-	// Una vez formado el título, el "89K+" sigue viaje hasta ocupar el hueco de
-	// la "x" del límite, encogiéndose a la vez para caber (NUMBER_ON_X_SIZE),
-	// mientras la "x" se desvanece. La etiqueta "Raids bloqueados" se queda
-	// quieta ahí. Reafirmamos antes (idempotente) las posiciones ya formadas.
+	// once the title is formed, "89K+" keeps traveling to occupy the
+	// limit's "x" gap, shrinking as it goes to fit (NUMBER_ON_X_SIZE),
+	// while the "x" fades out. the "Raids bloqueados" label stays put
+	// there. we reassert the already-formed positions first (idempotent).
 	tl.set(raidsLabel, { position: "fixed", left: labelTargetLeft, top: labelTargetTop }, 6.4)
 		.set(raidsNumber, { position: "fixed", left: numberTargetLeft, top: numberTargetTop }, 6.4)
 		.to(
@@ -208,12 +212,12 @@ export function addLimitAct(tl: gsap.core.Timeline, r: SceneRefs, m: Measurement
 			},
 			6.4,
 		)
-		// La etiqueta se recoloca CENTRADA bajo el límite y, a la vez, aparece
-		// el sufijo " = x": queda "Raids bloqueados = x" alineado al centro del
-		// bloque "lim".
+		// the label repositions CENTERED under the limit and, at the same
+		// time, the " = x" suffix appears: it reads "Raids bloqueados = x"
+		// aligned to the "lim" block's center.
 		.to(raidsLabel, { left: labelReflowLeft, duration: 1, ease: "power2.inOut" }, 6.4)
 		.set(raidsEqx, { display: "inline" }, 6.4)
 		.to(raidsEqx, { opacity: 1, duration: 0.5, ease: "power1.out" }, 6.45)
-		// La "x" se desvanece pronto, mientras el número aún va de camino.
+		// the "x" fades out early, while the number is still on its way.
 		.to(limitX, { opacity: 0, duration: 0.4, ease: "none" }, 6.5);
 }
