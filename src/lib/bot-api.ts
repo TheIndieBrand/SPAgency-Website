@@ -1,7 +1,7 @@
-// Cliente genérico de la API HTTP del bot (ver docs/README.md). Un solo servidor,
-// una sola clave (INTERNAL_API_KEY) para todo lo que la web le pide al bot. El
-// bot escucha solo en 127.0.0.1 y la clave nunca sale del servidor de la web: el
-// navegador habla con la web, y la web con el bot.
+// generic http client for the bot's api (see docs/README.md). one server, one
+// key (INTERNAL_API_KEY) for everything the web asks the bot. the bot only
+// listens on 127.0.0.1 and the key never leaves the web's server: the browser
+// talks to the web, and the web talks to the bot.
 
 const TimeoutMs = 6000;
 
@@ -38,7 +38,7 @@ export async function callBot<T>(
 		}
 		return { ok: true, data: data as T };
 	} catch {
-		// Bot caído, sin red local o respuesta tardía: para la web es lo mismo.
+		// bot down, no local network, or a late response: the web treats them the same.
 		return { ok: false, status: 503, error: "bot_unavailable" };
 	}
 }

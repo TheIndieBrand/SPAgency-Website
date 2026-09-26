@@ -7,9 +7,9 @@ import { renderMessageHtml } from "../support-format";
 import { chatRepository } from "./ChatRepository";
 import { ConsentVersion, ContextChunks, HistoryMessages, MaxInputChars, chatConfigured } from "./config";
 import { ASK_GUILD_TEXT, dashboardAssistantService, type GuildRef } from "./DashboardAssistantService";
-import { draftTicket, streamCompletion } from "./llm";
+import { llmClient } from "./LlmClient";
 import { knowledgeBase } from "./KnowledgeBase";
-import { SETTINGS_TOOL_NAME, buildMessages, messageChars } from "./prompt";
+import { SettingsToolName, buildMessages, messageChars } from "./prompt";
 import { redactSecrets } from "./redact";
 import { parseTicketDraft } from "./ticket";
 import { estimateUsage, recordUsage, usageState, type TokenUsage } from "./usage";
@@ -175,14 +175,14 @@ export class ChatRunner {
 						send("html", { html: renderMessageHtml(text) });
 					};
 
-					for await (const event of streamCompletion(messages, abort.signal)) {
+					for await (const event of llmClient.streamCompletion(messages, abort.signal)) {
 						if (event.type === "text") {
 							text += event.delta;
 							if (Date.now() - lastSent > 60) sendHtml();
 						} else {
 							usage = event.usage;
 							if (event.toolCall?.name === "offer_ticket") toolArguments = event.toolCall.arguments;
-							if (event.toolCall?.name === SETTINGS_TOOL_NAME) settingsArguments = event.toolCall.arguments;
+							if (event.toolCall?.name === SettingsToolName) settingsArguments = event.toolCall.arguments;
 						}
 					}
 
@@ -313,7 +313,7 @@ export class ChatRunner {
 
 		this.active.add(user.id);
 		try {
-			const { draft, usage } = await draftTicket(history, note, input.signal);
+			const { draft, usage } = await llmClient.draftTicket(history, note, input.signal);
 			const units = recordUsage(user.id, usage);
 			if (!draft) {
 				return json({ error: "draft_failed", message: "No he podido redactar el ticket. Inténtalo de nuevo o abre uno desde Soporte." }, 502);

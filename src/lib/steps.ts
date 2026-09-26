@@ -1,7 +1,7 @@
-// Los tres pasos de "Cómo funciona". Se muestran animados dentro de la escena
-// de entrada (AsymptoteScene: cada paso es un nodo del camino) y como sección
-// estática de respaldo (HowItWorks) cuando no hay animación. `short` es la
-// versión de una palabra que usa el recap de la CTA final (SceneCta).
+// the three "how it works" steps. shown animated inside the intro scene
+// (AsymptoteScene: each step is a node on the path) and as a static fallback
+// section (HowItWorks) when there's no animation. `short` is the one-word
+// version the final cta's recap uses (SceneCta).
 export interface Step {
 	n: string;
 	title: string;

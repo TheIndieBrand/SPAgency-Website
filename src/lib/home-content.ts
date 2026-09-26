@@ -1,7 +1,6 @@
-// Textos del home que se muestran en más de un sitio (la escena animada, el
-// respaldo estático y la versión para lectores de pantalla). Fuente única: si
-// cambia un texto, se cambia aquí. Los pasos y los testimonios viven en
-// steps.ts y testimonials.ts.
+// home page text shown in more than one place (the animated scene, the
+// static fallback and the screen-reader version). single source: if a text
+// changes, it changes here. steps and testimonials live in steps.ts and testimonials.ts.
 
 export const labels = {
 	invite: "Añadir a Discord",

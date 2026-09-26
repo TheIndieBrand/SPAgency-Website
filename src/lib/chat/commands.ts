@@ -7,17 +7,18 @@ import { dashboardAssistantService, type GuildRef } from "./DashboardAssistantSe
 import { chatRepository } from "./ChatRepository";
 import { chatRateLimiter } from "./ChatRateLimiter";
 
-// Comandos del chat que actúan sobre el dashboard. Ninguno llama al modelo: no
-// gastan cupo. Dejan rastro (y por eso exigen haber aceptado el aviso, como cualquier
-// conversación guardada) solo /servidor al elegir y /panico al proponer. El servidor
-// elegido vale para ESA conversación: no se arrastra a otras.
+// chat commands that act on the dashboard. none of them call the model: they
+// don't spend quota. only /servidor (choosing) and /panico (proposing) leave
+// a trace (which is why they require accepting the notice, like any stored
+// conversation). the chosen guild only applies to THAT conversation: it isn't
+// carried over to others.
 
 export type DashboardCommand = "servidor" | "config" | "panico" | "registros";
 
 const html = (markdown: string) => renderMessageHtml(markdown);
 const plain = (text: string) => text.replace(/[<>*_`]/g, "");
 
-const NO_GUILD: Record<"none" | "multiple" | "unavailable", string> = {
+const NoGuild: Record<"none" | "multiple" | "unavailable", string> = {
 	none: "No administras ningún servidor donde esté SP Agency. Invítalo desde /dashboard.",
 	multiple: "Administras varios servidores. Elige uno con /servidor.",
 	unavailable: "No he podido comprobar tus servidores ahora mismo. Inténtalo de nuevo en un momento.",
@@ -40,11 +41,11 @@ export async function dashboardCommand(input: {
 		return json({ error: "not_found", message: "Esa conversación no existe." }, 404);
 	}
 
-	// ── /servidor [nombre | número] ─────────────────────────────────────────
+	// ── /servidor [name | number] ────────────────────────────────────────────
 	if (name === "servidor") {
 		const list = await listAccessibleGuilds(accessToken).catch(() => null);
-		if (!list) return json({ error: "unavailable", message: NO_GUILD.unavailable }, 502);
-		if (!list.length) return json({ html: html(NO_GUILD.none), guilds: [] });
+		if (!list) return json({ error: "unavailable", message: NoGuild.unavailable }, 502);
+		if (!list.length) return json({ html: html(NoGuild.none), guilds: [] });
 
 		const guilds: GuildRef[] = list.map((g) => ({ id: g.id, name: g.name }));
 		if (!arg) {
@@ -59,7 +60,7 @@ export async function dashboardCommand(input: {
 		if (!chosen) return json({ error: "not_found", message: "No encuentro ese servidor entre los que administras. Escribe /servidor para ver la lista." }, 404);
 		if (!chatRepository.hasConsent(user.id, ConsentVersion)) return consentRequired();
 
-		// Elegir deja rastro: la conversación recuerda el servidor y lo dice en el historial.
+		// choosing leaves a trace: the conversation remembers the guild and says so in the history.
 		const conversationId = input.conversationId ?? chatRepository.createConversation(user.id, user.global_name || user.username, `Servidor: ${chosen.name}`);
 		chatRepository.setConversationGuild(conversationId, chosen);
 		const text = `Listo: en esta conversación trabajo con **${plain(chosen.name)}**. Todo lo que cambie se aplicará ahí.`;
@@ -68,15 +69,15 @@ export async function dashboardCommand(input: {
 		return json({ conversationId, guild: chosen, html: html(text), guilds: [] });
 	}
 
-	// Los demás necesitan un servidor ya resuelto en esta conversación.
+	// everything else needs a guild already resolved in this conversation.
 	const selection = await dashboardAssistantService.resolveGuild(accessToken, input.conversationId);
-	if (!selection.ok) return json({ error: "no_guild", message: NO_GUILD[selection.reason] }, selection.reason === "unavailable" ? 502 : 409);
+	if (!selection.ok) return json({ error: "no_guild", message: NoGuild[selection.reason] }, selection.reason === "unavailable" ? 502 : 409);
 	const { guild } = selection;
 
 	const config = await dashboardAssistantService.loadConfigFor(guild);
 	if (!config) return json({ error: "unavailable", message: "No he podido leer la configuración ahora mismo. Inténtalo de nuevo." }, 503);
 
-	// ── /config [sección] ───────────────────────────────────────────────────
+	// ── /config [section] ────────────────────────────────────────────────────
 	if (name === "config") {
 		const text = dashboardAssistantService.configMarkdown(guild, config, arg);
 		if (!text) return json({ error: "invalid_section", message: "Secciones: protección, automoderación, alertas o general." }, 400);

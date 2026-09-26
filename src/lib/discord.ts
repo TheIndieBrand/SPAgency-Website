@@ -75,8 +75,8 @@ export async function getBotGuildIds(): Promise<Set<string>> {
 	return new Set(guilds.map((g) => g.id));
 }
 
-// Dueño del servidor, con el token del bot (la lista de servidores del usuario solo
-// dice si ÉL es el dueño, no quién lo es).
+// the guild's owner, using the bot's token (the user's guild list only says
+// whether THEY are the owner, not who is).
 export async function getGuildOwnerId(guildId: string): Promise<string | null> {
 	const botToken = process.env.DISCORD_BOT_TOKEN;
 	if (!botToken) return null;
@@ -109,10 +109,11 @@ export function userAvatarUrl(user: DiscordUser): string {
 	return `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.${ext}`;
 }
 
-// A dónde vuelve Discord tras invitar al bot: la página de agradecimiento (/gracias),
-// en el mismo dominio que el login. Esa URL tiene que estar entre los Redirects de la
-// aplicación en el Developer Portal (OAuth2), como la del login. Con INVITE_REDIRECT="off"
-// la invitación se hace sin redirección (Discord se queda en su pantalla de "Autorizado").
+// where discord returns to after inviting the bot: the thank-you page
+// (/gracias), on the same domain as the login. that url must be among the
+// application's Redirects in the developer portal (oauth2), same as the
+// login's. with INVITE_REDIRECT="off" the invite happens with no redirect
+// (discord stays on its "authorized" screen).
 function thanksRedirect(): Record<string, string> {
 	const login = process.env.DISCORD_REDIRECT_URI;
 	if (!login || process.env.INVITE_REDIRECT === "off") return {};
@@ -123,10 +124,11 @@ function thanksRedirect(): Record<string, string> {
 	}
 }
 
-// Invitación general (botón «Añadir a Discord»): el usuario elige el servidor en Discord.
-// Conserva el client_id que ya tenía el botón (el de la invitación pública del bot), que
-// no coincide con DISCORD_CLIENT_ID (el del login): la redirección a /gracias hay que
-// registrarla en ESA aplicación. INVITE_CLIENT_ID lo cambia sin tocar el código.
+// general invite (the "add to discord" button): the user picks the guild on
+// discord. keeps the client_id the button already had (the bot's public
+// invite one), which doesn't match DISCORD_CLIENT_ID (the login's): the
+// /gracias redirect has to be registered on THAT application. INVITE_CLIENT_ID
+// changes it without touching the code.
 const PublicInviteClientId = "1038614901394002020";
 
 export function generalInviteUrl(): string {
@@ -156,9 +158,9 @@ export interface GuildPreview {
 	iconUrl: string | null;
 }
 
-// Nombre e icono de un servidor donde está el bot, para decirle a quien se
-// verifica "a qué" servidor entra. Es solo cosmético: cualquier fallo devuelve
-// null y la página sigue sin él.
+// name and icon of a guild the bot is in, to tell whoever is verifying
+// "which" guild they're joining. purely cosmetic: any failure returns null
+// and the page carries on without it.
 export async function getGuildPreview(guildId: string): Promise<GuildPreview | null> {
 	const botToken = process.env.DISCORD_BOT_TOKEN;
 	if (!botToken || !/^\d{15,25}$/.test(guildId)) return null;

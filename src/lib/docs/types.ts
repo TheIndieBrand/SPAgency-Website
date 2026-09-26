@@ -1,5 +1,5 @@
-// Modelo de la documentación. Cada página es una lista de bloques; el texto admite
-// `código` y **negrita** en línea (ver renderInline en components/docs/DocBlocks.astro).
+// docs data model. each page is a list of blocks; text supports inline
+// `code` and **bold** (see renderInline in components/docs/DocBlocks.astro).
 export type DocBlock =
 	| { type: "p"; text: string }
 	| { type: "h"; text: string }
@@ -11,7 +11,7 @@ export interface DocPage {
 	slug: string;
 	title: string;
 	summary: string;
-	// Clase de bootstrap-icons (sin el prefijo `bi`).
+	// a bootstrap-icons class (without the `bi` prefix).
 	icon: string;
 	blocks: DocBlock[];
 }

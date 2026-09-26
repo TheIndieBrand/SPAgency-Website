@@ -7,7 +7,7 @@ import type { DocGroup, DocPage } from "./types.ts";
 
 export type { DocBlock, DocGroup, DocPage } from "./types.ts";
 
-// Orden de la barra lateral y de los botones anterior/siguiente.
+// order of the sidebar and of the previous/next buttons.
 export const docGroups: DocGroup[] = [
 	{ title: "Empezar", pages: gettingStarted },
 	{ title: "Protección", pages: protection },
@@ -26,8 +26,8 @@ export function getNeighbors(slug: string) {
 	return { prev: docPages[i - 1], next: docPages[i + 1] };
 }
 
-// Los ids de los títulos son estables (sin acentos ni signos) para poder enlazarlos
-// desde otras páginas: "Quien añade un bot raider" → "quien-anade-un-bot-raider".
+// heading ids are stable (no accents or punctuation) so other pages can link
+// to them: "Quien añade un bot raider" → "quien-anade-un-bot-raider".
 export function slugify(text: string) {
 	return text
 		.normalize("NFD")
@@ -41,8 +41,8 @@ export function getHeadings(page: DocPage) {
 	return page.blocks.flatMap((block) => (block.type === "h" ? [{ id: slugify(block.text), text: block.text }] : []));
 }
 
-// Texto en línea de los bloques: `código`, **negrita** y [enlaces](/docs/...).
-// Se escapa antes de formatear, así el contenido nunca inyecta HTML.
+// inline text for blocks: `code`, **bold** and [links](/docs/...). escaped
+// before formatting, so the content never injects html.
 export function renderInline(text: string) {
 	return text
 		.replace(/&/g, "&amp;")

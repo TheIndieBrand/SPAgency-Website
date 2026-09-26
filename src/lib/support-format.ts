@@ -3,9 +3,9 @@ import sanitizeHtml from "sanitize-html";
 
 const marked = new Marked({ gfm: true, breaks: true });
 
-// Los mensajes llegan como markdown de Discord, escritos por el staff o por el
-// propio usuario. Se pintan saneados: solo texto con formato básico y enlaces
-// http(s); nada de imágenes, HTML crudo, títulos ni manejadores de eventos.
+// messages arrive as discord markdown, written by staff or by the user
+// themselves. rendered sanitized: only basic-formatted text and http(s)
+// links; no images, raw html, headings or event handlers.
 export function renderMessageHtml(content: string): string {
 	return sanitizeHtml(marked.parse(content) as string, {
 		allowedTags: ["p", "br", "strong", "em", "del", "code", "pre", "blockquote", "a", "ul", "ol", "li"],
@@ -18,8 +18,9 @@ export function renderMessageHtml(content: string): string {
 	});
 }
 
-// El avatar lo manda el bot, pero solo se admite si apunta a la CDN de Discord:
-// así, aunque algo raro llegara, nunca se carga una imagen de un tercero.
+// the avatar comes from the bot, but it's only accepted if it points to
+// discord's cdn: that way, even if something odd arrived, a third party's
+// image is never loaded.
 export function safeAvatar(url: unknown): string | null {
 	if (typeof url !== "string") return null;
 	try {
@@ -31,7 +32,7 @@ export function safeAvatar(url: unknown): string | null {
 	}
 }
 
-// Códigos de error de la API del bot → mensaje para el usuario.
+// bot api error codes → user-facing message.
 const MESSAGES: Record<string, string> = {
 	too_many_open_tickets: "Ya tienes un ticket abierto. Ciérralo antes de abrir otro.",
 	cooldown: "Espera unos segundos antes de volver a intentarlo.",

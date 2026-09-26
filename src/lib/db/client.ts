@@ -1,9 +1,9 @@
 import postgres from "postgres";
 
-// Conexión a la base de SP Agency (la del bot). La web entra con el rol
-// `spagency_web`, que solo puede leer configuración, registros y advertencias y
-// actualizar los ajustes: aunque hubiera un fallo en una consulta, no puede
-// insertar, borrar ni cambiar el esquema (eso lo lleva el bot con sus migraciones).
+// connection to SP Agency's database (the bot's). the web connects with the
+// `spagency_web` role, which can only read config, logs and warnings, and
+// update settings: even if a query went wrong, it can't insert, delete or
+// change the schema (the bot owns that, through its own migrations).
 
 export class DatabaseNotConfigured extends Error {
 	constructor() {
@@ -21,8 +21,8 @@ export function getSql(): postgres.Sql {
 	const url = process.env.DATABASE_URL;
 	if (!url) throw new DatabaseNotConfigured();
 
-	// Un pool pequeño: la web hace pocas consultas y comparte servidor con el bot.
-	// Las columnas llegan en camelCase. Los avisos de Postgres no son errores.
+	// a small pool: the web makes few queries and shares the server with the
+	// bot. columns arrive in camelCase. postgres notices aren't errors.
 	sql ??= postgres(url, {
 		max: 5,
 		idle_timeout: 30,
@@ -33,8 +33,8 @@ export function getSql(): postgres.Sql {
 	return sql;
 }
 
-// Las columnas `timestamp` de la base no llevan zona horaria y su reloj está
-// fijado en UTC (`ALTER DATABASE spagency SET timezone TO 'UTC'`), igual que las
-// fechas que escribe el bot desde JS. Se leen siempre como texto ISO en UTC para
-// no depender de cómo interprete el driver una fecha sin zona.
+// the database's `timestamp` columns carry no time zone, and its clock is
+// fixed to utc (`ALTER DATABASE spagency SET timezone TO 'UTC'`), same as the
+// dates the bot writes from js. they're always read as an iso utc string so
+// it never depends on how the driver interprets a zoneless date.
 export const isoUtc = (column: string) => `to_char(${column}, 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"')`;
