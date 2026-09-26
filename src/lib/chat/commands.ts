@@ -3,16 +3,7 @@ import { listAccessibleGuilds } from "../dashboard-guard";
 import { json } from "../session";
 import { renderMessageHtml } from "../support-format";
 import { CONSENT_VERSION } from "./config";
-import {
-	buildSettingsProposal,
-	configMarkdown,
-	loadConfigFor,
-	matchGuild,
-	readSetting,
-	recentActivityMarkdown,
-	resolveGuild,
-	type GuildRef,
-} from "./dashboard";
+import { dashboardAssistantService, type GuildRef } from "./DashboardAssistantService";
 import { chatRepository } from "./ChatRepository";
 import { withinRate } from "./rate";
 
@@ -64,7 +55,7 @@ export async function dashboardCommand(input: {
 			});
 		}
 
-		const chosen = matchGuild(guilds, arg);
+		const chosen = dashboardAssistantService.matchGuild(guilds, arg);
 		if (!chosen) return json({ error: "not_found", message: "No encuentro ese servidor entre los que administras. Escribe /servidor para ver la lista." }, 404);
 		if (!chatRepository.hasConsent(user.id, CONSENT_VERSION)) return consentRequired();
 
@@ -78,23 +69,23 @@ export async function dashboardCommand(input: {
 	}
 
 	// Los demás necesitan un servidor ya resuelto en esta conversación.
-	const selection = await resolveGuild(accessToken, input.conversationId);
+	const selection = await dashboardAssistantService.resolveGuild(accessToken, input.conversationId);
 	if (!selection.ok) return json({ error: "no_guild", message: NO_GUILD[selection.reason] }, selection.reason === "unavailable" ? 502 : 409);
 	const { guild } = selection;
 
-	const config = await loadConfigFor(guild);
+	const config = await dashboardAssistantService.loadConfigFor(guild);
 	if (!config) return json({ error: "unavailable", message: "No he podido leer la configuración ahora mismo. Inténtalo de nuevo." }, 503);
 
 	// ── /config [sección] ───────────────────────────────────────────────────
 	if (name === "config") {
-		const text = configMarkdown(guild, config, arg);
+		const text = dashboardAssistantService.configMarkdown(guild, config, arg);
 		if (!text) return json({ error: "invalid_section", message: "Secciones: protección, automoderación, alertas o general." }, 400);
 		return json({ guild, html: html(text) });
 	}
 
 	// ── /registros ──────────────────────────────────────────────────────────
 	if (name === "registros") {
-		const text = await recentActivityMarkdown(guild);
+		const text = await dashboardAssistantService.recentActivityMarkdown(guild);
 		if (!text) return json({ error: "unavailable", message: "No he podido leer los registros ahora mismo." }, 503);
 		return json({ guild, html: html(text) });
 	}
@@ -108,11 +99,11 @@ export async function dashboardCommand(input: {
 		: /^(off|no|desactivar|desactiva|apagar|apaga)$/.test(word)
 			? false
 			: arg === ""
-				? !readSetting(config, "raidmodeEnable")
+				? !dashboardAssistantService.readSetting(config, "raidmodeEnable")
 				: null;
 	if (enable === null) return json({ error: "invalid_argument", message: "Usa /panico, /panico on o /panico off." }, 400);
 
-	const built = buildSettingsProposal(guild, config, [{ key: "raidmodeEnable", value: enable }]);
+	const built = dashboardAssistantService.buildSettingsProposal(guild, config, [{ key: "raidmodeEnable", value: enable }]);
 	if (!built.payload) return json({ guild, html: html(`El Modo Pánico de **${plain(guild.name)}** ya estaba ${enable ? "activado" : "desactivado"}.`) });
 
 	const where = `**${plain(guild.name)}**`;

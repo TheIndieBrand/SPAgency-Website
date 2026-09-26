@@ -1,6 +1,6 @@
 import type { APIRoute } from "astro";
 import { PROPOSAL_TTL_MS, SETTINGS_PROPOSAL_TTL_MS } from "../../../../lib/chat/config";
-import { parsePayload } from "../../../../lib/chat/dashboard";
+import { dashboardAssistantService } from "../../../../lib/chat/DashboardAssistantService";
 import { requireGuildApi } from "../../../../lib/dashboard-guard";
 import { chatRepository } from "../../../../lib/chat/ChatRepository";
 import { json, requireUser } from "../../../../lib/session";
@@ -48,7 +48,7 @@ export const POST: APIRoute = async ({ request, cookies, params }) => {
 	// settings changes: whoever confirms must still be an administrator of the
 	// guild (checked now, not when it was proposed), and every change is validated again.
 	if (proposal.kind === "settings") {
-		const payload = parsePayload(proposal.payload);
+		const payload = dashboardAssistantService.parsePayload(proposal.payload);
 		if (!payload) {
 			chatRepository.moveProposal(proposal.id, { from: "pending", to: "dismissed" });
 			return json({ error: "invalid", message: "Esta propuesta ya no es válida. Pídele al asistente que la prepare de nuevo." }, 410);

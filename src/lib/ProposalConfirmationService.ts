@@ -1,6 +1,6 @@
 import type { DiscordUser } from "./discord";
 import { userAvatarUrl } from "./discord";
-import { applySettings, outcomeNote, type SettingsPayload } from "./chat/dashboard";
+import { dashboardAssistantService, type SettingsPayload } from "./chat/DashboardAssistantService";
 import { chatRepository, type Proposal } from "./chat/ChatRepository";
 import { ticketFirstMessage } from "./chat/ticket";
 import { renderMessageHtml } from "./support-format";
@@ -34,7 +34,7 @@ export class ProposalConfirmationService {
 			return { ok: false, status: 409, error: "conflict", message: "Esta propuesta ya se está procesando." };
 		}
 
-		const outcomes = await applySettings(payload, userId);
+		const outcomes = await dashboardAssistantService.applySettings(payload, userId);
 		if (outcomes.every((o) => !o.ok && o.unavailable)) {
 			// the database didn't respond: nothing changed, safe to retry.
 			chatRepository.moveProposal(proposal.id, { from: "confirming", to: "pending" });
@@ -42,7 +42,7 @@ export class ProposalConfirmationService {
 		}
 
 		chatRepository.moveProposal(proposal.id, { from: "confirming", to: "confirmed" });
-		const note = outcomeNote(payload, outcomes);
+		const note = dashboardAssistantService.outcomeNote(payload, outcomes);
 		chatRepository.addMessage({ conversationId: proposal.conversationId, role: "note", content: note });
 		return { ok: true, applied: outcomes.filter((o) => o.ok).length, failed: outcomes.filter((o) => !o.ok).length, html: renderMessageHtml(note) };
 	}

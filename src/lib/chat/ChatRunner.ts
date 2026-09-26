@@ -6,7 +6,7 @@ import { listOpenTickets } from "../support-bot";
 import { renderMessageHtml } from "../support-format";
 import { chatRepository } from "./ChatRepository";
 import { CONSENT_VERSION, CONTEXT_CHUNKS, HISTORY_MESSAGES, MAX_INPUT_CHARS, chatConfigured } from "./config";
-import { ASK_GUILD_TEXT, buildSettingsProposal, isHowTo, loadConfigFor, noGuildContext, resolveGuild, settingsContext, wantsSettings, type GuildRef } from "./dashboard";
+import { ASK_GUILD_TEXT, dashboardAssistantService, type GuildRef } from "./DashboardAssistantService";
 import { draftTicket, streamCompletion } from "./llm";
 import { knowledgeBase } from "./KnowledgeBase";
 import { SETTINGS_TOOL_NAME, buildMessages, messageChars } from "./prompt";
@@ -120,12 +120,12 @@ export class ChatRunner {
 				const ctx: { target: { guild: GuildRef; config: GuildConfig } | null; reason: "none" | "multiple" | "unavailable" } = { target: null, reason: "none" };
 				const findTarget = async () => {
 					if (ctx.target) return ctx.target;
-					const selection = await resolveGuild(input.accessToken, conversation);
+					const selection = await dashboardAssistantService.resolveGuild(input.accessToken, conversation);
 					if (!selection.ok) {
 						ctx.reason = selection.reason;
 						return null;
 					}
-					const config = await loadConfigFor(selection.guild);
+					const config = await dashboardAssistantService.loadConfigFor(selection.guild);
 					if (!config) ctx.reason = "unavailable";
 					else ctx.target = { guild: selection.guild, config };
 					return ctx.target;
@@ -146,14 +146,14 @@ export class ChatRunner {
 
 					// guild settings are only sent if the message talks about settings.
 					let settingsBlock = "";
-					if (wantsSettings(question.length < 40 ? `${lastUser} ${question}` : question)) {
+					if (dashboardAssistantService.wantsSettings(question.length < 40 ? `${lastUser} ${question}` : question)) {
 						const found = await findTarget();
 
 						// several guilds and none chosen in this conversation: never guessed nor
 						// sent to the model (doesn't spend quota). the user is asked which one,
 						// with buttons, and the client repeats the request once they choose.
 						// "how do I" questions are answered from the docs without asking for a guild.
-						if (!found && ctx.reason === "multiple" && !isHowTo(question)) {
+						if (!found && ctx.reason === "multiple" && !dashboardAssistantService.isHowTo(question)) {
 							const list = (await listAccessibleGuilds(input.accessToken).catch(() => null)) ?? [];
 							chatRepository.addMessage({ conversationId: conversation, role: "assistant", content: ASK_GUILD_TEXT });
 							send("html", { html: renderMessageHtml(ASK_GUILD_TEXT) });
@@ -163,7 +163,7 @@ export class ChatRunner {
 						}
 
 						if (found) send("guild", { id: found.guild.id, name: found.guild.name });
-						settingsBlock = found ? settingsContext(found.guild, found.config) : noGuildContext(ctx.reason);
+						settingsBlock = found ? dashboardAssistantService.settingsContext(found.guild, found.config) : dashboardAssistantService.noGuildContext(ctx.reason);
 					}
 
 					const messages = buildMessages(history, question, hits, settingsBlock);
@@ -190,7 +190,7 @@ export class ChatRunner {
 
 					// changes the model proposed: validated and stored as a proposal; nothing
 					// is applied until the user confirms.
-					let settings: ReturnType<typeof buildSettingsProposal> | null = null;
+					let settings: ReturnType<typeof dashboardAssistantService.buildSettingsProposal> | null = null;
 					if (settingsArguments) {
 						let changes: unknown = null;
 						try {
@@ -200,7 +200,7 @@ export class ChatRunner {
 						}
 						const found = await findTarget();
 						settings = found
-							? buildSettingsProposal(found.guild, found.config, changes)
+							? dashboardAssistantService.buildSettingsProposal(found.guild, found.config, changes)
 							: { problems: [ctx.reason === "multiple" ? "Elige primero el servidor con /servidor." : "No he podido acceder a la configuración de tu servidor."] };
 						const list = settings.problems.map((p) => `- ${p}`).join("\n");
 						if (!settings.payload) {
