@@ -1,13 +1,13 @@
 import type { APIRoute } from "astro";
-import { chatTurn } from "../../../lib/chat/run";
+import { chatRunner } from "../../../lib/chat/ChatRunner";
 import { tokenFromCookies } from "../../../lib/dashboard-guard";
 import { requireUser } from "../../../lib/session";
 
 export const prerender = false;
 
-// Un mensaje del usuario → respuesta del asistente en streaming (SSE). La
-// identidad sale de la sesión; el cuerpo solo trae el texto y, si continúa una
-// conversación, su ID (que se comprueba que sea suya).
+// a user message → the assistant's streamed answer (sse). identity comes from
+// the session; the body only carries the text and, if it continues a
+// conversation, its id (checked as belonging to the user).
 export const POST: APIRoute = async ({ request, cookies }) => {
 	const auth = await requireUser(request, cookies);
 	if ("response" in auth) return auth.response;
@@ -16,7 +16,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
 	const message = typeof body?.message === "string" ? body.message : "";
 	const conversationId = typeof body?.conversationId === "string" && body.conversationId ? body.conversationId : undefined;
 
-	// El token de Discord solo sirve para comprobar sus servidores; nunca llega al modelo.
+	// discord's token is only used to check the user's guilds; it never reaches the model.
 	const { token } = tokenFromCookies(cookies);
-	return chatTurn({ user: auth.user, accessToken: token ?? "", conversationId, message, signal: request.signal });
+	return chatRunner.chatTurn({ user: auth.user, accessToken: token ?? "", conversationId, message, signal: request.signal });
 };

@@ -13,7 +13,7 @@ import {
 	resolveGuild,
 	type GuildRef,
 } from "./dashboard";
-import { addMessage, createConversation, createProposal, getConversation, getConversationGuild, hasConsent, setConversationGuild } from "./db";
+import { chatRepository } from "./ChatRepository";
 import { withinRate } from "./rate";
 
 // Comandos del chat que actúan sobre el dashboard. Ninguno llama al modelo: no
@@ -45,7 +45,7 @@ export async function dashboardCommand(input: {
 	const arg = input.arg.trim().slice(0, 100);
 
 	if (!withinRate(user.id)) return json({ error: "rate_limited", message: "Vas muy rápido. Espera unos segundos." }, 429);
-	if (input.conversationId && getConversation(input.conversationId)?.userId !== user.id) {
+	if (input.conversationId && chatRepository.getConversation(input.conversationId)?.userId !== user.id) {
 		return json({ error: "not_found", message: "Esa conversación no existe." }, 404);
 	}
 
@@ -57,7 +57,7 @@ export async function dashboardCommand(input: {
 
 		const guilds: GuildRef[] = list.map((g) => ({ id: g.id, name: g.name }));
 		if (!arg) {
-			const current = input.conversationId ? getConversationGuild(input.conversationId)?.id : undefined;
+			const current = input.conversationId ? chatRepository.getConversationGuild(input.conversationId)?.id : undefined;
 			return json({
 				html: html("Elige el servidor sobre el que quieres que actúe en esta conversación:"),
 				guilds: guilds.map((g) => ({ ...g, current: g.id === current })),
@@ -66,14 +66,14 @@ export async function dashboardCommand(input: {
 
 		const chosen = matchGuild(guilds, arg);
 		if (!chosen) return json({ error: "not_found", message: "No encuentro ese servidor entre los que administras. Escribe /servidor para ver la lista." }, 404);
-		if (!hasConsent(user.id, CONSENT_VERSION)) return consentRequired();
+		if (!chatRepository.hasConsent(user.id, CONSENT_VERSION)) return consentRequired();
 
 		// Elegir deja rastro: la conversación recuerda el servidor y lo dice en el historial.
-		const conversationId = input.conversationId ?? createConversation(user.id, user.global_name || user.username, `Servidor: ${chosen.name}`);
-		setConversationGuild(conversationId, chosen);
+		const conversationId = input.conversationId ?? chatRepository.createConversation(user.id, user.global_name || user.username, `Servidor: ${chosen.name}`);
+		chatRepository.setConversationGuild(conversationId, chosen);
 		const text = `Listo: en esta conversación trabajo con **${plain(chosen.name)}**. Todo lo que cambie se aplicará ahí.`;
-		addMessage({ conversationId, role: "user", content: `/servidor ${arg}` });
-		addMessage({ conversationId, role: "assistant", content: text });
+		chatRepository.addMessage({ conversationId, role: "user", content: `/servidor ${arg}` });
+		chatRepository.addMessage({ conversationId, role: "assistant", content: text });
 		return json({ conversationId, guild: chosen, html: html(text), guilds: [] });
 	}
 
@@ -100,7 +100,7 @@ export async function dashboardCommand(input: {
 	}
 
 	// ── /panico [on | off] ──────────────────────────────────────────────────
-	if (!hasConsent(user.id, CONSENT_VERSION)) return consentRequired();
+	if (!chatRepository.hasConsent(user.id, CONSENT_VERSION)) return consentRequired();
 
 	const word = arg.toLowerCase();
 	const enable = /^(on|si|sí|activar|activa|encender|enciende)$/.test(word)
@@ -119,11 +119,11 @@ export async function dashboardCommand(input: {
 	const text = enable
 		? `Esto activa el **Modo Pánico** en ${where}: el bot endurece la protección del servidor hasta que se apague solo o lo desactives. Confírmalo si es lo que quieres:`
 		: `Esto desactiva el **Modo Pánico** en ${where}. Confírmalo si es lo que quieres:`;
-	const conversationId = input.conversationId ?? createConversation(user.id, user.global_name || user.username, "Modo Pánico");
-	setConversationGuild(conversationId, guild);
-	addMessage({ conversationId, role: "user", content: `/panico${arg ? ` ${arg}` : ""}` });
-	const proposalId = createProposal({ conversationId, userId: user.id, kind: "settings", subject: built.subject, summary: built.summary, payload: built.payload });
-	addMessage({ conversationId, role: "assistant", content: text, proposalId });
+	const conversationId = input.conversationId ?? chatRepository.createConversation(user.id, user.global_name || user.username, "Modo Pánico");
+	chatRepository.setConversationGuild(conversationId, guild);
+	chatRepository.addMessage({ conversationId, role: "user", content: `/panico${arg ? ` ${arg}` : ""}` });
+	const proposalId = chatRepository.createProposal({ conversationId, userId: user.id, kind: "settings", subject: built.subject, summary: built.summary, payload: built.payload });
+	chatRepository.addMessage({ conversationId, role: "assistant", content: text, proposalId });
 
 	return json({
 		conversationId,

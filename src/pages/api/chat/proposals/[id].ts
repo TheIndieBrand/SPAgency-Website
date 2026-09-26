@@ -2,7 +2,7 @@ import type { APIRoute } from "astro";
 import { PROPOSAL_TTL_MS, SETTINGS_PROPOSAL_TTL_MS } from "../../../../lib/chat/config";
 import { parsePayload } from "../../../../lib/chat/dashboard";
 import { requireGuildApi } from "../../../../lib/dashboard-guard";
-import { getProposal, moveProposal } from "../../../../lib/chat/db";
+import { chatRepository } from "../../../../lib/chat/ChatRepository";
 import { json, requireUser } from "../../../../lib/session";
 import { botFailure } from "../../../../lib/support-bot";
 import { proposalConfirmationService } from "../../../../lib/ProposalConfirmationService";
@@ -24,13 +24,13 @@ export const POST: APIRoute = async ({ request, cookies, params }) => {
 		return json({ error: "invalid_body", message: "Acción no válida." }, 400);
 	}
 
-	const proposal = getProposal(params.id ?? "");
+	const proposal = chatRepository.getProposal(params.id ?? "");
 	if (!proposal || proposal.userId !== user.id) {
 		return json({ error: "not_found", message: "Esa propuesta no existe." }, 404);
 	}
 
 	if (action === "dismiss") {
-		moveProposal(proposal.id, { from: "pending", to: "dismissed" });
+		chatRepository.moveProposal(proposal.id, { from: "pending", to: "dismissed" });
 		return json({ ok: true });
 	}
 
@@ -50,7 +50,7 @@ export const POST: APIRoute = async ({ request, cookies, params }) => {
 	if (proposal.kind === "settings") {
 		const payload = parsePayload(proposal.payload);
 		if (!payload) {
-			moveProposal(proposal.id, { from: "pending", to: "dismissed" });
+			chatRepository.moveProposal(proposal.id, { from: "pending", to: "dismissed" });
 			return json({ error: "invalid", message: "Esta propuesta ya no es válida. Pídele al asistente que la prepare de nuevo." }, 410);
 		}
 		const guard = await requireGuildApi(request, cookies, payload.guildId);

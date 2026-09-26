@@ -12,7 +12,7 @@ import {
 	type CheckedChange,
 } from "../db/SettingsRepository";
 import { MAX_SETTING_CHANGES } from "./config";
-import { getConversationGuild, setConversationGuild } from "./db";
+import { chatRepository } from "./ChatRepository";
 
 // El asistente sobre el dashboard. Tres piezas:
 //   · qué servidor toca (uno elegido por usuario, comprobado en cada uso),
@@ -34,7 +34,7 @@ export type Selection = { ok: true; guild: GuildRef } | { ok: false; reason: "no
 // La elección no se hereda de otras conversaciones.
 export async function resolveGuild(accessToken: string, conversationId?: string): Promise<Selection> {
 	try {
-		const saved = conversationId ? getConversationGuild(conversationId) : null;
+		const saved = conversationId ? chatRepository.getConversationGuild(conversationId) : null;
 		if (saved) {
 			const access = await resolveGuildAccess(accessToken, saved.id);
 			if ("guild" in access) return { ok: true, guild: { id: access.guild.id, name: access.guild.name } };
@@ -43,7 +43,7 @@ export async function resolveGuild(accessToken: string, conversationId?: string)
 		if (!guilds || !guilds.length) return { ok: false, reason: guilds ? "none" : "unavailable" };
 		if (guilds.length > 1) return { ok: false, reason: "multiple" };
 		const only = { id: guilds[0].id, name: guilds[0].name };
-		if (conversationId) setConversationGuild(conversationId, only);
+		if (conversationId) chatRepository.setConversationGuild(conversationId, only);
 		return { ok: true, guild: only };
 	} catch (error) {
 		console.error("[chat] no se pudo resolver el servidor:", error instanceof Error ? error.message : error);

@@ -1,7 +1,7 @@
 import type { DiscordUser } from "./discord";
 import { userAvatarUrl } from "./discord";
 import { applySettings, outcomeNote, type SettingsPayload } from "./chat/dashboard";
-import { addMessage, moveProposal, setConversationTicket, type Proposal } from "./chat/db";
+import { chatRepository, type Proposal } from "./chat/ChatRepository";
 import { ticketFirstMessage } from "./chat/ticket";
 import { renderMessageHtml } from "./support-format";
 import { createTicket } from "./support-bot";
@@ -30,20 +30,20 @@ export class ProposalConfirmationService {
 	 * @returns the outcome, or why it could not be applied.
 	 */
 	async confirmSettings(proposal: Proposal, payload: SettingsPayload, userId: string): Promise<SettingsConfirmResult> {
-		if (!moveProposal(proposal.id, { from: "pending", to: "confirming" })) {
+		if (!chatRepository.moveProposal(proposal.id, { from: "pending", to: "confirming" })) {
 			return { ok: false, status: 409, error: "conflict", message: "Esta propuesta ya se está procesando." };
 		}
 
 		const outcomes = await applySettings(payload, userId);
 		if (outcomes.every((o) => !o.ok && o.unavailable)) {
 			// the database didn't respond: nothing changed, safe to retry.
-			moveProposal(proposal.id, { from: "confirming", to: "pending" });
+			chatRepository.moveProposal(proposal.id, { from: "confirming", to: "pending" });
 			return { ok: false, status: 503, error: "unavailable", message: "No se pudo guardar: la base de datos no responde. Inténtalo de nuevo." };
 		}
 
-		moveProposal(proposal.id, { from: "confirming", to: "confirmed" });
+		chatRepository.moveProposal(proposal.id, { from: "confirming", to: "confirmed" });
 		const note = outcomeNote(payload, outcomes);
-		addMessage({ conversationId: proposal.conversationId, role: "note", content: note });
+		chatRepository.addMessage({ conversationId: proposal.conversationId, role: "note", content: note });
 		return { ok: true, applied: outcomes.filter((o) => o.ok).length, failed: outcomes.filter((o) => !o.ok).length, html: renderMessageHtml(note) };
 	}
 
@@ -54,7 +54,7 @@ export class ProposalConfirmationService {
 	 * @returns the opened ticket, or why it could not be opened.
 	 */
 	async confirmTicket(proposal: Proposal, user: DiscordUser): Promise<TicketConfirmResult> {
-		if (!moveProposal(proposal.id, { from: "pending", to: "confirming" })) {
+		if (!chatRepository.moveProposal(proposal.id, { from: "pending", to: "confirming" })) {
 			return { ok: false, status: 409, error: "conflict", message: "Esta propuesta ya se está procesando." };
 		}
 
@@ -68,15 +68,15 @@ export class ProposalConfirmationService {
 
 		if (!result.ok) {
 			// didn't open: the proposal goes back to available so it can be retried.
-			moveProposal(proposal.id, { from: "confirming", to: "pending" });
+			chatRepository.moveProposal(proposal.id, { from: "confirming", to: "pending" });
 			return { ok: false, botError: result };
 		}
 
 		const { ticketId } = result.data;
-		moveProposal(proposal.id, { from: "confirming", to: "confirmed", ticketId });
-		setConversationTicket(proposal.conversationId, ticketId);
+		chatRepository.moveProposal(proposal.id, { from: "confirming", to: "confirmed", ticketId });
+		chatRepository.setConversationTicket(proposal.conversationId, ticketId);
 		const url = `/support/tickets/${encodeURIComponent(ticketId)}`;
-		addMessage({
+		chatRepository.addMessage({
 			conversationId: proposal.conversationId,
 			role: "note",
 			content: `Ticket abierto: **${proposal.subject}**. Sigue la conversación con el staff en [tu ticket](${url}); su primer mensaje lo ha generado la IA con el resumen de este chat.`,

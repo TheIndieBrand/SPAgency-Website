@@ -1,14 +1,14 @@
 import { renderMessageHtml } from "../support-format";
 import { PROPOSAL_TTL_MS, SETTINGS_PROPOSAL_TTL_MS } from "./config";
-import type { Proposal, StoredMessage } from "./db";
+import type { Proposal, StoredMessage } from "./ChatRepository";
 
-// Lo que ve el navegador de un mensaje guardado: el markdown ya formateado y
-// saneado en el servidor (nunca se inyecta texto crudo en la página).
+// what the browser sees of a stored message: the markdown already formatted
+// and sanitized on the server (raw text is never injected into the page).
 
 export interface ProposalView {
 	id: string;
 	kind: "ticket" | "settings";
-	// Solo en propuestas de cambios: el servidor donde se aplicarían.
+	// only on settings-change proposals: the guild they'd be applied to.
 	guild: string | null;
 	subject: string;
 	summary: string;
@@ -43,7 +43,7 @@ export function proposalView(p: Proposal): ProposalView {
 		guild: p.kind === "settings" ? guildNameOf(p.payload) : null,
 		subject: p.subject,
 		summary: p.summary,
-		// "confirming" es transitorio (se está creando el ticket): para la interfaz, sigue pendiente.
+		// "confirming" is transient (the ticket is being created): for the ui, it's still pending.
 		status: expired ? "expired" : p.status === "confirming" ? "pending" : p.status,
 		ticketId: p.ticketId,
 	};
