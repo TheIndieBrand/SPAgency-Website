@@ -47,7 +47,20 @@ Este documento define las convenciones de código para este proyecto (Astro + Ty
 - Nada de lógica de negocio dentro de rutas de API (`src/pages/api/**`) más allá de orquestar: parsear input, invocar el servicio/clase correspondiente, devolver la respuesta.
 - Acceso a base de datos encapsulado en clases repositorio (`src/lib/db`), nunca queries sueltas dispersas en componentes o endpoints.
 
-## 7. Antes de abrir un PR
+## 7. Base de datos — sin cambios de esquema
+
+- **La base de datos es compartida con el bot de Discord.** Ningún refactor de este repositorio puede cambiar el esquema (tablas, columnas, tipos), ni el significado o formato de los datos que ya existen.
+- Envolver queries existentes en clases repositorio está permitido y es lo esperado; cambiar la query en sí (columnas leídas/escritas, condiciones, tipos devueltos) no lo está, salvo que el cambio se coordine explícitamente con el bot.
+- Cualquier necesidad real de cambio de esquema se trata aparte, nunca como parte de un refactor de estilo de código.
+
+## 8. Documentación (JSDoc)
+
+- Todo elemento exportado (clase, método público, función, tipo) lleva JSDoc en **inglés**.
+- El JSDoc documenta cada propiedad requerida: parámetros (`@param`), valor de retorno (`@returns`), y errores esperados (`@throws`) cuando aplique.
+- Los comentarios descriptivos (la línea de resumen del JSDoc, comentarios inline) son **cortos y en minúscula**, con lenguaje natural y directo — se explica qué hace o por qué existe, sin sobrecargar de jerga.
+- No se documentan obviedades ya evidentes por el nombre de la función o variable.
+
+## 9. Antes de abrir un PR
 
 - El código debe pasar `pnpm astro check` sin errores de tipado.
 - Ningún archivo nuevo debe romper las convenciones anteriores; si una excepción es imprescindible, se justifica en el PR.
