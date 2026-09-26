@@ -1,17 +1,10 @@
 import type { APIRoute } from "astro";
 import { json, requireUser } from "../../../lib/session";
-import {
-	captchaConfigured,
-	completeVerification,
-	isPlausibleToken,
-	lookupToken,
-	verificationErrorMessage,
-	verifyCaptcha,
-} from "../../../lib/verification";
+import { verificationService } from "../../../lib/VerificationService";
 
 export const prerender = false;
 
-const fail = (status: number, error: string) => json({ error, message: verificationErrorMessage(error, status) }, status);
+const fail = (status: number, error: string) => json({ error, message: verificationService.verificationErrorMessage(error, status) }, status);
 
 // Que el bot rechace nuestra clave (401/403) es un problema de configuración,
 // no del usuario: para él, la verificación simplemente no está disponible.
@@ -25,15 +18,15 @@ export const POST: APIRoute = async ({ request, cookies, clientAddress }) => {
 	const auth = await requireUser(request, cookies);
 	if ("response" in auth) return auth.response;
 
-	if (!captchaConfigured()) return fail(503, "not_configured");
+	if (!verificationService.captchaConfigured()) return fail(503, "not_configured");
 
 	const body = (await request.json().catch(() => null)) as Record<string, unknown> | null;
 	const token = typeof body?.token === "string" ? body.token : "";
 	const captcha = typeof body?.captcha === "string" ? body.captcha : "";
-	if (!isPlausibleToken(token)) return fail(400, "invalid_token");
+	if (!verificationService.isPlausibleToken(token)) return fail(400, "invalid_token");
 
 	// La identidad se lee del bot en cada intento: el navegador no puede decir de quién es el token.
-	const target = await lookupToken(token);
+	const target = await verificationService.lookupToken(token);
 	if (!target.ok) return fromBot(target.status, target.error);
 	if (target.data.userId !== auth.user.id) return fail(403, "wrong_account");
 
@@ -43,9 +36,9 @@ export const POST: APIRoute = async ({ request, cookies, clientAddress }) => {
 	} catch {
 		ip = undefined;
 	}
-	if (!(await verifyCaptcha(captcha, ip))) return fail(400, "invalid_captcha");
+	if (!(await verificationService.verifyCaptcha(captcha, ip))) return fail(400, "invalid_captcha");
 
-	const done = await completeVerification(token);
+	const done = await verificationService.completeVerification(token);
 	if (!done.ok) return fromBot(done.status, done.error);
 
 	return json({ ok: true, guildId: target.data.guildId });

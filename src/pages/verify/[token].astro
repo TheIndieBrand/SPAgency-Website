@@ -5,13 +5,7 @@ import Layout from "../../layouts/Layout.astro";
 import Navbar from "../../components/Navbar.astro";
 import { getGuildPreview, userAvatarUrl } from "../../lib/discord";
 import { getSessionUser } from "../../lib/session";
-import {
-	captchaConfigured,
-	captchaSiteKey,
-	isPlausibleToken,
-	lookupToken,
-	verificationErrorMessage,
-} from "../../lib/verification";
+import { verificationService } from "../../lib/VerificationService";
 
 // El token de la URL es una credencial: nada de guardarlo en cachés ni de
 // dejarlo en la cabecera Referer de lo que esta página cargue (el script del
@@ -32,23 +26,23 @@ let guild: Awaited<ReturnType<typeof getGuildPreview>> = null;
 let guildId = "";
 const user = await getSessionUser(Astro.cookies);
 
-if (!isPlausibleToken(token)) {
-	state = { kind: "invalid", message: verificationErrorMessage("invalid_token", 400) };
-} else if (!captchaConfigured()) {
-	state = { kind: "unavailable", message: verificationErrorMessage("not_configured", 503) };
+if (!verificationService.isPlausibleToken(token)) {
+	state = { kind: "invalid", message: verificationService.verificationErrorMessage("invalid_token", 400) };
+} else if (!verificationService.captchaConfigured()) {
+	state = { kind: "unavailable", message: verificationService.verificationErrorMessage("not_configured", 503) };
 } else {
 	// Primero se pregunta al bot: un enlace inválido no debería mandar a nadie a iniciar sesión.
-	const target = await lookupToken(token);
+	const target = await verificationService.lookupToken(token);
 
 	if (!target.ok) {
 		state =
 			target.error === "invalid_token"
-				? { kind: "invalid", message: verificationErrorMessage("invalid_token", 400) }
-				: { kind: "unavailable", message: verificationErrorMessage(target.error, target.status) };
+				? { kind: "invalid", message: verificationService.verificationErrorMessage("invalid_token", 400) }
+				: { kind: "unavailable", message: verificationService.verificationErrorMessage(target.error, target.status) };
 	} else if (!user) {
 		return Astro.redirect(`/auth/discord/login?next=${encodeURIComponent(Astro.url.pathname)}`);
 	} else if (user.id !== target.data.userId) {
-		state = { kind: "wrongAccount", message: verificationErrorMessage("wrong_account", 403) };
+		state = { kind: "wrongAccount", message: verificationService.verificationErrorMessage("wrong_account", 403) };
 	} else {
 		state = { kind: "ready" };
 		guildId = target.data.guildId;
@@ -56,7 +50,7 @@ if (!isPlausibleToken(token)) {
 	}
 }
 
-const siteKey = captchaSiteKey();
+const siteKey = verificationService.captchaSiteKey();
 ---
 
 <Layout title="Verificación — SP Agency" description="Verifica tu cuenta para acceder al servidor.">
