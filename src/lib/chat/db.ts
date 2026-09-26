@@ -299,12 +299,19 @@ export function listProposals(conversationId: string): Proposal[] {
 	return rows.map(toProposal);
 }
 
+/** the proposal transition applied by {@link moveProposal}. */
+export interface ProposalTransition {
+	from: ProposalStatus;
+	to: ProposalStatus;
+	ticketId?: string;
+}
+
 // Cambio de estado atómico: solo pasa si sigue en `from`. Es lo que impide que
 // dos clics (o dos pestañas) abran dos tickets con la misma propuesta.
-export function moveProposal(id: string, from: ProposalStatus, to: ProposalStatus, ticketId?: string): boolean {
+export function moveProposal(id: string, transition: ProposalTransition): boolean {
 	const result = getDb()
 		.prepare("UPDATE proposals SET status = ?, ticket_id = COALESCE(?, ticket_id) WHERE id = ? AND status = ?")
-		.run(to, ticketId ?? null, id, from);
+		.run(transition.to, transition.ticketId ?? null, id, transition.from);
 	return Number(result.changes) === 1;
 }
 
