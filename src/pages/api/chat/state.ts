@@ -1,7 +1,7 @@
 import type { APIRoute } from "astro";
 import { CONSENT_VERSION, MAX_INPUT_CHARS, chatConfigured } from "../../../lib/chat/config";
 import { chatRepository } from "../../../lib/chat/ChatRepository";
-import { siteRoutes } from "../../../lib/chat/knowledge";
+import { knowledgeBase } from "../../../lib/chat/KnowledgeBase";
 import { isStaff } from "../../../lib/chat/staff";
 import { usageState } from "../../../lib/chat/usage";
 import { json, requireUser } from "../../../lib/session";
@@ -21,7 +21,7 @@ export const GET: APIRoute = async ({ request, cookies }) => {
 		maxInputChars: MAX_INPUT_CHARS,
 		usage: usageState(user.id),
 		staff: isStaff(user),
-		routes: siteRoutes(),
+		routes: knowledgeBase.siteRoutes(),
 		conversations: chatRepository.listConversations(user.id).map((c) => ({
 			id: c.id,
 			title: c.title,

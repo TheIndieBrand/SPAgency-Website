@@ -8,7 +8,7 @@ import { chatRepository } from "./ChatRepository";
 import { CONSENT_VERSION, CONTEXT_CHUNKS, HISTORY_MESSAGES, MAX_INPUT_CHARS, chatConfigured } from "./config";
 import { ASK_GUILD_TEXT, buildSettingsProposal, isHowTo, loadConfigFor, noGuildContext, resolveGuild, settingsContext, wantsSettings, type GuildRef } from "./dashboard";
 import { draftTicket, streamCompletion } from "./llm";
-import { search } from "./knowledge";
+import { knowledgeBase } from "./KnowledgeBase";
 import { SETTINGS_TOOL_NAME, buildMessages, messageChars } from "./prompt";
 import { redactSecrets } from "./redact";
 import { parseTicketDraft } from "./ticket";
@@ -142,7 +142,7 @@ export class ChatRunner {
 					// a very short message ("what about on mobile?") is searched together
 					// with the user's previous one, which is what gives it meaning.
 					const lastUser = [...history].reverse().find((m) => m.role === "user")?.content ?? "";
-					const hits = search(question.length < 40 ? `${lastUser} ${question}` : question, CONTEXT_CHUNKS);
+					const hits = knowledgeBase.search(question.length < 40 ? `${lastUser} ${question}` : question, CONTEXT_CHUNKS);
 
 					// guild settings are only sent if the message talks about settings.
 					let settingsBlock = "";
