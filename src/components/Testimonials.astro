@@ -1,13 +1,13 @@
 ---
-// Sección de la versión simple (móvil, reduced-motion, sin JS). Con la escena
-// animada, los testimonios se ven en el carrusel final de la escena de entrada
-// (AsymptoteScene.astro) y esta sección se oculta (static-only, ver global.css).
-// Los datos viven en src/lib/testimonials.ts.
+// section for the simple version (mobile, reduced-motion, no js). with the
+// animated scene, testimonials show up in the intro scene's final carousel
+// (AsymptoteScene.astro) and this section is hidden (static-only, see
+// global.css). the data lives in src/lib/testimonials.ts.
 //
-// Las tarjetas corren en dos filas tipo marquee (fila 1 → izquierda, fila 2
-// → derecha). Se reparten automáticamente entre las dos filas, no hace falta
-// tocar nada más al agregar o quitar testimonios. Con prefers-reduced-motion no
-// hay marquee: las tarjetas se muestran todas, en filas que se ajustan al ancho.
+// cards run in two marquee-style rows (row 1 → left, row 2 → right). they're
+// split between the two rows automatically, nothing else needs touching
+// when adding or removing testimonials. under prefers-reduced-motion there's
+// no marquee: all cards show, in rows that wrap to the available width.
 import AddTestimonialButton from "./AddTestimonialButton.astro";
 import TestimonialCard from "./TestimonialCard.astro";
 import { sections } from "../lib/home-content";
@@ -31,9 +31,9 @@ const row2 = testimonials.slice(half);
 		<div class="marquee-fade from-bg pointer-events-none absolute top-0 right-0 z-10 h-full w-24 bg-gradient-to-l to-transparent">
 		</div>
 
-		<!-- La segunda copia de cada fila solo existe para que el bucle sea continuo: va
-		     aria-hidden (si no, los lectores de pantalla leerían cada testimonio dos
-		     veces) y con prefers-reduced-motion se oculta (ver global.css). -->
+		<!-- the second copy of each row only exists to make the loop continuous:
+		     it's aria-hidden (otherwise screen readers would read every
+		     testimonial twice) and hidden under prefers-reduced-motion (see global.css). -->
 		<div class="marquee-row animate-marquee-left group-hover:[animation-play-state:paused] mb-5 flex w-max gap-5">
 			{row1.map((t) => <TestimonialCard testimonial={t} />)}
 			<div class="marquee-dup contents" aria-hidden="true">
@@ -49,8 +49,8 @@ const row2 = testimonials.slice(half);
 		</div>
 	</div>
 
-	<!-- Justo debajo de la última tarjeta: lleva a /testimonios, donde cualquiera con
-	     sesión de Discord puede dejar el suyo (lo aprueba el staff). -->
+	<!-- right below the last card: links to /testimonios, where anyone with a
+	     discord session can leave their own (approved by staff). -->
 	<div class="mt-9 flex justify-center px-8">
 		<AddTestimonialButton />
 	</div>

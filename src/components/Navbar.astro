@@ -29,9 +29,9 @@ import { navLinks, site } from "../lib/site";
 				{labels.invite}
 			</a>
 
-			<!-- Menú de móvil y tablet (< lg): los enlaces de arriba no caben. <details>
-			     funciona sin JS; el script de abajo solo lo cierra al elegir un enlace, con
-			     Escape o al pulsar fuera. -->
+			<!-- mobile and tablet menu (< lg): the links above don't fit. <details>
+			     works with no js; the script below only closes it when a link is
+			     chosen, on Escape or on a click outside. -->
 			<details class="nav-menu relative lg:hidden">
 				<summary
 					aria-label="Menú"
@@ -56,11 +56,12 @@ import { navLinks, site } from "../lib/site";
 				</div>
 			</details>
 
-			<!-- Cuenta (siempre a la derecha del todo). Las páginas públicas se generan sin
-			     sesión, así que el estado lo resuelve el script de abajo con /api/me: hasta
-			     entonces se ve un círculo neutro, y con sesión ya vista en esta pestaña se
-			     pinta al instante. Con sesión: avatar → panel con nombre y "Cerrar sesión".
-			     Sin sesión: un "+" que lleva a iniciarla. -->
+			<!-- account (always at the very right). public pages are rendered with
+			     no session, so the state is resolved by the script below via
+			     /api/me: until then a neutral circle shows, and if a session was
+			     already seen in this tab it's painted instantly. with a session:
+			     avatar → panel with the name and "log out". with no session: a
+			     "+" that goes to log in. -->
 			<div id="nav-account" class="relative">
 				<span id="nav-skeleton" class="border-border-soft bg-bg-soft animate-status-pulse block h-9 w-9 rounded-full border" aria-hidden="true"></span>
 
@@ -146,13 +147,14 @@ import { navLinks, site } from "../lib/site";
 		const avatarBtn = document.getElementById("nav-avatar") as HTMLButtonElement;
 		const panel = document.getElementById("nav-panel")!;
 
-		// Con sesión, se recuerda el usuario visto en esta pestaña para no parpadear al
-		// cambiar de página; /api/me lo confirma siempre. Sin sesión no se recuerda
-		// nada (justo al volver del login ese dato estaría desfasado).
-		const KEY = "spa:nav-user";
+		// with a session, the user seen in this tab is remembered so the page
+		// doesn't flicker on navigation; /api/me always confirms it. with no
+		// session nothing is remembered (right after returning from login that
+		// data would be stale anyway).
+		const StorageKey = "spa:nav-user";
 		const remembered = (): NavUser | null => {
 			try {
-				const raw = sessionStorage.getItem(KEY);
+				const raw = sessionStorage.getItem(StorageKey);
 				return raw ? (JSON.parse(raw) as NavUser) : null;
 			} catch {
 				return null;
@@ -160,10 +162,10 @@ import { navLinks, site } from "../lib/site";
 		};
 		const remember = (user: NavUser | null) => {
 			try {
-				if (user) sessionStorage.setItem(KEY, JSON.stringify(user));
-				else sessionStorage.removeItem(KEY);
+				if (user) sessionStorage.setItem(StorageKey, JSON.stringify(user));
+				else sessionStorage.removeItem(StorageKey);
 			} catch {
-				/* sin almacenamiento: solo se pierde el pintado instantáneo */
+				/* no storage available: only the instant paint is lost */
 			}
 		};
 
@@ -172,8 +174,8 @@ import { navLinks, site } from "../lib/site";
 			avatarBtn.setAttribute("aria-expanded", String(open));
 		};
 
-		// Tras iniciar sesión se vuelve a la página en la que se estaba (solo rutas
-		// del propio sitio: el login rechaza cualquier otra cosa).
+		// after logging in, it returns to the page it was on (only routes on the
+		// site itself: the login rejects anything else).
 		const here = window.location.pathname + window.location.search;
 		if (/^\/[\w\-./%?=&]*$/.test(here) && !here.startsWith("//") && here !== "/") {
 			login.href = `/auth/discord/login?next=${encodeURIComponent(here)}`;
@@ -202,7 +204,8 @@ import { navLinks, site } from "../lib/site";
 				remember(user);
 				render(user);
 			})
-			// Sin respuesta no se sabe si hay sesión: se ofrece entrar, que es inocuo.
+			// with no response, whether there's a session is unknown: offering to
+			// log in is shown instead, which is harmless.
 			.catch(() => {
 				if (!hint) render(null);
 			});
@@ -217,7 +220,7 @@ import { navLinks, site } from "../lib/site";
 				avatarBtn.focus();
 			}
 		});
-		// Al cerrar sesión se olvida lo recordado (el enlace navega a /auth/logout).
+		// on logout, whatever was remembered is forgotten (the link navigates to /auth/logout).
 		document.getElementById("nav-logout")!.addEventListener("click", () => remember(null));
 	}
 </script>

@@ -1,20 +1,21 @@
 ---
-// CTA del FINAL de la escena de entrada. Va DENTRO de #intro-scene pero fuera del
-// contenedor aria-hidden de la escena: es contenido real (título, texto y
-// enlaces), no presentación. Empieza invisible; al final de la inmersión en el
-// agujero negro, del negro reaparece un punto de luz que se expande y sobre él
-// se compone esta CTA, sin caja: el título entra palabra a palabra, luego el
-// texto, los botones y un recap de los tres pasos (ver renderOutro en
-// intro-scene.ts, que anima cada pieza en función del tiempo). Como está dentro
-// del elemento pineado, al soltarse el pin se va con la escena y detrás llega el
-// footer. Su contenido es el mismo que el de CtaSection (la versión simple).
+// cta at the END of the intro scene. sits INSIDE #intro-scene but outside
+// the scene's aria-hidden container: it's real content (title, text and
+// links), not presentation. starts invisible; at the end of the black hole
+// immersion, a point of light re-emerges from black and expands, and this
+// cta is composed over it, with no box: the title enters word by word, then
+// the text, the buttons and a recap of the three steps (see renderOutro in
+// intro-scene.ts, which animates each piece based on time). since it's
+// inside the pinned element, once the pin releases it leaves with the scene
+// and the footer arrives behind it. its content is the same as CtaSection's
+// (the simple version).
 import { cta, labels } from "../lib/home-content";
 import { site } from "../lib/site";
 import { steps } from "../lib/steps";
 
 const recap = steps.map((step) => ({ label: step.short }));
 
-// El título entra palabra a palabra; las dos últimas llevan el degradado de marca.
+// the title enters word by word; the last two carry the brand gradient.
 const titleWords = cta.title.split(" ");
 const gradientClasses = ["cta-grad-a", "cta-grad-b"];
 const wordClass = (i: number) => {
@@ -28,7 +29,7 @@ const wordClass = (i: number) => {
 	class="scene-only pointer-events-none fixed inset-0 z-30 flex items-center justify-center px-6 opacity-0"
 	aria-labelledby="cta-scene-title"
 >
-	<!-- Velo oscuro muy difuso: da contraste al texto sobre el resplandor. -->
+	<!-- soft dark veil: gives the text contrast against the glow. -->
 	<div
 		id="cta-scene-scrim"
 		class="pointer-events-none absolute inset-0 opacity-0"
@@ -91,8 +92,8 @@ const wordClass = (i: number) => {
 			</a>
 		</div>
 
-		<!-- Recap decorativo de los tres pasos (los textos reales están en la lista
-		     accesible de StepsA11y): tres anillos que se completan. -->
+		<!-- decorative recap of the three steps (the real text is in StepsA11y's
+		     accessible list): three rings that fill in. -->
 		<div data-cta-recap class="mt-14 flex items-center justify-center gap-3 sm:gap-4" aria-hidden="true">
 			{
 				recap.map((r, i) => (
@@ -135,9 +136,9 @@ const wordClass = (i: number) => {
 </section>
 
 <style>
-	/* Palabras clave del título: degradado blanco → azul de marca, continuo entre
-	   las dos palabras (cada una lleva su tramo; un degradado compartido no es
-	   posible porque cada palabra se anima por separado). */
+	/* keywords in the title: white → brand blue gradient, continuous across
+	   both words (each carries its own segment; a shared gradient isn't
+	   possible since each word animates separately). */
 	.cta-grad-a,
 	.cta-grad-b {
 		-webkit-background-clip: text;
@@ -152,7 +153,7 @@ const wordClass = (i: number) => {
 		background-image: linear-gradient(100deg, #8fd0ff 0%, #0093e4 100%);
 	}
 
-	/* Botón principal: degradado de marca, brillo superior y halo que respira. */
+	/* primary button: brand gradient, top highlight and a breathing halo. */
 	.cta-primary {
 		background: linear-gradient(180deg, #14a0f2 0%, #0079bb 100%);
 		box-shadow:

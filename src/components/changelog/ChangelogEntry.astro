@@ -8,12 +8,12 @@ interface Props {
 	subtitle?: string;
 	html: string;
 	publishedAt: string;
-	// Si viene, es un nodo de la línea de tiempo de la lista (fecha a la izquierda,
-	// título enlazado); si no, es la página propia de la entrada (título como h1).
+	// if given, it's a node in the list's timeline (date on the left, linked
+	// title); otherwise it's the entry's own page (title as an h1).
 	href?: string;
 	latest?: boolean;
 	draft?: boolean;
-	// Me gusta de la entrada (no hay en los borradores). `signedIn` = hay sesión.
+	// the entry's likes (none on drafts). `signedIn` = there's a session.
 	like?: { target: string; count: number; liked: boolean; signedIn: boolean };
 }
 
@@ -23,8 +23,8 @@ const inList = Boolean(href);
 const Heading = inList ? "h2" : "h1";
 const date = formatChangelogDate(publishedAt);
 
-// Con versión, la versión es la protagonista y el nombre pasa a ser secundario;
-// sin versión, el nombre hace de título grande.
+// with a version, the version takes the lead and the name becomes
+// secondary; with no version, the name acts as the large title.
 const versionClass = inList ? "text-[52px]" : "text-[56px] sm:text-[72px]";
 const soloNameClass = inList ? "text-[36px]" : "text-[40px] sm:text-[52px]";
 ---
