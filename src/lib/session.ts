@@ -3,15 +3,15 @@ import { createHash } from "node:crypto";
 import { getCurrentUser, type DiscordUser } from "./discord";
 import { sessionCookieService } from "./SessionCookieService";
 
-// La cookie de sesión solo guarda los tokens de Discord, así que saber quién es
-// el usuario cuesta una llamada a /users/@me. El chat de soporte consulta cada
-// pocos segundos: sin caché, cada consulta sería también una llamada a Discord
-// (con su latencia y sus límites). Se recuerda la identidad un rato, por token.
+// the session cookie only stores discord's tokens, so knowing who the user is
+// costs a call to /users/@me. the support chat polls every few seconds:
+// without a cache, every poll would also be a discord call (with its latency
+// and its rate limits). the identity is remembered for a while, per token.
 //
-// Solo en memoria del proceso, y con la clave hasheada. Coste: un token
-// revocado en Discord puede seguir valiendo hasta USER_TTL_MS. Los fallos
-// (token inválido) se recuerdan menos, para no martillear a Discord con un
-// token malo y a la vez recuperarse pronto.
+// only in the process's own memory, and keyed by a hash. cost: a token
+// revoked on discord can still be valid for up to USER_TTL_MS. failures
+// (an invalid token) are remembered for less time, so a bad token doesn't
+// hammer discord while still recovering quickly.
 const USER_TTL_MS = 60_000;
 const MISS_TTL_MS = 10_000;
 const MAX_ENTRIES = 500;
@@ -47,9 +47,9 @@ function lookupUser(accessToken: string): Promise<DiscordUser | null> {
 	return request;
 }
 
-// Reutiliza la sesión del login con Discord (cookie con el access_token). No
-// borra la cookie si algo falla: estas comprobaciones también se usan en
-// páginas públicas, donde no tener sesión es lo normal.
+// reuses the session from the discord login (cookie with the access_token).
+// doesn't delete the cookie on failure: these checks are also used on public
+// pages, where having no session is the normal case.
 export async function getSessionUser(cookies: AstroCookies): Promise<DiscordUser | null> {
 	const accessToken = sessionCookieService.readAccessToken(cookies);
 	return accessToken ? lookupUser(accessToken) : null;
@@ -62,9 +62,9 @@ export function json(data: unknown, status = 200): Response {
 	});
 }
 
-// Guardia de los endpoints con sesión. Las peticiones que escriben exigen
-// Content-Type JSON: un formulario de otra web no puede enviarlo así sin pasar
-// por CORS (que aquí no está habilitado), lo que evita el CSRF.
+// guard for endpoints that need a session. requests that write require a
+// json content-type: a form on another site can't send that without going
+// through cors (not enabled here), which is what stops csrf.
 export async function requireUser(
 	request: Request,
 	cookies: AstroCookies,

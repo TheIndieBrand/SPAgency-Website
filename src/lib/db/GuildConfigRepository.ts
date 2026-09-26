@@ -1,9 +1,9 @@
 import { getGuildOwnerId } from "../discord";
 import { getSql, isoUtc } from "./client";
 
-// Configuración de un servidor, tal como la guarda el bot en `guilds`,
-// `guild_protection`, `guild_moderation` y `guild_configuration` (el bot crea las
-// cuatro filas a la vez al entrar en el servidor).
+// a guild's config, as the bot stores it across `guilds`, `guild_protection`,
+// `guild_moderation` and `guild_configuration` (the bot creates all four rows
+// at once when it joins the guild).
 
 export interface GuildConfig {
 	core: {
@@ -22,7 +22,7 @@ export interface GuildConfig {
 		intelligentSosEnable: boolean;
 		raidmodeEnable: boolean;
 		raidmodeTimeToDisable: string;
-		// ISO en UTC, o null si el modo pánico está apagado.
+		// iso utc, or null if panic mode is off.
 		raidmodeActivatedAt: string | null;
 	};
 	moderation: {
@@ -42,14 +42,14 @@ export interface GuildConfig {
 		automodFinalActionAt: number;
 	};
 	configuration: {
-		// IDs de Discord de usuarios y bots exentos.
+		// discord ids of exempt users and bots.
 		whitelist: string[];
 		logsChannel: string | null;
 	};
 }
 
-// Por qué no se pudo dar la configuración: el bot aún no ha creado las filas de
-// este servidor (`missing`) o la base no responde (`unavailable`).
+// why the config could not be given: the bot hasn't created this guild's rows
+// yet (`missing`), or the database isn't responding (`unavailable`).
 export type ConfigResult = { ok: true; config: GuildConfig } | { ok: false; reason: "missing" | "unavailable" };
 
 /**

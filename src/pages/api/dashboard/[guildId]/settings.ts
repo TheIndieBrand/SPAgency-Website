@@ -6,11 +6,11 @@ import { json } from "../../../../lib/session";
 
 export const prerender = false;
 
-// Cambia un ajuste del servidor (el autoguardado del dashboard). Cuerpo:
-//   { key, value }              → valor suelto (interruptor, opción, número, ID…)
-//   { key, op: "add"|"remove", value }  → un elemento de una lista
-// La identidad y el servidor se comprueban en cada petición; la clave se valida
-// contra el registro de ajustes y nunca decide qué tabla o columna se toca.
+// changes a guild setting (the dashboard's autosave). body:
+//   { key, value }                       → a single value (toggle, option, number, id…)
+//   { key, op: "add"|"remove", value }   → one element of a list
+// identity and the guild are checked on every request; the key is validated
+// against the settings registry and never decides which table or column is touched.
 export const PATCH: APIRoute = async ({ request, cookies, params }) => {
 	const auth = await requireGuildApi(request, cookies, params.guildId);
 	if ("response" in auth) return auth.response;

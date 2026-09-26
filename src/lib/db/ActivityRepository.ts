@@ -1,9 +1,10 @@
 import { getSql, isoUtc } from "./client";
 
-// Registro de actividad de un servidor: une los eventos que detecta el bot
-// (`server_event_logs`) y las acciones que se le piden (`bot_action_logs`). La
-// base guarda el tipo y los datos, no el texto: aquí se traduce cada tipo a una
-// frase (las plantillas del bot viven en sus locales, en el servidor).
+// a guild's activity log: merges the events the bot detects
+// (`server_event_logs`) with the actions requested of it (`bot_action_logs`).
+// the database stores the type and the data, not the text — this is where
+// each type is turned into a sentence (the bot's own templates live on its
+// side, in its locale files).
 
 export type Tone = "danger" | "warning" | "info" | "success";
 
@@ -65,7 +66,7 @@ export class ActivityRepository {
 
 export const activityRepository = new ActivityRepository();
 
-// ── Traducción a texto ──────────────────────────────────────────────────────
+// ── translation to text ─────────────────────────────────────────────────────
 
 interface Presentation {
 	label: string;
@@ -86,8 +87,8 @@ const ACTIONS: Record<string, string> = { none: "sin acción", mark: "marcado", 
 
 const str = (value: unknown): string => (typeof value === "string" ? value : "");
 
-// Los IDs de Discord no dicen nada a quien lee: se muestran como `@id` hasta que
-// haya nombres (los tiene Discord, no la base de datos).
+// discord ids mean nothing to a reader: shown as `@id` until there are names
+// (discord has those, the database doesn't).
 const user = (id: string | null) => (id ? `@${id}` : "alguien");
 const by = (row: ActivityRow) => (!row.executorId ? "" : row.executorId === "system" ? " por SP Agency" : ` por ${user(row.executorId)}`);
 const why = (row: ActivityRow) => (row.reason ? ` — ${row.reason}` : "");
@@ -168,8 +169,8 @@ const ACTION_TYPES: Record<string, (r: ActivityRow) => Presentation> = {
  */
 export function describeActivity(row: ActivityRow): Activity {
 	const table = row.source === "event" ? EVENTS : ACTION_TYPES;
-	// Un tipo que la web aún no conoce (el bot puede ser más nuevo) se muestra
-	// tal cual en vez de esconderse.
+	// a type the web doesn't know yet (the bot may be newer) is shown as-is
+	// instead of being hidden.
 	const p: Presentation = table[row.type]?.(row) ?? { label: `${row.type}${row.targetId ? ` (${row.targetId})` : ""}`, icon: "bi-dot", tone: "info" };
 	return { id: `${row.source}-${row.id}`, type: row.type, at: row.createdAt, ...p };
 }

@@ -1,7 +1,7 @@
 import { getSql } from "./client";
 
-// Cifras de la página General. "Hoy" y "ayer" son días de Madrid (igual que el
-// reinicio del cupo del asistente), no de UTC; las semanas son 7 días móviles.
+// numbers for the general dashboard page. "today" and "yesterday" are madrid
+// days (same as the assistant's quota reset), not utc; weeks are a rolling 7 days.
 
 export interface Overview {
 	raidsToday: number;
@@ -25,7 +25,7 @@ const ZERO: Overview = {
 	autoActionsPrevWeek: 0,
 };
 
-// Tipos de evento que son una respuesta automática del bot (no una acción pedida).
+// event types that are an automatic bot response (not a requested action).
 const AUTO_ACTIONS = ["antibotsKick", "selfbotDetected", "raidmodeJoinBan", "raidmodeActionBan", "raidBotAdderBan", "webhookFloodPurge", "raidDetected"];
 
 // "+2 vs ayer" / "sin cambios" / "-1 vs semana pasada".
@@ -37,9 +37,9 @@ export function deltaText(current: number, previous: number, versus: string): st
 export { ZERO as EMPTY_OVERVIEW };
 
 // ── Tarjetas de la lista de servidores ──────────────────────────────────────
-// Dos cifras por servidor, de una sola consulta para todos: ataques frenados hoy (día de
-// Madrid, como en General) y cuántos módulos de protección hay activos. Los módulos son
-// los mismos seis que lista la página General.
+// two numbers per guild, from a single query for all of them: attacks stopped
+// today (madrid day, same as the general page) and how many protection
+// modules are on. the modules are the same six the general page lists.
 
 export const MODULES_TOTAL = 6;
 
@@ -64,8 +64,8 @@ export class OverviewRepository {
 	async getOverview(guildId: string): Promise<Overview | null> {
 		try {
 			const sql = getSql();
-			// Las fechas de la base son UTC sin zona: se pasan a timestamptz para
-			// comparar con los límites del día de Madrid.
+			// the database's dates are utc with no zone: cast to timestamptz to
+			// compare against madrid day boundaries.
 			const [events] = await sql`
 				with b as (
 					select

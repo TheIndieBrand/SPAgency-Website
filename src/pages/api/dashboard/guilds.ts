@@ -5,9 +5,9 @@ import { sessionCookieService } from "../../../lib/SessionCookieService";
 
 export const prerender = false;
 
-// Servidores donde el usuario es administrador y si SP Agency está en ellos. Es
-// lo único lento del dashboard (dos llamadas a Discord), así que la página se
-// pinta primero y pide esto aparte, mientras muestra tarjetas de carga.
+// guilds the user administers, and whether SP Agency is in each one. this is
+// the only slow part of the dashboard (two discord calls), so the page paints
+// first and requests this separately, showing loading cards meanwhile.
 export const GET: APIRoute = async ({ cookies }) => {
 	const accessToken = sessionCookieService.readAccessToken(cookies);
 	if (!accessToken) return json({ error: "unauthorized" }, 401);

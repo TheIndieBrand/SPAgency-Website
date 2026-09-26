@@ -4,13 +4,13 @@ import { getBotGuildIds, getUserGuilds, hasAdminAccess, type DiscordGuild } from
 import { getSessionUser, json } from "./session";
 import { sessionCookieService } from "./SessionCookieService";
 
-// Quién puede tocar un servidor: administrador de él en Discord y con SP Agency
-// dentro. Son dos llamadas a Discord, y el dashboard las repite en cada página y
-// en cada ajuste que se autoguarda, así que se recuerdan un minuto. Coste: un
-// permiso retirado en Discord puede seguir valiendo hasta ese minuto. Al revés no
-// hay espera: si la caché dice "no tienes acceso" se vuelve a preguntar a
-// Discord (con un mínimo de 3 s entre preguntas), para que quien acaba de recibir
-// permisos o de invitar al bot no tenga que esperar.
+// who can touch a guild: an administrator of it on discord, with SP Agency
+// inside. that's two discord calls, and the dashboard repeats them on every
+// page and every setting it autosaves, so they're cached for a minute. cost: a
+// permission revoked on discord can still be valid for up to that minute.
+// the other way around there's no wait: if the cache says "no access", discord
+// is asked again (at least 3s apart), so someone who just got permissions or
+// just invited the bot doesn't have to wait.
 
 const TTL_MS = 60_000;
 const REFRESH_AFTER_MS = 3_000;
@@ -60,7 +60,7 @@ async function botGuildIds(fresh = false): Promise<Cached<Set<string>>> {
 }
 
 // Servidores que el usuario puede gestionar (administrador y con el bot dentro), con la
-// misma caché que el resto. Null si Discord rechaza la sesión.
+// same cache as everything else. null if discord rejects the session.
 export async function listAccessibleGuilds(accessToken: string): Promise<DiscordGuild[] | null> {
 	const guilds = await userGuilds(accessToken);
 	if (!guilds) return null;
@@ -94,9 +94,9 @@ export function tokenFromCookies(cookies: AstroCookies): { cookieName: string; t
 
 type GuardResult = { guild: DiscordGuild } | { redirect: Response };
 
-// Guardia de cada página de un servidor: valida la sesión, confirma que el usuario
-// es administrador de `guildId` y que el bot está en él (si no, no hay nada que
-// gestionar). Quien llama hace `return` de la redirección tal cual.
+// guard for every guild page: validates the session, confirms the user is an
+// administrator of `guildId` and that the bot is in it (otherwise there's
+// nothing to manage). the caller just `return`s the redirect as-is.
 export async function requireGuildAccess(Astro: AstroGlobal, guildId: string | undefined): Promise<GuardResult> {
 	const token = sessionCookieService.readAccessToken(Astro.cookies);
 	if (!token) {
@@ -114,9 +114,10 @@ export async function requireGuildAccess(Astro: AstroGlobal, guildId: string | u
 	return { redirect: Astro.redirect("/dashboard") };
 }
 
-// La misma comprobación para los endpoints (responden JSON en vez de redirigir).
-// Las peticiones que escriben exigen Content-Type JSON: un formulario de otra web
-// no puede enviarlo así sin pasar por CORS (aquí deshabilitado), lo que evita el CSRF.
+// the same check for endpoints (they answer json instead of redirecting).
+// requests that write require a json content-type: a form on another site
+// can't send that without going through cors (disabled here), which is what
+// stops csrf.
 export async function requireGuildApi(
 	request: Request,
 	cookies: AstroCookies,

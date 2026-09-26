@@ -1,10 +1,10 @@
 import { getSql, isoUtc } from "./client";
 
-// Registro de ajustes: la fuente única de qué se puede cambiar desde la web, con
-// su tabla, columna, tipo y límites. La API valida contra esto (nunca se fía de
-// lo que manda el navegador) y de aquí salen también los nombres de tabla y
-// columna de cada UPDATE: no llegan del cliente. Las claves son los nombres de
-// los campos de `GuildConfig`, únicos en todo el panel.
+// settings registry: the single source of what can be changed from the web,
+// with its table, column, type and limits. the api validates against this
+// (it never trusts what the browser sends), and the table and column name of
+// every UPDATE also comes from here, never from the client. the keys are the
+// field names of `GuildConfig`, unique across the whole panel.
 
 type Table = "guilds" | "guild_protection" | "guild_moderation" | "guild_configuration";
 
@@ -21,12 +21,12 @@ type Spec =
 	| (Base & { kind: "boolean" })
 	| (Base & { kind: "enum"; values: readonly string[] })
 	| (Base & { kind: "int"; min: number; max: number })
-	// Duración como la guarda el bot: "30d", "15m"... (mismo formato que su parser).
+	// duration as the bot stores it: "30d", "15m"... (same format as its parser).
 	| (Base & { kind: "duration"; units: readonly Unit[]; minSeconds: number; maxSeconds: number })
-	// ID de Discord o null (vacío = sin valor).
+	// a discord id, or null (empty = no value).
 	| (Base & { kind: "snowflake" })
 	| (Base & { kind: "text"; pattern: RegExp; message: string })
-	// Lista de textos (`text[]`): se cambia elemento a elemento, no entera.
+	// a text list (`text[]`): changed one element at a time, never as a whole.
 	| (Base & { kind: "list"; item: "snowflake" | "text"; max: number; maxLength: number });
 
 const SNOWFLAKE = /^\d{15,25}$/;
@@ -36,7 +36,7 @@ const guildProtection = (column: string, label: string) => ({ table: "guild_prot
 const guildModeration = (column: string, label: string) => ({ table: "guild_moderation" as const, column, label });
 
 export const SETTINGS: Record<string, Spec> = {
-	// Protección
+	// protection
 	antiraidEnable: { kind: "boolean", ...guildProtection("antiraid_enable", "Anti-Raid") },
 	antibotsEnable: { kind: "boolean", ...guildProtection("antibots_enable", "Anti-Bots") },
 	antibotsType: { kind: "enum", values: ["all", "onlyUnverified"], ...guildProtection("antibots_type", "Alcance del Anti-Bots") },
@@ -49,7 +49,7 @@ export const SETTINGS: Record<string, Spec> = {
 	raidmodeEnable: { kind: "boolean", ...guildProtection("raidmode_enable", "Modo Pánico") },
 	raidmodeTimeToDisable: { kind: "duration", units: ["m", "h", "d", "w"], minSeconds: 5 * 60, maxSeconds: 30 * day, ...guildProtection("raidmode_time_to_disable", "Duración del Modo Pánico") },
 
-	// Automoderación
+	// auto-moderation
 	antiflood: { kind: "boolean", ...guildModeration("antiflood", "Anti-flood de mensajes") },
 	antiWebhooksFlood: { kind: "boolean", ...guildModeration("anti_webhooks_flood", "Anti-flood de webhooks") },
 	ghostpingEnable: { kind: "boolean", ...guildModeration("ghostping_enable", "Ghost-pings") },
@@ -60,22 +60,22 @@ export const SETTINGS: Record<string, Spec> = {
 	manyWordsEnable: { kind: "boolean", ...guildModeration("many_words_enable", "Filtro de mensajes largos") },
 	manyWordsThreshold: { kind: "int", min: 1, max: 1000, ...guildModeration("many_words_threshold", "Umbral de palabras") },
 	automodMuteAt: { kind: "int", min: 1, max: 50, ...guildModeration("automod_mute_at", "Silenciar a partir de") },
-	// El máximo de un timeout en Discord son 28 días.
+	// the max timeout duration on discord is 28 days.
 	automodMuteMinutes: { kind: "int", min: 1, max: 40_320, ...guildModeration("automod_mute_minutes", "Duración del silencio") },
 	automodFinalAction: { kind: "enum", values: ["none", "kick", "ban"], ...guildModeration("automod_final_action", "Acción final") },
 	automodFinalActionAt: { kind: "int", min: 1, max: 100, ...guildModeration("automod_final_action_at", "Acción final a partir de") },
 	forceReasons: { kind: "list", item: "text", max: 25, maxLength: 100, ...guildModeration("force_reasons", "Razones predefinidas") },
 
-	// Alertas y canales
+	// alerts and channels
 	logsChannel: { kind: "snowflake", table: "guild_configuration", column: "logs_channel", label: "Canal de logs" },
 	whitelist: { kind: "list", item: "snowflake", max: 100, maxLength: 25, table: "guild_configuration", column: "whitelist", label: "Lista blanca" },
 
-	// Ajustes generales
+	// general settings
 	prefix: { kind: "text", pattern: /^\S{1,5}$/, message: "El prefijo tiene entre 1 y 5 caracteres, sin espacios.", table: "guilds", column: "prefix", label: "Prefijo" },
 	language: { kind: "enum", values: ["es", "en"], table: "guilds", column: "language", label: "Idioma" },
 };
 
-// ── Resultado ───────────────────────────────────────────────────────────────
+// ── result ──────────────────────────────────────────────────────────────────
 
 export type ChangeInput = { key: string; value?: unknown; op?: "add" | "remove" };
 
@@ -85,7 +85,7 @@ export type ChangeResult =
 
 const fail = (status: 400 | 404 | 422 | 503, error: string, message: string): ChangeResult => ({ ok: false, status, error, message });
 
-// ── Validación de un valor suelto ───────────────────────────────────────────
+// ── validating a single value ───────────────────────────────────────────────
 
 type Parsed = { ok: true; value: unknown } | { ok: false; message: string };
 
@@ -146,7 +146,7 @@ function parseItem(spec: Extract<Spec, { kind: "list" }>, value: unknown): Parse
 	return { ok: true, value: item };
 }
 
-// ── Escritura ───────────────────────────────────────────────────────────────
+// ── writing ─────────────────────────────────────────────────────────────────
 
 const idColumn = (table: Table) => (table === "guilds" ? "id" : "guild_id");
 
@@ -175,7 +175,7 @@ export class SettingsRepository {
 			const [current] = await sql`select ${sql(spec.column)} as value from ${sql(spec.table)} where ${sql(key)} = ${guildId}`;
 			if (!current) return fail(404, "not_found", "Este servidor todavía no tiene configuración.");
 
-			// ── Listas: añadir o quitar un elemento ───────────────────────────────
+			// ── lists: add or remove one element ──────────────────────────────────
 			if (spec.kind === "list") {
 				if (input.op !== "add" && input.op !== "remove") return fail(400, "invalid_body", "Operación no válida.");
 				const item = parseItem(spec, input.value);
@@ -196,16 +196,16 @@ export class SettingsRepository {
 						where ${sql(key)} = ${guildId} returning ${sql(spec.column)} as value`;
 					return { ok: true, key: input.key, value: row.value, old: list };
 				}
-				// Ya estaba (o ya no estaba): el resultado es el que se pedía.
+				// already there (or already gone): the result is what was asked for.
 				return { ok: true, key: input.key, value: list, old: list };
 			}
 
-			// ── Valores sueltos ───────────────────────────────────────────────────
+			// ── single values ──────────────────────────────────────────────────────
 			const parsed = parseValue(spec, input.value);
 			if (!parsed.ok) return fail(422, "invalid_value", parsed.message);
 			const value = parsed.value;
 
-			// Reglas que dependen de otro ajuste.
+			// rules that depend on another setting.
 			if (input.key === "verificationEnable" && value === true) {
 				const [p] = await sql`select verification_role from guild_protection where guild_id = ${guildId}`;
 				if (!p?.verificationRole) return fail(422, "needs_role", "Indica primero el rol que se concede al verificar.");
@@ -215,10 +215,10 @@ export class SettingsRepository {
 				if (p?.verificationEnable) return fail(422, "verification_active", "Desactiva la verificación antes de quitar el rol.");
 			}
 
-			// El Modo Pánico va acompañado de su fecha de activación: el auto-apagado del
-			// bot se programa a partir de ella (RaidmodeExpiry), así que sin fecha no se
-			// apagaría nunca. Se fija al pasar de apagado a encendido, y se borra al apagar.
-			// La fecha es UTC sin zona, igual que las que escribe el bot.
+			// panic mode carries its activation date along: the bot's auto-shutoff
+			// schedules itself from it (RaidmodeExpiry), so with no date it would never
+			// turn off. it's set when going from off to on, and cleared when turning off.
+			// the date is utc with no zone, same as the ones the bot writes.
 			if (input.key === "raidmodeEnable") {
 				const on = value as boolean;
 				const [row] = await sql`
@@ -245,10 +245,11 @@ export class SettingsRepository {
 
 export const settingsRepository = new SettingsRepository();
 
-// ── Para el asistente ───────────────────────────────────────────────────────
-// Validación y texto de un cambio SIN tocar la base: el asistente propone y el
-// usuario confirma, y la propuesta debe salir ya normalizada y legible. La
-// escritura real sigue siendo `changeSetting` (que vuelve a validar todo).
+// ── for the assistant ───────────────────────────────────────────────────────
+// validating and formatting a change WITHOUT touching the database: the
+// assistant proposes and the user confirms, and the proposal has to come out
+// already normalized and readable. the actual write is still `changeSetting`
+// (which validates everything again).
 
 export type CheckedChange = { key: string; label: string; value: unknown; op?: "add" | "remove" };
 
@@ -274,8 +275,8 @@ export function formatSettingValue(value: unknown): string {
 	return String(value);
 }
 
-// Una línea por ajuste para el contexto del modelo: `clave=valor pista # etiqueta`.
-// Es lo único que necesita para proponer (claves exactas, opciones y rangos).
+// one line per setting for the model's context: `key=value hint # label`.
+// it's all it needs to propose changes (exact keys, options and ranges).
 export function settingsLegend(read: (key: string) => unknown): string {
 	const rows: string[] = [];
 	for (const [key, spec] of Object.entries(SETTINGS)) {
@@ -300,7 +301,7 @@ function humanShort(s: number): string {
 	return s % day === 0 ? `${s / day}d` : s % 3600 === 0 ? `${s / 3600}h` : `${Math.round(s / 60)}m`;
 }
 
-// Secciones de la configuración por ajuste, para /config.
+// config sections by setting, for /config.
 export const SETTING_SECTIONS: Record<string, string[]> = {
 	proteccion: ["antiraidEnable", "antibotsEnable", "antibotsType", "selfbotAction", "selfbotMinAccountAge", "maliciousMemberAction", "verificationEnable", "verificationRole", "intelligentSosEnable", "raidmodeEnable", "raidmodeTimeToDisable"],
 	automoderacion: ["antiflood", "antiWebhooksFlood", "ghostpingEnable", "capsLockEnable", "capsLockThreshold", "manyEmojisEnable", "manyEmojisThreshold", "manyWordsEnable", "manyWordsThreshold", "automodMuteAt", "automodMuteMinutes", "automodFinalAction", "automodFinalActionAt", "forceReasons"],

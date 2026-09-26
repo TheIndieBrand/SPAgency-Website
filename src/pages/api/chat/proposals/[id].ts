@@ -9,9 +9,10 @@ import { proposalConfirmationService } from "../../../../lib/ProposalConfirmatio
 
 export const prerender = false;
 
-// Confirma o descarta la propuesta de ticket del asistente. El modelo solo
-// propone: quien abre el ticket es esta ruta, y solo si el dueño de la propuesta
-// pulsa el botón. El asunto y el resumen salen de lo guardado, no del cuerpo.
+// confirms or dismisses the assistant's ticket proposal. the model only
+// proposes: this route is what opens the ticket, and only if the proposal's
+// owner clicks the button. the subject and summary come from what's stored,
+// never from the request body.
 export const POST: APIRoute = async ({ request, cookies, params }) => {
 	const auth = await requireUser(request, cookies);
 	if ("response" in auth) return auth.response;
@@ -33,7 +34,7 @@ export const POST: APIRoute = async ({ request, cookies, params }) => {
 		return json({ ok: true });
 	}
 
-	// Doble clic o dos pestañas: el ticket ya está abierto, se devuelve el mismo.
+	// double click or two tabs: the ticket is already open, the same one is returned.
 	if (proposal.status === "confirmed" && proposal.ticketId) {
 		return json({ ticketId: proposal.ticketId, url: `/support/tickets/${encodeURIComponent(proposal.ticketId)}` });
 	}
@@ -44,8 +45,8 @@ export const POST: APIRoute = async ({ request, cookies, params }) => {
 		return json({ error: "expired", message: "Esta propuesta ha caducado. Pídele al asistente que la vuelva a preparar." }, 410);
 	}
 
-	// Cambios de configuración: quien confirma debe seguir siendo administrador del servidor
-	// (se comprueba ahora, no cuando se propuso) y cada cambio se vuelve a validar.
+	// settings changes: whoever confirms must still be an administrator of the
+	// guild (checked now, not when it was proposed), and every change is validated again.
 	if (proposal.kind === "settings") {
 		const payload = parsePayload(proposal.payload);
 		if (!payload) {

@@ -27,12 +27,12 @@ export class GuildDashboardService {
 		try {
 			const [userGuilds, botGuildIds] = await Promise.all([getUserGuilds(accessToken), getBotGuildIds()]);
 
-			// Discord rechazó el token: la sesión ya no vale.
+			// discord rejected the token: the session is no longer valid.
 			if (!userGuilds) return { ok: false, reason: "unauthorized" };
 
 			const admin = userGuilds.filter(hasAdminAccess);
-			// Cifras de las tarjetas: una consulta para todos los servidores con el bot. Si la base
-			// no responde, las tarjetas quedan sin cifras (no se inventan).
+			// card numbers: one query for every guild with the bot. if the database
+			// doesn't respond, the cards are left without numbers (never made up).
 			const stats = await overviewRepository.getGuildCardStats(admin.filter((g) => botGuildIds.has(g.id)).map((g) => g.id));
 
 			const guilds = admin
@@ -53,7 +53,7 @@ export class GuildDashboardService {
 
 			return { ok: true, guilds };
 		} catch {
-			// Discord no responde: no es un problema de sesión, se puede reintentar.
+			// discord isn't responding: not a session problem, safe to retry.
 			return { ok: false, reason: "unavailable" };
 		}
 	}

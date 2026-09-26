@@ -36,7 +36,7 @@ export class ProposalConfirmationService {
 
 		const outcomes = await applySettings(payload, userId);
 		if (outcomes.every((o) => !o.ok && o.unavailable)) {
-			// La base no respondió: no se cambió nada y se puede reintentar.
+			// the database didn't respond: nothing changed, safe to retry.
 			moveProposal(proposal.id, { from: "confirming", to: "pending" });
 			return { ok: false, status: 503, error: "unavailable", message: "No se pudo guardar: la base de datos no responde. Inténtalo de nuevo." };
 		}
@@ -67,7 +67,7 @@ export class ProposalConfirmationService {
 		});
 
 		if (!result.ok) {
-			// No se abrió: la propuesta vuelve a estar disponible para reintentar.
+			// didn't open: the proposal goes back to available so it can be retried.
 			moveProposal(proposal.id, { from: "confirming", to: "pending" });
 			return { ok: false, botError: result };
 		}

@@ -53,10 +53,11 @@ Este documento define las convenciones de código para este proyecto (Astro + Ty
 - Envolver queries existentes en clases repositorio está permitido y es lo esperado; cambiar la query en sí (columnas leídas/escritas, condiciones, tipos devueltos) no lo está, salvo que el cambio se coordine explícitamente con el bot.
 - Cualquier necesidad real de cambio de esquema se trata aparte, nunca como parte de un refactor de estilo de código.
 
-## 8. Documentación (JSDoc)
+## 8. Documentación (JSDoc) y comentarios
 
 - Todo elemento exportado (clase, método público, función, tipo) lleva JSDoc en **inglés**.
 - El JSDoc documenta cada propiedad requerida: parámetros (`@param`), valor de retorno (`@returns`), y errores esperados (`@throws`) cuando aplique.
+- **Todos los comentarios de código van en inglés, sin excepción** (JSDoc, comentarios de bloque, comentarios inline). Esto no incluye los textos de la interfaz (mensajes de error, etiquetas, contenido mostrado al usuario), que siguen en español porque la web es en español.
 - Los comentarios descriptivos (la línea de resumen del JSDoc, comentarios inline) son **cortos y en minúscula**, con lenguaje natural y directo — se explica qué hace o por qué existe, sin sobrecargar de jerga.
 - No se documentan obviedades ya evidentes por el nombre de la función o variable.
 

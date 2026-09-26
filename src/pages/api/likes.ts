@@ -5,8 +5,8 @@ import { json, requireUser } from "../../lib/session";
 
 export const prerender = false;
 
-// Alterna el me gusta del usuario en un target (ver src/lib/likes.ts). Hace falta
-// sesión de Discord; nadie puede gustarse a sí mismo (su propio testimonio).
+// toggles the user's like on a target (see src/lib/likes.ts). requires a
+// discord session; nobody can like their own thing (their own testimonial).
 export const POST: APIRoute = async ({ request, cookies }) => {
 	const auth = await requireUser(request, cookies);
 	if ("response" in auth) return auth.response;

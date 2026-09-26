@@ -18,7 +18,7 @@ export const GET: APIRoute = async ({ url, redirect, cookies }) => {
 		expiresIn: token.expires_in,
 	});
 
-	// Si el login venía de otra página (p. ej. /support), se vuelve a ella.
+	// if the login came from another page (e.g. /support), go back to it.
 	const next = safeNextPath(cookies.get("spa_next")?.value);
 	cookies.delete("spa_next", { path: "/" });
 

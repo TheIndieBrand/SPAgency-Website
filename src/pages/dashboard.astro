@@ -6,9 +6,9 @@ import Navbar from "../components/Navbar.astro";
 import { site } from "../lib/site";
 import { sessionCookieService } from "../lib/SessionCookieService";
 
-// Aquí no se espera a Discord: la lista de servidores es lo lento, así que la
-// página se pinta al momento con tarjetas de carga y la lista llega después
-// desde /api/dashboard/guilds. Solo se comprueba que haya sesión.
+// discord isn't awaited here: the guild list is the slow part, so the page
+// paints immediately with loading cards and the list arrives later from
+// /api/dashboard/guilds. only a session check happens here.
 if (!sessionCookieService.has(Astro.cookies)) return Astro.redirect("/auth/discord/login");
 
 const botTokenMissing = !process.env.DISCORD_BOT_TOKEN;
