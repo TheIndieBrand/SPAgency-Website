@@ -13,7 +13,7 @@ import { SETTINGS_TOOL_NAME, buildMessages, messageChars } from "./prompt";
 import { redactSecrets } from "./redact";
 import { parseTicketDraft } from "./ticket";
 import { estimateUsage, recordUsage, usageState, type TokenUsage } from "./usage";
-import { withinRate } from "./rate";
+import { chatRateLimiter } from "./ChatRateLimiter";
 
 const MAX_TICKET_NOTE = 500;
 const DEFAULT_SETTINGS_TEXT = "Te he preparado estos cambios. Revísalos y confírmalos si son lo que querías:";
@@ -59,7 +59,7 @@ export class ChatRunner {
 				429,
 			);
 		}
-		if (!withinRate(user.id)) {
+		if (!chatRateLimiter.withinRate(user.id)) {
 			return json({ error: "rate_limited", message: "Vas muy rápido. Espera unos segundos." }, 429);
 		}
 		if (this.active.has(user.id)) {

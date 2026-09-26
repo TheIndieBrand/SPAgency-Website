@@ -5,7 +5,7 @@ import { renderMessageHtml } from "../support-format";
 import { CONSENT_VERSION } from "./config";
 import { dashboardAssistantService, type GuildRef } from "./DashboardAssistantService";
 import { chatRepository } from "./ChatRepository";
-import { withinRate } from "./rate";
+import { chatRateLimiter } from "./ChatRateLimiter";
 
 // Comandos del chat que actúan sobre el dashboard. Ninguno llama al modelo: no
 // gastan cupo. Dejan rastro (y por eso exigen haber aceptado el aviso, como cualquier
@@ -35,7 +35,7 @@ export async function dashboardCommand(input: {
 	const { user, accessToken, name } = input;
 	const arg = input.arg.trim().slice(0, 100);
 
-	if (!withinRate(user.id)) return json({ error: "rate_limited", message: "Vas muy rápido. Espera unos segundos." }, 429);
+	if (!chatRateLimiter.withinRate(user.id)) return json({ error: "rate_limited", message: "Vas muy rápido. Espera unos segundos." }, 429);
 	if (input.conversationId && chatRepository.getConversation(input.conversationId)?.userId !== user.id) {
 		return json({ error: "not_found", message: "Esa conversación no existe." }, 404);
 	}
