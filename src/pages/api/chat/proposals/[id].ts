@@ -1,5 +1,5 @@
 import type { APIRoute } from "astro";
-import { PROPOSAL_TTL_MS, SETTINGS_PROPOSAL_TTL_MS } from "../../../../lib/chat/config";
+import { ProposalTtlMs, SettingsProposalTtlMs } from "../../../../lib/chat/config";
 import { dashboardAssistantService } from "../../../../lib/chat/DashboardAssistantService";
 import { requireGuildApi } from "../../../../lib/dashboard-guard";
 import { chatRepository } from "../../../../lib/chat/ChatRepository";
@@ -41,7 +41,7 @@ export const POST: APIRoute = async ({ request, cookies, params }) => {
 	if (proposal.status !== "pending") {
 		return json({ error: "conflict", message: "Esta propuesta ya no está disponible." }, 409);
 	}
-	if (Date.now() - Date.parse(proposal.createdAt) > (proposal.kind === "settings" ? SETTINGS_PROPOSAL_TTL_MS : PROPOSAL_TTL_MS)) {
+	if (Date.now() - Date.parse(proposal.createdAt) > (proposal.kind === "settings" ? SettingsProposalTtlMs : ProposalTtlMs)) {
 		return json({ error: "expired", message: "Esta propuesta ha caducado. Pídele al asistente que la vuelva a preparar." }, 410);
 	}
 

@@ -5,7 +5,7 @@ import { json } from "../session";
 import { listOpenTickets } from "../support-bot";
 import { renderMessageHtml } from "../support-format";
 import { chatRepository } from "./ChatRepository";
-import { CONSENT_VERSION, CONTEXT_CHUNKS, HISTORY_MESSAGES, MAX_INPUT_CHARS, chatConfigured } from "./config";
+import { ConsentVersion, ContextChunks, HistoryMessages, MaxInputChars, chatConfigured } from "./config";
 import { ASK_GUILD_TEXT, dashboardAssistantService, type GuildRef } from "./DashboardAssistantService";
 import { draftTicket, streamCompletion } from "./llm";
 import { knowledgeBase } from "./KnowledgeBase";
@@ -40,7 +40,7 @@ export class ChatRunner {
 		if (!chatConfigured()) {
 			return json({ error: "not_configured", message: "El asistente no está disponible ahora mismo." }, 503);
 		}
-		if (!chatRepository.hasConsent(user.id, CONSENT_VERSION)) {
+		if (!chatRepository.hasConsent(user.id, ConsentVersion)) {
 			return json({ error: "consent_required", message: "Acepta el aviso para usar el asistente." }, 403);
 		}
 		return null;
@@ -80,8 +80,8 @@ export class ChatRunner {
 
 		const denied = this.guardBase(user);
 		if (denied) return denied;
-		if (!message || message.length > MAX_INPUT_CHARS) {
-			return json({ error: "invalid_body", message: `Escribe un mensaje de hasta ${MAX_INPUT_CHARS} caracteres.` }, 400);
+		if (!message || message.length > MaxInputChars) {
+			return json({ error: "invalid_body", message: `Escribe un mensaje de hasta ${MaxInputChars} caracteres.` }, 400);
 		}
 		const blocked = this.guardBudget(user);
 		if (blocked) return blocked;
@@ -136,13 +136,13 @@ export class ChatRunner {
 
 					// what's stored and sent is the message with any obvious secrets masked.
 					const question = redactSecrets(message);
-					const history = chatRepository.recentTurns(conversation, HISTORY_MESSAGES);
+					const history = chatRepository.recentTurns(conversation, HistoryMessages);
 					chatRepository.addMessage({ conversationId: conversation, role: "user", content: question });
 
 					// a very short message ("what about on mobile?") is searched together
 					// with the user's previous one, which is what gives it meaning.
 					const lastUser = [...history].reverse().find((m) => m.role === "user")?.content ?? "";
-					const hits = knowledgeBase.search(question.length < 40 ? `${lastUser} ${question}` : question, CONTEXT_CHUNKS);
+					const hits = knowledgeBase.search(question.length < 40 ? `${lastUser} ${question}` : question, ContextChunks);
 
 					// guild settings are only sent if the message talks about settings.
 					let settingsBlock = "";
@@ -285,7 +285,7 @@ export class ChatRunner {
 		if (input.conversationId && chatRepository.getConversation(input.conversationId)?.userId !== user.id) {
 			return json({ error: "not_found", message: "Esa conversación no existe." }, 404);
 		}
-		const history = input.conversationId ? chatRepository.recentTurns(input.conversationId, HISTORY_MESSAGES) : [];
+		const history = input.conversationId ? chatRepository.recentTurns(input.conversationId, HistoryMessages) : [];
 		if (!history.length && !note) {
 			return json(
 				{ error: "nothing_to_report", message: "Cuéntame primero qué necesitas, o escribe /ticket seguido de una descripción." },

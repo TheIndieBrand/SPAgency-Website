@@ -1,5 +1,5 @@
 import OpenAI from "openai";
-import { MAX_OUTPUT_TOKENS, llmSettings } from "./config";
+import { MaxOutputTokens, llmSettings } from "./config";
 import { SETTINGS_TOOL, TICKET_TOOL, TICKET_TOOL_NAME, ticketDraftMessages, type ChatMessage } from "./prompt";
 import { parseTicketDraft, type TicketDraft } from "./ticket";
 import { estimateUsage, type TokenUsage } from "./usage";
@@ -43,7 +43,7 @@ export async function* streamCompletion(messages: ChatMessage[], signal: AbortSi
 			messages,
 			stream: true,
 			stream_options: { include_usage: true },
-			max_tokens: MAX_OUTPUT_TOKENS,
+			max_tokens: MaxOutputTokens,
 			temperature: 0.3,
 			tools: [TICKET_TOOL, SETTINGS_TOOL],
 		},

@@ -1,4 +1,4 @@
-import { RATE_PER_MINUTE } from "./config";
+import { RatePerMinute } from "./config";
 
 /** per-user, per-minute rate limit shared by chat messages and commands. */
 export class ChatRateLimiter {
@@ -13,7 +13,7 @@ export class ChatRateLimiter {
 	withinRate(userId: string): boolean {
 		const cutoff = Date.now() - 60_000;
 		const stamps = (this.recent.get(userId) ?? []).filter((t) => t > cutoff);
-		if (stamps.length >= RATE_PER_MINUTE) {
+		if (stamps.length >= RatePerMinute) {
 			this.recent.set(userId, stamps);
 			return false;
 		}

@@ -1,5 +1,5 @@
 import type { APIRoute } from "astro";
-import { CONSENT_VERSION, MAX_INPUT_CHARS, chatConfigured } from "../../../lib/chat/config";
+import { ConsentVersion, MaxInputChars, chatConfigured } from "../../../lib/chat/config";
 import { chatRepository } from "../../../lib/chat/ChatRepository";
 import { knowledgeBase } from "../../../lib/chat/KnowledgeBase";
 import { isStaff } from "../../../lib/chat/staff";
@@ -17,8 +17,8 @@ export const GET: APIRoute = async ({ request, cookies }) => {
 
 	return json({
 		configured: chatConfigured(),
-		consented: chatRepository.hasConsent(user.id, CONSENT_VERSION),
-		maxInputChars: MAX_INPUT_CHARS,
+		consented: chatRepository.hasConsent(user.id, ConsentVersion),
+		maxInputChars: MaxInputChars,
 		usage: usageState(user.id),
 		staff: isStaff(user),
 		routes: knowledgeBase.siteRoutes(),

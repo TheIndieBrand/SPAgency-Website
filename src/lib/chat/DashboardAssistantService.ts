@@ -11,7 +11,7 @@ import {
 	settingsRepository,
 	type CheckedChange,
 } from "../db/SettingsRepository";
-import { MAX_SETTING_CHANGES } from "./config";
+import { MaxSettingChanges } from "./config";
 import { chatRepository } from "./ChatRepository";
 
 // the assistant's dashboard integration. three pieces:
@@ -139,9 +139,9 @@ export class DashboardAssistantService {
 		const changes: CheckedChange[] = [];
 		const lines: string[] = [];
 		const list = Array.isArray(raw) ? raw : [];
-		if (list.length > MAX_SETTING_CHANGES) problems.push(`Solo preparo hasta ${MAX_SETTING_CHANGES} cambios cada vez.`);
+		if (list.length > MaxSettingChanges) problems.push(`Solo preparo hasta ${MaxSettingChanges} cambios cada vez.`);
 
-		for (const item of list.slice(0, MAX_SETTING_CHANGES)) {
+		for (const item of list.slice(0, MaxSettingChanges)) {
 			const checked = checkChange(item && typeof item === "object" ? (item as Record<string, unknown>) : {});
 			if (!checked.ok) {
 				problems.push(checked.message);
@@ -181,7 +181,7 @@ export class DashboardAssistantService {
 			const data = JSON.parse(raw ?? "") as Record<string, unknown>;
 			if (typeof data.guildId !== "string" || !Array.isArray(data.changes)) return null;
 			const changes: CheckedChange[] = [];
-			for (const c of data.changes.slice(0, MAX_SETTING_CHANGES)) {
+			for (const c of data.changes.slice(0, MaxSettingChanges)) {
 				const checked = checkChange(c as Record<string, unknown>);
 				if (!checked.ok) return null;
 				changes.push(checked.change);

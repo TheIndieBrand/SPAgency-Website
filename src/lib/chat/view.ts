@@ -1,5 +1,5 @@
 import { renderMessageHtml } from "../support-format";
-import { PROPOSAL_TTL_MS, SETTINGS_PROPOSAL_TTL_MS } from "./config";
+import { ProposalTtlMs, SettingsProposalTtlMs } from "./config";
 import type { Proposal, StoredMessage } from "./ChatRepository";
 
 // what the browser sees of a stored message: the markdown already formatted
@@ -35,7 +35,7 @@ function guildNameOf(payload: string | null): string | null {
 }
 
 export function proposalView(p: Proposal): ProposalView {
-	const ttl = p.kind === "settings" ? SETTINGS_PROPOSAL_TTL_MS : PROPOSAL_TTL_MS;
+	const ttl = p.kind === "settings" ? SettingsProposalTtlMs : ProposalTtlMs;
 	const expired = p.status === "pending" && Date.now() - Date.parse(p.createdAt) > ttl;
 	return {
 		id: p.id,

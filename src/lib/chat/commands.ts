@@ -2,7 +2,7 @@ import type { DiscordUser } from "../discord";
 import { listAccessibleGuilds } from "../dashboard-guard";
 import { json } from "../session";
 import { renderMessageHtml } from "../support-format";
-import { CONSENT_VERSION } from "./config";
+import { ConsentVersion } from "./config";
 import { dashboardAssistantService, type GuildRef } from "./DashboardAssistantService";
 import { chatRepository } from "./ChatRepository";
 import { chatRateLimiter } from "./ChatRateLimiter";
@@ -57,7 +57,7 @@ export async function dashboardCommand(input: {
 
 		const chosen = dashboardAssistantService.matchGuild(guilds, arg);
 		if (!chosen) return json({ error: "not_found", message: "No encuentro ese servidor entre los que administras. Escribe /servidor para ver la lista." }, 404);
-		if (!chatRepository.hasConsent(user.id, CONSENT_VERSION)) return consentRequired();
+		if (!chatRepository.hasConsent(user.id, ConsentVersion)) return consentRequired();
 
 		// Elegir deja rastro: la conversación recuerda el servidor y lo dice en el historial.
 		const conversationId = input.conversationId ?? chatRepository.createConversation(user.id, user.global_name || user.username, `Servidor: ${chosen.name}`);
@@ -91,7 +91,7 @@ export async function dashboardCommand(input: {
 	}
 
 	// ── /panico [on | off] ──────────────────────────────────────────────────
-	if (!chatRepository.hasConsent(user.id, CONSENT_VERSION)) return consentRequired();
+	if (!chatRepository.hasConsent(user.id, ConsentVersion)) return consentRequired();
 
 	const word = arg.toLowerCase();
 	const enable = /^(on|si|sí|activar|activa|encender|enciende)$/.test(word)
