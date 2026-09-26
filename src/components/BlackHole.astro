@@ -1,22 +1,22 @@
 ---
-// Agujero negro por WEBGL (fragment shader, ray-marching con deflexión
-// gravitacional). El CSS no puede hacer lente gravitacional; esto sí.
+// black hole rendered with WEBGL (fragment shader, ray-marching with
+// gravitational deflection). css can't do gravitational lensing; this can.
 //
-// El disco de acreción usa ruido fBm en un marco polar con cizalla
-// kepleriana (el gas interior gira más rápido) y capas aditivas — idea
-// tomada de brunosimon/webgl-black-hole (allí es un mesh con textura de
-// perlin en 3 capas que hacen scroll; aquí se calcula procedural en el
-// shader, sin dependencia de three.js).
+// the accretion disk uses fbm noise in a polar frame with keplerian shear
+// (the inner gas spins faster) and additive layers — idea taken from
+// brunosimon/webgl-black-hole (there it's a mesh with a 3-layer scrolling
+// perlin texture; here it's computed procedurally in the shader, with no
+// three.js dependency).
 //
-// Cámara: se orbita con `u_yaw` / `u_pitch`. Con la prop `controls` se
-// puede arrastrar con el ratón para buscar el ángulo (lo imprime en consola
-// al soltar); sin ella, la cámara está FIJA y el usuario no la puede mover.
+// camera: orbits via `u_yaw` / `u_pitch`. with the `controls` prop, it can
+// be dragged with the mouse to find an angle (logged to the console on
+// release); without it, the camera is FIXED and the user can't move it.
 //
-// Un solo <canvas>: la escena GSAP lo anima como cualquier elemento. Se
-// pausa fuera de pantalla y respeta prefers-reduced-motion.
+// a single <canvas>: the gsap scene animates it like any other element. it
+// pauses off-screen and respects prefers-reduced-motion.
 interface Props {
-	size?: number; // px, lado del canvas (CSS). Resolución interna = size * DPR (cap 1.5).
-	controls?: boolean; // arrastrar para orbitar la cámara (solo para elegir ángulo)
+	size?: number; // px, the canvas's css side. internal resolution = size * dpr (capped at 1.5).
+	controls?: boolean; // drag to orbit the camera (only for picking an angle)
 }
 
 const { size = 480, controls = false } = Astro.props;
@@ -75,7 +75,7 @@ const { size = 480, controls = false } = Astro.props;
 		cursor: grabbing;
 	}
 
-	/* Panel de depuración (solo con la prop `controls`). */
+	/* debug panel (only with the `controls` prop). */
 	.bh-debug {
 		position: absolute;
 		top: 8px;
@@ -174,7 +174,7 @@ const { size = 480, controls = false } = Astro.props;
 		void main() {
 			vec2 uv = (gl_FragCoord.xy - 0.5 * u_res) / u_res.y;
 
-			// cámara en órbita alrededor del origen (yaw/pitch fijados por JS)
+			// camera orbiting the origin (yaw/pitch set by js)
 			vec3 ro = u_dist * vec3(
 				sin(u_yaw) * cos(u_pitch),
 				sin(u_pitch),
@@ -208,7 +208,7 @@ const { size = 480, controls = false } = Astro.props;
 				rd = normalize(rd + grav * GM * dt);
 				vec3 npos = pos + rd * dt;
 
-				// cruce del plano ecuatorial (y = 0)
+				// crossing the equatorial plane (y = 0)
 				if (pos.y * npos.y < 0.0) {
 					float t = pos.y / (pos.y - npos.y);
 					vec3 hp = mix(pos, npos, t);
@@ -217,28 +217,28 @@ const { size = 480, controls = false } = Astro.props;
 						float rn = clamp((rd2 - diskIn) / (diskOut - diskIn), 0.0, 1.0);
 						float ang = atan(hp.z, hp.x);
 
-						// cizalla kepleriana: el gas interior gira más rápido
+						// keplerian shear: the inner gas spins faster
 						float omega = 2.6 / pow(rd2, 1.35);
 						float a2 = ang + u_time * omega;
 						vec2 sp = vec2(cos(a2), sin(a2)) * rd2;
 
-						// gas: dos octavas fBm aditivas
+						// gas: two additive fbm octaves
 						float n1 = fbm(vec3(sp * 0.52, u_time * 0.05));
 						float n2 = fbm(vec3(sp * 1.7 + 17.0, u_time * 0.13));
 						float dens = n1 * 0.7 + n2 * 0.55;
 						dens = pow(clamp(dens, 0.0, 1.0), 1.75);
 						dens *= 0.72 + 0.28 * sin(rd2 * 2.7 - u_time * 0.5);
 
-						// bordes suaves + más brillo hacia dentro
+						// soft edges + more brightness toward the inside
 						float edges = smoothstep(0.0, 0.09, rn) * smoothstep(1.0, 0.62, rn);
 						dens *= edges * mix(1.7, 0.32, rn);
 
-						// Doppler beaming: el lado que se acerca brilla mucho más
+						// doppler beaming: the approaching side glows much brighter
 						vec3 orbitVel = normalize(vec3(-hp.z, 0.0, hp.x));
 						float dop = dot(orbitVel, normalize(ro - hp));
 						float beam = pow(clamp(0.5 + 0.9 * dop, 0.0, 2.0), 3.5);
 
-						// color: blanco incandescente dentro → naranja → rojo oscuro fuera
+						// color: incandescent white inside → orange → dark red outside
 						vec3 dcol = mix(vec3(1.0, 0.52, 0.14), vec3(0.5, 0.12, 0.03), rn);
 						dcol = mix(vec3(1.0, 0.95, 0.85), dcol, smoothstep(0.0, 0.22, rn));
 
@@ -251,7 +251,7 @@ const { size = 480, controls = false } = Astro.props;
 				dt *= 1.007;
 			}
 
-			// anillo de fotones: solo rayos que ROZAN el horizonte sin caer dentro
+			// photon ring: only rays that GRAZE the horizon without falling in
 			if (!hitHorizon) {
 				float ring = exp(-max(minR - horizon, 0.0) * 7.0);
 				col += ring * vec3(1.0, 0.6, 0.26) * 0.95;
@@ -262,10 +262,9 @@ const { size = 480, controls = false } = Astro.props;
 			col = col / (col + vec3(1.0));
 			col = pow(col, vec3(1.0 / 2.2));
 
-			// Viñeta: apaga el color según se acerca al borde del canvas, para
-			// que estrellas/anillo se fundan a negro en vez de cortarse en seco
-			// justo en la arista cuadrada (muy visible desde que la cámara
-			// orbita en yaw — las estrellas cruzan las esquinas todo el rato).
+			// vignette: dims the color toward the canvas edge, so stars/ring fade
+			// to black instead of cutting off sharply right at the square edge
+			// (very noticeable since the camera orbits in yaw — stars cross the corners constantly).
 			float edgeDist = 0.5 - max(abs(uv.x), abs(uv.y));
 			float vignette = smoothstep(0.0, 0.14, edgeDist);
 			col *= vignette;
@@ -274,10 +273,10 @@ const { size = 480, controls = false } = Astro.props;
 		}
 	`;
 
-	// Ángulos por defecto de la cámara (los usa la escena en producción).
-	const DEFAULT_YAW = 2.94;
-	const DEFAULT_PITCH = -0.004;
-	const DEFAULT_DIST = 30.0;
+	// default camera angles (used by the scene in production).
+	const DefaultYaw = 2.94;
+	const DefaultPitch = -0.004;
+	const DefaultDist = 30.0;
 
 	function compile(gl: WebGLRenderingContext, type: number, src: string) {
 		const sh = gl.createShader(type)!;
@@ -316,9 +315,9 @@ const { size = 480, controls = false } = Astro.props;
 		const uPitch = gl.getUniformLocation(prog, "u_pitch");
 		const uDist = gl.getUniformLocation(prog, "u_dist");
 
-		let yaw = DEFAULT_YAW;
-		let pitch = DEFAULT_PITCH;
-		let dist = DEFAULT_DIST;
+		let yaw = DefaultYaw;
+		let pitch = DefaultPitch;
+		let dist = DefaultDist;
 
 		const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
 		function resize() {
@@ -334,10 +333,10 @@ const { size = 480, controls = false } = Astro.props;
 		resize();
 		window.addEventListener("resize", resize);
 
-		// Orbitación programática: cualquiera puede animar yaw/pitch/dist desde
-		// fuera (p.ej. GSAP en intro-scene.ts) disparando este evento en el
-		// propio <canvas>, sin necesidad de la prop `controls` (esa es solo para
-		// arrastrar con el ratón y elegir un ángulo a mano).
+		// programmatic orbiting: anything can animate yaw/pitch/dist from the
+		// outside (e.g. gsap in intro-scene.ts) by firing this event on the
+		// <canvas> itself, with no need for the `controls` prop (that one's
+		// only for dragging with the mouse to pick an angle by hand).
 		canvas.addEventListener("blackhole:orbit", (e) => {
 			const { yaw: y, pitch: p, dist: d } = (e as CustomEvent<{ yaw?: number; pitch?: number; dist?: number }>).detail;
 			if (y !== undefined) yaw = y;
@@ -345,7 +344,7 @@ const { size = 480, controls = false } = Astro.props;
 			if (d !== undefined) dist = d;
 		});
 
-		// Panel de depuración + arrastre, SOLO con la prop `controls`.
+		// debug panel + dragging, ONLY with the `controls` prop.
 		if (canvas.dataset.controls) {
 			const panel = canvas.closest(".black-hole")?.querySelector<HTMLElement>(".bh-debug");
 			const out = panel?.querySelector<HTMLElement>(".bh-debug-out") ?? null;
@@ -376,7 +375,7 @@ const { size = 480, controls = false } = Astro.props;
 				});
 			}
 
-			// arrastre sobre el canvas (mueve yaw/pitch, además de los sliders)
+			// dragging over the canvas (moves yaw/pitch, in addition to the sliders)
 			let dragging = false;
 			let lx = 0;
 			let ly = 0;
@@ -439,13 +438,13 @@ const { size = 480, controls = false } = Astro.props;
 		);
 		io.observe(canvas);
 
-		requestAnimationFrame(draw); // primer frame siempre
+		requestAnimationFrame(draw); // always draw the first frame
 	}
 
 	function boot() {
 		document.querySelectorAll<HTMLCanvasElement>("canvas[data-blackhole]").forEach((canvas) => {
-			// Sin caja (p.ej. la versión simple de la home, donde la escena está con
-			// display:none) no se crea el contexto WebGL ni se compila el shader.
+			// with no box (e.g. the home page's simple version, where the scene
+			// has display:none) the webgl context isn't created and the shader isn't compiled.
 			if (canvas.getClientRects().length === 0) return;
 			initCanvas(canvas);
 		});
