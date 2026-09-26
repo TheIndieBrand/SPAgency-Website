@@ -1,10 +1,10 @@
 ---
-// Fondo de /testimonios: el mismo cielo del tramo final de la escena del home
-// (campo de estrellas de star-field.ts sobre negro) más algo de decoración
-// propia: dos resplandores azules, la curva de la asíntota subiendo por la
-// derecha, símbolos matemáticos que aparecen y se desvanecen y alguna estrella
-// fugaz. Todo es decorativo (aria-hidden) y con prefers-reduced-motion queda
-// quieto. Va DENTRO de un contenedor `relative isolate`, detrás del contenido.
+// backdrop for /testimonios: the same sky as the home scene's final section
+// (star-field.ts's starfield over black) plus some decoration of its own:
+// two blue glows, the asymptote's curve rising on the right, math symbols
+// that fade in and out, and the occasional shooting star. all of it is
+// decorative (aria-hidden) and holds still under prefers-reduced-motion.
+// goes INSIDE a `relative isolate` container, behind the content.
 const glyphs = [
 	{ text: "λ", x: 6, y: 14, size: 26, tone: "brand", peak: 0.2, duration: 9, delay: 0.2 },
 	{ text: "Σ", x: 90, y: 30, size: 24, tone: "brand", peak: 0.16, duration: 10, delay: 0.6 },
@@ -18,7 +18,7 @@ const glyphs = [
 ---
 
 <div class="pointer-events-none absolute inset-0 -z-10 overflow-hidden" aria-hidden="true">
-	<!-- Controlador de star-field.ts (lee su opacidad y su `y`) y el lienzo. -->
+	<!-- star-field.ts's controller (reads its opacity and its `y`) and the canvas. -->
 	<div id="stars-controller" class="hidden" style="opacity: 1"></div>
 	<canvas id="stars-canvas" class="absolute inset-0 h-full w-full"></canvas>
 
@@ -33,7 +33,7 @@ const glyphs = [
 	>
 	</div>
 
-	<!-- La curva de la asíntota, muy tenue, subiendo por el lado derecho. -->
+	<!-- the asymptote's curve, very faint, rising up the right side. -->
 	<svg class="absolute top-0 right-0 hidden h-full w-[44%] max-w-[620px] sm:block" viewBox="0 0 400 800" preserveAspectRatio="none">
 		<defs>
 			<linearGradient id="backdrop-curve" x1="0" y1="1" x2="0" y2="0">
@@ -83,7 +83,7 @@ const glyphs = [
 		animation-delay: var(--delay);
 	}
 
-	/* Cruza de izquierda a derecha en el primer ~5% del ciclo y descansa el resto. */
+	/* crosses left to right in the first ~5% of the cycle and rests for the rest. */
 	@keyframes shoot {
 		0% {
 			opacity: 0;
@@ -115,7 +115,7 @@ const glyphs = [
 	const canvas = document.getElementById("stars-canvas") as HTMLCanvasElement | null;
 	const controller = document.getElementById("stars-controller");
 
-	// Cielo fijo (sin parpadeo ni deriva) para prefers-reduced-motion. Determinista.
+	// static sky (no flicker or drift) for prefers-reduced-motion. deterministic.
 	function drawStatic(target: HTMLCanvasElement) {
 		const ctx = target.getContext("2d");
 		if (!ctx) return;
@@ -148,7 +148,7 @@ const glyphs = [
 		} else {
 			const field = createStarField(canvas, controller);
 			const start = performance.now();
-			// Deriva lenta hacia arriba y un poco de paralaje con el scroll.
+			// slow upward drift plus a bit of parallax on scroll.
 			const tick = () => {
 				field.setCamera(0, ((performance.now() - start) / 1000) * 5 + window.scrollY * 0.18);
 				requestAnimationFrame(tick);

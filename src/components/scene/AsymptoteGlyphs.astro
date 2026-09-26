@@ -1,6 +1,6 @@
 ---
-// Símbolos que aparecen repartidos por toda la pantalla durante el Acto 2
-// (los revela el script con un stagger). Puramente ambientales.
+// symbols scattered across the whole screen during act 2 (revealed by the
+// script with a stagger). purely ambient.
 const extraGlyphs = [
 	{ text: "∫", x: 12, y: 16, size: 30, tone: "brand" },
 	{ text: "∂x", x: 78, y: 10, size: 15, tone: "text" },
@@ -23,9 +23,9 @@ const extraGlyphs = [
 ];
 ---
 
-<!-- Capa de símbolos extra repartidos por toda la pantalla. Arrancan
-     invisibles; el script los revela con un stagger durante el Acto 2 y la
-     desplaza (con parallax) al mover la cámara por el plano. -->
+<!-- layer of extra symbols scattered across the whole screen. they start
+     invisible; the script reveals them with a stagger during act 2 and
+     shifts it (with parallax) as the camera moves through the plane. -->
 <div id="asymptote-glyph-layer" class="pointer-events-none absolute inset-0 font-mono select-none" aria-hidden="true">
 	{
 		extraGlyphs.map((g) => (

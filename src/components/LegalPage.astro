@@ -1,8 +1,8 @@
 ---
-// Estructura común de los textos legales: cabecera con la fecha de revisión, índice
-// fijo a la izquierda (en escritorio) y el texto a la derecha. El contenido llega
-// por el slot, con un <section id> + <h2> por apartado (el índice y la numeración
-// salen de ahí: los títulos se numeran solos por CSS, ver .legal-prose).
+// shared structure for the legal texts: a header with the revision date, a
+// fixed sidebar index (on desktop) and the text on the right. content comes
+// through the slot, with one <section id> + <h2> per part (the index and
+// numbering come from there: headings number themselves via css, see .legal-prose).
 import Layout from "../layouts/Layout.astro";
 import Navbar from "./Navbar.astro";
 import Footer from "./Footer.astro";
@@ -11,9 +11,9 @@ import { legal } from "../lib/legal";
 interface Props {
 	title: string;
 	description: string;
-	// Los apartados, en el mismo orden que las <section> del slot.
+	// the sections, in the same order as the slot's <section> elements.
 	toc: Array<{ id: string; title: string }>;
-	// El otro texto legal, para enlazarlo al final.
+	// the other legal text, to link to it at the end.
 	other: { href: string; label: string };
 }
 
