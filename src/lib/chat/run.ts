@@ -12,7 +12,7 @@ import {
 import { addMessage, createConversation, createProposal, getConversation, hasConsent, recentTurns } from "./db";
 import { listAccessibleGuilds } from "../dashboard-guard";
 import { ASK_GUILD_TEXT, buildSettingsProposal, isHowTo, loadConfigFor, noGuildContext, resolveGuild, settingsContext, wantsSettings, type GuildRef } from "./dashboard";
-import type { GuildConfig } from "../db/guild-config";
+import type { GuildConfig } from "../db/GuildConfigRepository";
 import { draftTicket, streamCompletion } from "./llm";
 import { search } from "./knowledge";
 import { SETTINGS_TOOL_NAME, buildMessages, messageChars } from "./prompt";

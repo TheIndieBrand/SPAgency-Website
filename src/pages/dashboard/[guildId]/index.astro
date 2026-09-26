@@ -4,19 +4,19 @@ export const prerender = false;
 import Layout from "../../../layouts/Layout.astro";
 import DashboardShell from "../../../components/dashboard/DashboardShell.astro";
 import { requireGuildAccess } from "../../../lib/dashboard-guard";
-import { describeActivity, listActivity } from "../../../lib/db/activity";
-import { loadOrCreateGuildConfig } from "../../../lib/db/guild-config";
-import { EMPTY_OVERVIEW, deltaText, getOverview } from "../../../lib/db/overview";
+import { activityRepository, describeActivity } from "../../../lib/db/ActivityRepository";
+import { guildConfigRepository } from "../../../lib/db/GuildConfigRepository";
+import { EMPTY_OVERVIEW, deltaText, overviewRepository } from "../../../lib/db/OverviewRepository";
 
 const result = await requireGuildAccess(Astro, Astro.params.guildId);
 if ("redirect" in result) return result.redirect;
 const { guild } = result;
 
-const loaded = await loadOrCreateGuildConfig(guild.id);
+const loaded = await guildConfigRepository.loadOrCreateGuildConfig(guild.id);
 if (!loaded.ok) return Astro.rewrite(`/dashboard/unavailable?reason=${loaded.reason}`);
 const config = loaded.config;
 
-const [overview, rows] = await Promise.all([getOverview(guild.id), listActivity(guild.id, 5)]);
+const [overview, rows] = await Promise.all([overviewRepository.getOverview(guild.id), activityRepository.listActivity(guild.id, 5)]);
 const stats = overview ?? EMPTY_OVERVIEW;
 const activity = (rows ?? []).map(describeActivity);
 const show = (n: number) => (overview ? String(n) : "—");

@@ -1,7 +1,7 @@
 import type { APIRoute } from "astro";
 import { recordSettingChange } from "../../../../lib/audit";
 import { requireGuildApi } from "../../../../lib/dashboard-guard";
-import { changeSetting } from "../../../../lib/db/settings";
+import { settingsRepository } from "../../../../lib/db/SettingsRepository";
 import { json } from "../../../../lib/session";
 
 export const prerender = false;
@@ -18,7 +18,7 @@ export const PATCH: APIRoute = async ({ request, cookies, params }) => {
 	const body = (await request.json().catch(() => null)) as Record<string, unknown> | null;
 	if (!body || typeof body.key !== "string") return json({ error: "invalid_body", message: "Petición no válida." }, 400);
 
-	const result = await changeSetting(auth.guild.id, {
+	const result = await settingsRepository.changeSetting(auth.guild.id, {
 		key: body.key,
 		value: body.value,
 		op: body.op === "add" || body.op === "remove" ? body.op : undefined,

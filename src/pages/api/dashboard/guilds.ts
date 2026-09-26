@@ -1,6 +1,6 @@
 import type { APIRoute } from "astro";
 import { botInviteUrl, getBotGuildIds, getUserGuilds, guildIconUrl, hasAdminAccess } from "../../../lib/discord";
-import { MODULES_TOTAL, getGuildCardStats } from "../../../lib/db/overview";
+import { MODULES_TOTAL, overviewRepository } from "../../../lib/db/OverviewRepository";
 import { json } from "../../../lib/session";
 
 export const prerender = false;
@@ -32,7 +32,7 @@ export const GET: APIRoute = async ({ cookies }) => {
 		const admin = userGuilds.filter(hasAdminAccess);
 		// Cifras de las tarjetas: una consulta para todos los servidores con el bot. Si la base
 		// no responde, las tarjetas quedan sin cifras (no se inventan).
-		const stats = await getGuildCardStats(admin.filter((g) => botGuildIds.has(g.id)).map((g) => g.id));
+		const stats = await overviewRepository.getGuildCardStats(admin.filter((g) => botGuildIds.has(g.id)).map((g) => g.id));
 
 		const guilds = admin
 			.map((guild) => {

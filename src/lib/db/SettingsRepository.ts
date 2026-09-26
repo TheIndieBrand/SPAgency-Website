@@ -150,83 +150,100 @@ function parseItem(spec: Extract<Spec, { kind: "list" }>, value: unknown): Parse
 
 const idColumn = (table: Table) => (table === "guilds" ? "id" : "guild_id");
 
-export async function changeSetting(guildId: string, input: ChangeInput): Promise<ChangeResult> {
-	const spec = Object.hasOwn(SETTINGS, input.key) ? SETTINGS[input.key] : undefined;
-	if (!spec) return fail(400, "unknown_setting", "Ese ajuste no existe.");
+/**
+ * validates and writes a single guild setting change against the shared
+ * `SETTINGS` registry.
+ *
+ * every query here mirrors what already existed — this class only wraps
+ * them, it never changes a column, a table or what a query returns.
+ */
+export class SettingsRepository {
+	/**
+	 * validates one change against the settings registry and writes it.
+	 * @param guildId - the discord guild id.
+	 * @param input - the setting key, and the new value or list operation.
+	 * @returns the applied change, or why it failed.
+	 */
+	async changeSetting(guildId: string, input: ChangeInput): Promise<ChangeResult> {
+		const spec = Object.hasOwn(SETTINGS, input.key) ? SETTINGS[input.key] : undefined;
+		if (!spec) return fail(400, "unknown_setting", "Ese ajuste no existe.");
 
-	try {
-		const sql = getSql();
-		const key = idColumn(spec.table);
+		try {
+			const sql = getSql();
+			const key = idColumn(spec.table);
 
-		const [current] = await sql`select ${sql(spec.column)} as value from ${sql(spec.table)} where ${sql(key)} = ${guildId}`;
-		if (!current) return fail(404, "not_found", "Este servidor todavía no tiene configuración.");
+			const [current] = await sql`select ${sql(spec.column)} as value from ${sql(spec.table)} where ${sql(key)} = ${guildId}`;
+			if (!current) return fail(404, "not_found", "Este servidor todavía no tiene configuración.");
 
-		// ── Listas: añadir o quitar un elemento ───────────────────────────────
-		if (spec.kind === "list") {
-			if (input.op !== "add" && input.op !== "remove") return fail(400, "invalid_body", "Operación no válida.");
-			const item = parseItem(spec, input.value);
-			if (!item.ok) return fail(422, "invalid_value", item.message);
+			// ── Listas: añadir o quitar un elemento ───────────────────────────────
+			if (spec.kind === "list") {
+				if (input.op !== "add" && input.op !== "remove") return fail(400, "invalid_body", "Operación no válida.");
+				const item = parseItem(spec, input.value);
+				if (!item.ok) return fail(422, "invalid_value", item.message);
 
-			const list = current.value as string[];
-			const present = list.includes(item.value as string);
-			if (input.op === "add" && !present) {
-				if (list.length >= spec.max) return fail(422, "list_full", `Máximo ${spec.max} elementos.`);
-				const [row] = await sql`
-					update ${sql(spec.table)} set ${sql(spec.column)} = array_append(${sql(spec.column)}, ${item.value as string})
-					where ${sql(key)} = ${guildId} returning ${sql(spec.column)} as value`;
-				return { ok: true, key: input.key, value: row.value, old: list };
+				const list = current.value as string[];
+				const present = list.includes(item.value as string);
+				if (input.op === "add" && !present) {
+					if (list.length >= spec.max) return fail(422, "list_full", `Máximo ${spec.max} elementos.`);
+					const [row] = await sql`
+						update ${sql(spec.table)} set ${sql(spec.column)} = array_append(${sql(spec.column)}, ${item.value as string})
+						where ${sql(key)} = ${guildId} returning ${sql(spec.column)} as value`;
+					return { ok: true, key: input.key, value: row.value, old: list };
+				}
+				if (input.op === "remove" && present) {
+					const [row] = await sql`
+						update ${sql(spec.table)} set ${sql(spec.column)} = array_remove(${sql(spec.column)}, ${item.value as string})
+						where ${sql(key)} = ${guildId} returning ${sql(spec.column)} as value`;
+					return { ok: true, key: input.key, value: row.value, old: list };
+				}
+				// Ya estaba (o ya no estaba): el resultado es el que se pedía.
+				return { ok: true, key: input.key, value: list, old: list };
 			}
-			if (input.op === "remove" && present) {
-				const [row] = await sql`
-					update ${sql(spec.table)} set ${sql(spec.column)} = array_remove(${sql(spec.column)}, ${item.value as string})
-					where ${sql(key)} = ${guildId} returning ${sql(spec.column)} as value`;
-				return { ok: true, key: input.key, value: row.value, old: list };
+
+			// ── Valores sueltos ───────────────────────────────────────────────────
+			const parsed = parseValue(spec, input.value);
+			if (!parsed.ok) return fail(422, "invalid_value", parsed.message);
+			const value = parsed.value;
+
+			// Reglas que dependen de otro ajuste.
+			if (input.key === "verificationEnable" && value === true) {
+				const [p] = await sql`select verification_role from guild_protection where guild_id = ${guildId}`;
+				if (!p?.verificationRole) return fail(422, "needs_role", "Indica primero el rol que se concede al verificar.");
 			}
-			// Ya estaba (o ya no estaba): el resultado es el que se pedía.
-			return { ok: true, key: input.key, value: list, old: list };
-		}
+			if (input.key === "verificationRole" && value === null) {
+				const [p] = await sql`select verification_enable from guild_protection where guild_id = ${guildId}`;
+				if (p?.verificationEnable) return fail(422, "verification_active", "Desactiva la verificación antes de quitar el rol.");
+			}
 
-		// ── Valores sueltos ───────────────────────────────────────────────────
-		const parsed = parseValue(spec, input.value);
-		if (!parsed.ok) return fail(422, "invalid_value", parsed.message);
-		const value = parsed.value;
+			// El Modo Pánico va acompañado de su fecha de activación: el auto-apagado del
+			// bot se programa a partir de ella (RaidmodeExpiry), así que sin fecha no se
+			// apagaría nunca. Se fija al pasar de apagado a encendido, y se borra al apagar.
+			// La fecha es UTC sin zona, igual que las que escribe el bot.
+			if (input.key === "raidmodeEnable") {
+				const on = value as boolean;
+				const [row] = await sql`
+					update guild_protection set
+						raidmode_enable = ${on},
+						raidmode_activated_at = case
+							when ${on}::boolean then (case when raidmode_enable then raidmode_activated_at else (now() at time zone 'utc') end)
+							else null end
+					where guild_id = ${guildId}
+					returning raidmode_enable as value, ${sql.unsafe(isoUtc("raidmode_activated_at"))} as activated_at`;
+				return { ok: true, key: input.key, value: row.value, old: current.value, activatedAt: row.activatedAt };
+			}
 
-		// Reglas que dependen de otro ajuste.
-		if (input.key === "verificationEnable" && value === true) {
-			const [p] = await sql`select verification_role from guild_protection where guild_id = ${guildId}`;
-			if (!p?.verificationRole) return fail(422, "needs_role", "Indica primero el rol que se concede al verificar.");
-		}
-		if (input.key === "verificationRole" && value === null) {
-			const [p] = await sql`select verification_enable from guild_protection where guild_id = ${guildId}`;
-			if (p?.verificationEnable) return fail(422, "verification_active", "Desactiva la verificación antes de quitar el rol.");
-		}
-
-		// El Modo Pánico va acompañado de su fecha de activación: el auto-apagado del
-		// bot se programa a partir de ella (RaidmodeExpiry), así que sin fecha no se
-		// apagaría nunca. Se fija al pasar de apagado a encendido, y se borra al apagar.
-		// La fecha es UTC sin zona, igual que las que escribe el bot.
-		if (input.key === "raidmodeEnable") {
-			const on = value as boolean;
 			const [row] = await sql`
-				update guild_protection set
-					raidmode_enable = ${on},
-					raidmode_activated_at = case
-						when ${on}::boolean then (case when raidmode_enable then raidmode_activated_at else (now() at time zone 'utc') end)
-						else null end
-				where guild_id = ${guildId}
-				returning raidmode_enable as value, ${sql.unsafe(isoUtc("raidmode_activated_at"))} as activated_at`;
-			return { ok: true, key: input.key, value: row.value, old: current.value, activatedAt: row.activatedAt };
+				update ${sql(spec.table)} set ${sql(spec.column)} = ${value as string | number | boolean | null}
+				where ${sql(key)} = ${guildId} returning ${sql(spec.column)} as value`;
+			return { ok: true, key: input.key, value: row.value, old: current.value };
+		} catch (error) {
+			console.error("[db] no se pudo guardar el ajuste:", error instanceof Error ? error.message : error);
+			return fail(503, "unavailable", "No se pudo guardar: la base de datos no responde. Inténtalo de nuevo.");
 		}
-
-		const [row] = await sql`
-			update ${sql(spec.table)} set ${sql(spec.column)} = ${value as string | number | boolean | null}
-			where ${sql(key)} = ${guildId} returning ${sql(spec.column)} as value`;
-		return { ok: true, key: input.key, value: row.value, old: current.value };
-	} catch (error) {
-		console.error("[db] no se pudo guardar el ajuste:", error instanceof Error ? error.message : error);
-		return fail(503, "unavailable", "No se pudo guardar: la base de datos no responde. Inténtalo de nuevo.");
 	}
 }
+
+export const settingsRepository = new SettingsRepository();
 
 // ── Para el asistente ───────────────────────────────────────────────────────
 // Validación y texto de un cambio SIN tocar la base: el asistente propone y el

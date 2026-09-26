@@ -1,16 +1,16 @@
 import { recordSettingChange } from "../audit";
 import { listAccessibleGuilds, resolveGuildAccess } from "../dashboard-guard";
-import { describeActivity, listActivity } from "../db/activity";
-import { loadOrCreateGuildConfig, type GuildConfig } from "../db/guild-config";
+import { activityRepository, describeActivity } from "../db/ActivityRepository";
+import { guildConfigRepository, type GuildConfig } from "../db/GuildConfigRepository";
 import {
 	SETTING_SECTIONS,
-	changeSetting,
 	checkChange,
 	formatSettingValue,
 	settingLabel,
 	settingsLegend,
+	settingsRepository,
 	type CheckedChange,
-} from "../db/settings";
+} from "../db/SettingsRepository";
 import { MAX_SETTING_CHANGES } from "./config";
 import { getConversationGuild, setConversationGuild } from "./db";
 
@@ -183,7 +183,7 @@ export interface ChangeOutcome {
 export async function applySettings(payload: SettingsPayload, userId: string): Promise<ChangeOutcome[]> {
 	const outcomes: ChangeOutcome[] = [];
 	for (const change of payload.changes) {
-		const result = await changeSetting(payload.guildId, { key: change.key, value: change.value, op: change.op });
+		const result = await settingsRepository.changeSetting(payload.guildId, { key: change.key, value: change.value, op: change.op });
 		if (!result.ok) {
 			outcomes.push({ label: change.label, ok: false, message: result.message, unavailable: result.status === 503 });
 			continue;
@@ -225,12 +225,12 @@ export function configMarkdown(guild: GuildRef, config: GuildConfig, section: st
 }
 
 export async function loadConfigFor(guild: GuildRef): Promise<GuildConfig | null> {
-	const loaded = await loadOrCreateGuildConfig(guild.id);
+	const loaded = await guildConfigRepository.loadOrCreateGuildConfig(guild.id);
 	return loaded.ok ? loaded.config : null;
 }
 
 export async function recentActivityMarkdown(guild: GuildRef, limit = 10): Promise<string | null> {
-	const rows = await listActivity(guild.id, limit);
+	const rows = await activityRepository.listActivity(guild.id, limit);
 	if (!rows) return null;
 	if (!rows.length) return `**${cleanName(guild.name)}** aún no tiene actividad registrada.`;
 	const when = new Intl.DateTimeFormat("es-ES", { timeZone: "Europe/Madrid", day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
