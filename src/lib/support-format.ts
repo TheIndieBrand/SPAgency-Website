@@ -44,10 +44,10 @@ const MESSAGES: Record<string, string> = {
 	unauthorized: "Inicia sesión para continuar.",
 };
 
-const UNAVAILABLE = "Soporte no está disponible ahora mismo. Inténtalo de nuevo en unos minutos.";
+const UnavailableMessage = "Soporte no está disponible ahora mismo. Inténtalo de nuevo en unos minutos.";
 
 export function supportErrorMessage(error: string, status: number): string {
 	if (MESSAGES[error]) return MESSAGES[error];
-	if (status >= 500) return UNAVAILABLE;
+	if (status >= 500) return UnavailableMessage;
 	return "No se pudo completar la acción.";
 }

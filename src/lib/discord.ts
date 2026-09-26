@@ -1,5 +1,5 @@
-const API = "https://discord.com/api/v10";
-const ADMINISTRATOR = 0x8n;
+const DiscordApiBase = "https://discord.com/api/v10";
+const AdministratorPermission = 0x8n;
 
 export interface DiscordGuild {
 	id: string;
@@ -19,7 +19,7 @@ export interface DiscordUser {
 
 // Permission bundle requested when inviting the bot: kick, ban, view audit
 // log, manage channels/roles, read/send/manage messages, timeout members.
-const BOT_PERMISSIONS = "1099780074646";
+const BotPermissions = "1099780074646";
 
 export interface DiscordToken {
 	access_token: string;
@@ -28,7 +28,7 @@ export interface DiscordToken {
 }
 
 export async function exchangeCodeForToken(code: string): Promise<DiscordToken | null> {
-	const res = await fetch(`${API}/oauth2/token`, {
+	const res = await fetch(`${DiscordApiBase}/oauth2/token`, {
 		method: "POST",
 		headers: { "Content-Type": "application/x-www-form-urlencoded" },
 		body: new URLSearchParams({
@@ -45,7 +45,7 @@ export async function exchangeCodeForToken(code: string): Promise<DiscordToken |
 }
 
 export async function getUserGuilds(accessToken: string): Promise<DiscordGuild[] | null> {
-	const res = await fetch(`${API}/users/@me/guilds?with_counts=true`, {
+	const res = await fetch(`${DiscordApiBase}/users/@me/guilds?with_counts=true`, {
 		headers: { Authorization: `Bearer ${accessToken}` },
 	});
 
@@ -54,7 +54,7 @@ export async function getUserGuilds(accessToken: string): Promise<DiscordGuild[]
 }
 
 export async function getCurrentUser(accessToken: string): Promise<DiscordUser | null> {
-	const res = await fetch(`${API}/users/@me`, {
+	const res = await fetch(`${DiscordApiBase}/users/@me`, {
 		headers: { Authorization: `Bearer ${accessToken}` },
 	});
 
@@ -66,7 +66,7 @@ export async function getBotGuildIds(): Promise<Set<string>> {
 	const botToken = process.env.DISCORD_BOT_TOKEN;
 	if (!botToken) return new Set();
 
-	const res = await fetch(`${API}/users/@me/guilds?limit=200`, {
+	const res = await fetch(`${DiscordApiBase}/users/@me/guilds?limit=200`, {
 		headers: { Authorization: `Bot ${botToken}` },
 	});
 
@@ -81,7 +81,7 @@ export async function getGuildOwnerId(guildId: string): Promise<string | null> {
 	const botToken = process.env.DISCORD_BOT_TOKEN;
 	if (!botToken) return null;
 
-	const res = await fetch(`${API}/guilds/${encodeURIComponent(guildId)}`, {
+	const res = await fetch(`${DiscordApiBase}/guilds/${encodeURIComponent(guildId)}`, {
 		headers: { Authorization: `Bot ${botToken}` },
 	});
 	if (!res.ok) return null;
@@ -91,7 +91,7 @@ export async function getGuildOwnerId(guildId: string): Promise<string | null> {
 
 export function hasAdminAccess(guild: DiscordGuild): boolean {
 	if (guild.owner) return true;
-	return (BigInt(guild.permissions) & ADMINISTRATOR) === ADMINISTRATOR;
+	return (BigInt(guild.permissions) & AdministratorPermission) === AdministratorPermission;
 }
 
 export function guildIconUrl(guild: DiscordGuild): string | null {
@@ -127,11 +127,11 @@ function thanksRedirect(): Record<string, string> {
 // Conserva el client_id que ya tenía el botón (el de la invitación pública del bot), que
 // no coincide con DISCORD_CLIENT_ID (el del login): la redirección a /gracias hay que
 // registrarla en ESA aplicación. INVITE_CLIENT_ID lo cambia sin tocar el código.
-const PUBLIC_INVITE_CLIENT_ID = "1038614901394002020";
+const PublicInviteClientId = "1038614901394002020";
 
 export function generalInviteUrl(): string {
 	const params = new URLSearchParams({
-		client_id: process.env.INVITE_CLIENT_ID || PUBLIC_INVITE_CLIENT_ID,
+		client_id: process.env.INVITE_CLIENT_ID || PublicInviteClientId,
 		permissions: "8",
 		scope: "bot applications.commands",
 		...thanksRedirect(),
@@ -143,7 +143,7 @@ export function botInviteUrl(guildId: string): string {
 	const params = new URLSearchParams({
 		client_id: process.env.DISCORD_CLIENT_ID!,
 		scope: "bot",
-		permissions: BOT_PERMISSIONS,
+		permissions: BotPermissions,
 		guild_id: guildId,
 		disable_guild_select: "true",
 		...thanksRedirect(),
@@ -164,7 +164,7 @@ export async function getGuildPreview(guildId: string): Promise<GuildPreview | n
 	if (!botToken || !/^\d{15,25}$/.test(guildId)) return null;
 
 	try {
-		const res = await fetch(`${API}/guilds/${guildId}`, {
+		const res = await fetch(`${DiscordApiBase}/guilds/${guildId}`, {
 			headers: { Authorization: `Bot ${botToken}` },
 			signal: AbortSignal.timeout(4000),
 		});

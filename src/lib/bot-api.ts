@@ -3,7 +3,7 @@
 // bot escucha solo en 127.0.0.1 y la clave nunca sale del servidor de la web: el
 // navegador habla con la web, y la web con el bot.
 
-const TIMEOUT_MS = 6000;
+const TimeoutMs = 6000;
 
 export type BotResult<T> = { ok: true; data: T } | { ok: false; status: number; error: string };
 
@@ -29,7 +29,7 @@ export async function callBot<T>(
 				...(body === undefined ? {} : { "Content-Type": "application/json" }),
 			},
 			body: body === undefined ? undefined : JSON.stringify(body),
-			signal: AbortSignal.timeout(TIMEOUT_MS),
+			signal: AbortSignal.timeout(TimeoutMs),
 		});
 
 		const data = await res.json().catch(() => null);
