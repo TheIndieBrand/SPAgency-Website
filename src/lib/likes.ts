@@ -1,5 +1,5 @@
 import type { DatabaseSync } from "node:sqlite";
-import { getChangelogById } from "./changelog";
+import { changelogRepository } from "./ChangelogRepository";
 import { getApprovedComment } from "./community-testimonials";
 import { openDatabase } from "./sqlite";
 import { testimonials } from "./testimonials";
@@ -61,7 +61,7 @@ export function resolveTarget(target: string): { ownerId: string | null } | null
 		return comment ? { ownerId: comment.userId } : null;
 	}
 
-	const entry = getChangelogById(Number(key));
+	const entry = changelogRepository.getChangelogById(Number(key));
 	return entry?.published ? { ownerId: null } : null;
 }
 

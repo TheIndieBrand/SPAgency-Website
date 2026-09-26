@@ -5,12 +5,12 @@ import Layout from "../../layouts/Layout.astro";
 import Navbar from "../../components/Navbar.astro";
 import Footer from "../../components/Footer.astro";
 import ChangelogEntry from "../../components/changelog/ChangelogEntry.astro";
-import { listChangelogs } from "../../lib/changelog";
+import { changelogRepository } from "../../lib/ChangelogRepository";
 import { isOwner } from "../../lib/changelog-auth";
 import { likeStates, likeTarget, noLikes } from "../../lib/likes";
 import { getSessionUser } from "../../lib/session";
 
-const entries = listChangelogs();
+const entries = changelogRepository.listChangelogs();
 
 // El enlace a la administración solo se pinta si hay sesión y es el dueño.
 // Sin cookie no se llama a Discord: la mayoría de visitas no pagan nada.

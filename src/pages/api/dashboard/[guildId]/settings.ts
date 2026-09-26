@@ -1,5 +1,5 @@
 import type { APIRoute } from "astro";
-import { recordSettingChange } from "../../../../lib/audit";
+import { auditRepository } from "../../../../lib/AuditRepository";
 import { requireGuildApi } from "../../../../lib/dashboard-guard";
 import { settingsRepository } from "../../../../lib/db/SettingsRepository";
 import { json } from "../../../../lib/session";
@@ -26,7 +26,7 @@ export const PATCH: APIRoute = async ({ request, cookies, params }) => {
 	if (!result.ok) return json({ error: result.error, message: result.message }, result.status);
 
 	const changed = JSON.stringify(result.old) !== JSON.stringify(result.value);
-	if (changed) recordSettingChange({ guildId: auth.guild.id, userId: auth.userId, key: result.key, old: result.old, value: result.value });
+	if (changed) auditRepository.recordSettingChange({ guildId: auth.guild.id, userId: auth.userId, key: result.key, old: result.old, value: result.value });
 
 	const response = json({ ok: true, key: result.key, value: result.value, activatedAt: result.activatedAt });
 	response.headers.set("Cache-Control", "no-store");

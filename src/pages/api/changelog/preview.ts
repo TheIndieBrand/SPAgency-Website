@@ -1,5 +1,5 @@
 import type { APIRoute } from "astro";
-import { formatChangelogDate } from "../../../lib/changelog";
+import { formatChangelogDate } from "../../../lib/ChangelogRepository";
 import { parseChangelogInput, requireOwner } from "../../../lib/changelog-auth";
 import { json } from "../../../lib/session";
 import { renderMarkdown } from "../../../lib/changelog-markdown";

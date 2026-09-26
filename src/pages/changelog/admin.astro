@@ -3,7 +3,7 @@ export const prerender = false;
 
 import Layout from "../../layouts/Layout.astro";
 import Navbar from "../../components/Navbar.astro";
-import { formatChangelogDate, getChangelogById, listChangelogs, todayIso } from "../../lib/changelog";
+import { changelogRepository, formatChangelogDate, todayIso } from "../../lib/ChangelogRepository";
 import { isOwner } from "../../lib/changelog-auth";
 import { getSessionUser } from "../../lib/session";
 
@@ -11,10 +11,10 @@ const user = await getSessionUser(Astro.cookies);
 if (!user) return Astro.redirect("/auth/discord/login");
 if (!isOwner(user)) return Astro.redirect("/changelog");
 
-const entries = listChangelogs({ includeDrafts: true });
+const entries = changelogRepository.listChangelogs({ includeDrafts: true });
 
 const idParam = Number(Astro.url.searchParams.get("id"));
-const current = Number.isInteger(idParam) && idParam > 0 ? getChangelogById(idParam) : null;
+const current = Number.isInteger(idParam) && idParam > 0 ? changelogRepository.getChangelogById(idParam) : null;
 
 // Plantilla de una entrada nueva: la estructura que ya usas en tus changelogs.
 const TEMPLATE = `# SP Agency v1.0.0

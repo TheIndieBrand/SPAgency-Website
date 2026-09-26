@@ -1,4 +1,4 @@
-import { recordSettingChange } from "../audit";
+import { auditRepository } from "../AuditRepository";
 import { listAccessibleGuilds, resolveGuildAccess } from "../dashboard-guard";
 import { activityRepository, describeActivity } from "../db/ActivityRepository";
 import { guildConfigRepository, type GuildConfig } from "../db/GuildConfigRepository";
@@ -206,7 +206,7 @@ export class DashboardAssistantService {
 				continue;
 			}
 			if (!same(result.old, result.value)) {
-				recordSettingChange({ guildId: payload.guildId, userId, key: result.key, old: result.old, value: result.value, source: "assistant" });
+				auditRepository.recordSettingChange({ guildId: payload.guildId, userId, key: result.key, old: result.old, value: result.value, source: "assistant" });
 			}
 			outcomes.push({ label: change.label, ok: true, message: "", unavailable: false });
 		}

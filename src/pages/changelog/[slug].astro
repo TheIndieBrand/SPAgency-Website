@@ -5,12 +5,12 @@ import Layout from "../../layouts/Layout.astro";
 import Navbar from "../../components/Navbar.astro";
 import Footer from "../../components/Footer.astro";
 import ChangelogEntry from "../../components/changelog/ChangelogEntry.astro";
-import { getChangelogBySlug, getChangelogNeighbors } from "../../lib/changelog";
+import { changelogRepository } from "../../lib/ChangelogRepository";
 import { isOwner } from "../../lib/changelog-auth";
 import { likeStates, likeTarget, noLikes } from "../../lib/likes";
 import { getSessionUser } from "../../lib/session";
 
-const entry = getChangelogBySlug(Astro.params.slug ?? "");
+const entry = changelogRepository.getChangelogBySlug(Astro.params.slug ?? "");
 
 // Un borrador solo lo ve el dueño (para revisarlo antes de publicar); para
 // cualquier otro es como si no existiera.
@@ -21,7 +21,7 @@ if (!entry || (!entry.published && !owner)) {
 	return new Response("Not found", { status: 404 });
 }
 
-const { newer, older, isLatest } = getChangelogNeighbors(entry.id);
+const { newer, older, isLatest } = changelogRepository.getChangelogNeighbors(entry.id);
 
 // Me gusta: solo las entradas publicadas (un borrador no se puede gustar).
 const target = likeTarget.changelog(entry.id);
