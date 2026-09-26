@@ -6,8 +6,8 @@ import { site } from "../lib/site";
 interface Props {
 	title?: string;
 	description?: string;
-	// Scrollbar propia que aparece al hacer scroll o acercar el ratón al borde. El
-	// home la desactiva: allí no hay ninguna (ver index.astro).
+	// custom scrollbar that appears on scroll or when the mouse nears the
+	// edge. the home page disables it: there's none there (see index.astro).
 	customScrollbar?: boolean;
 }
 
@@ -44,8 +44,8 @@ const {
 		<meta name="twitter:title" content={title} />
 		<meta name="twitter:description" content={description} />
 		<title>{title}</title>
-		<!-- Fuentes autoalojadas (ver styles/fonts.css). Se precargan solo los subconjuntos
-		     "latin", que es lo que usa el texto de la parte visible. -->
+		<!-- self-hosted fonts (see styles/fonts.css). only the "latin" subsets
+		     are preloaded, which is what the above-the-fold text uses. -->
 		<link rel="preload" href="/fonts/manrope-latin.woff2" as="font" type="font/woff2" crossorigin />
 		<link rel="preload" href="/fonts/space-grotesk-latin.woff2" as="font" type="font/woff2" crossorigin />
 	</head>

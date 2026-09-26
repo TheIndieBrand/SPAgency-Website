@@ -1,7 +1,7 @@
-// Cualquier enlace a otra web se abre en una pestaña nueva, también los que se pintan
-// después de cargar (chat, tarjetas del dashboard). Se marca al pulsar, justo antes de que
-// el navegador navegue, así que no hace falta tocar cada plantilla. Los enlaces con
-// `data-same-tab` se quedan como están.
+// any link to another site opens in a new tab, including ones rendered
+// after load (chat, dashboard cards). marked on click, right before the
+// browser navigates, so no template needs touching. links with
+// `data-same-tab` are left as they are.
 document.addEventListener(
 	"click",
 	(event) => {

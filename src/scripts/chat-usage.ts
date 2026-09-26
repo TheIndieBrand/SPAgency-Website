@@ -1,5 +1,5 @@
-// Tarjeta del comando /usage. Los datos los calcula el servidor
-// (src/lib/chat/usage.ts); aquí solo se pintan.
+// card for the /usage command. the data is computed on the server
+// (src/lib/chat/usage.ts); this only renders it.
 import { escapeHtml } from "./support-ui";
 
 export interface UsageReport {
