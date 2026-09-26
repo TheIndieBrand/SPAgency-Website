@@ -6,14 +6,14 @@ export const prerender = false;
 
 const fail = (status: number, error: string) => json({ error, message: verificationService.verificationErrorMessage(error, status) }, status);
 
-// Que el bot rechace nuestra clave (401/403) es un problema de configuración,
-// no del usuario: para él, la verificación simplemente no está disponible.
+// the bot rejecting our key (401/403) is a configuration problem, not the
+// user's: to them, verification is simply unavailable.
 const fromBot = (status: number, error: string) =>
 	status === 401 || status === 403 ? fail(503, "bot_unavailable") : fail(status, error);
 
-// Cierra una verificación. Se exige, en este orden: sesión de Discord, que el
-// token sea de ESA cuenta (es lo que demuestra que el enlace lo abre quien lo
-// recibió) y captcha superado. Solo entonces el bot concede el rol.
+// completes a verification. required, in this order: a discord session, that
+// the token belongs to THAT account (which is what proves the link is opened
+// by whoever received it), and a passed captcha. only then does the bot grant the role.
 export const POST: APIRoute = async ({ request, cookies, clientAddress }) => {
 	const auth = await requireUser(request, cookies);
 	if ("response" in auth) return auth.response;
@@ -25,7 +25,7 @@ export const POST: APIRoute = async ({ request, cookies, clientAddress }) => {
 	const captcha = typeof body?.captcha === "string" ? body.captcha : "";
 	if (!verificationService.isPlausibleToken(token)) return fail(400, "invalid_token");
 
-	// La identidad se lee del bot en cada intento: el navegador no puede decir de quién es el token.
+	// identity is read from the bot on every attempt: the browser can't say whose token it is.
 	const target = await verificationService.lookupToken(token);
 	if (!target.ok) return fromBot(target.status, target.error);
 	if (target.data.userId !== auth.user.id) return fail(403, "wrong_account");

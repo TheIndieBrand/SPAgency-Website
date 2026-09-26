@@ -7,9 +7,9 @@ import { getGuildPreview, userAvatarUrl } from "../../lib/discord";
 import { getSessionUser } from "../../lib/session";
 import { verificationService } from "../../lib/VerificationService";
 
-// El token de la URL es una credencial: nada de guardarlo en cachés ni de
-// dejarlo en la cabecera Referer de lo que esta página cargue (el script del
-// captcha viene de un tercero).
+// the url's token is a credential: it must never be stored in caches or leak
+// through the Referer header of anything this page loads (the captcha
+// script comes from a third party).
 Astro.response.headers.set("Cache-Control", "no-store");
 Astro.response.headers.set("Referrer-Policy", "no-referrer");
 
@@ -31,7 +31,7 @@ if (!verificationService.isPlausibleToken(token)) {
 } else if (!verificationService.captchaConfigured()) {
 	state = { kind: "unavailable", message: verificationService.verificationErrorMessage("not_configured", 503) };
 } else {
-	// Primero se pregunta al bot: un enlace inválido no debería mandar a nadie a iniciar sesión.
+	// the bot is asked first: an invalid link shouldn't send anyone to log in.
 	const target = await verificationService.lookupToken(token);
 
 	if (!target.ok) {

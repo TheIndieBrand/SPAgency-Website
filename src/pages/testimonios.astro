@@ -23,9 +23,9 @@ const alreadyPublished = user ? communityTestimonialsRepository.hasPublishedTest
 const isCurated = user ? testimonials.some((t) => t.userId === user.id) : false;
 const likes = likesRepository.likeStates("testimonial:", user?.id);
 
-// El muro: los testimonios de siempre (los del home) y, a continuación, los de la
-// comunidad ya aprobados por el staff, del más reciente al más antiguo. Los de la
-// comunidad viven SOLO aquí: el home no los muestra nunca.
+// the wall: the usual testimonials (the home page's) followed by the
+// community's ones already approved by staff, most recent first. the
+// community's live ONLY here: the home page never shows them.
 const defaultAvatar = "https://cdn.discordapp.com/embed/avatars/0.png";
 const wall = [
 	...testimonials.map((t) => ({ ...t, like: { target: likeTarget.curated(t.userId), ownerId: t.userId } })),

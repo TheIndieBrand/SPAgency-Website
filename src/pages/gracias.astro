@@ -1,6 +1,6 @@
 ---
 export const prerender = false;
-export const knowledge = false; // página posterior a la invitación: el asistente no la necesita
+export const knowledge = false; // page after the invite: the assistant doesn't need it
 
 import Layout from "../layouts/Layout.astro";
 import Navbar from "../components/Navbar.astro";
@@ -10,9 +10,9 @@ import CommunityBackdrop from "../components/CommunityBackdrop.astro";
 import { getGuildPreview } from "../lib/discord";
 import { site } from "../lib/site";
 
-// Aquí llega quien acaba de invitar al bot: Discord redirige con ?guild_id=<servidor>
-// (y un `code` que no usamos). Si canceló la invitación llega ?error=…, y no hay nada
-// que celebrar: se le devuelve al inicio.
+// whoever just invited the bot lands here: discord redirects with
+// ?guild_id=<guild> (and a `code` we don't use). if they canceled the invite,
+// ?error=… arrives instead, and there's nothing to celebrate: back to the home page.
 if (Astro.url.searchParams.has("error")) return Astro.redirect("/");
 
 const rawGuild = Astro.url.searchParams.get("guild_id") ?? "";

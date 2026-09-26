@@ -7,9 +7,8 @@ export const prerender = false;
 
 const STATUSES: readonly CommentStatus[] = ["approved", "rejected", "pending"];
 
-// Decisión del staff sobre un comentario: aprobar, rechazar, o volver a dejarlo
-// pendiente (deshacer). Se comprueba en el servidor en cada petición; quedan
-// guardados quién decidió y cuándo.
+// staff's decision on a comment: approve, reject, or put it back to pending
+// (undo). checked on the server on every request; who decided and when are recorded.
 export const POST: APIRoute = async ({ request, cookies }) => {
 	const auth = await requireStaff(request, cookies);
 	if ("response" in auth) return auth.response;

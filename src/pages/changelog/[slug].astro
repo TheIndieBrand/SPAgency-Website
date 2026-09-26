@@ -12,8 +12,8 @@ import { getSessionUser } from "../../lib/session";
 
 const entry = changelogRepository.getChangelogBySlug(Astro.params.slug ?? "");
 
-// Un borrador solo lo ve el dueño (para revisarlo antes de publicar); para
-// cualquier otro es como si no existiera.
+// a draft is only seen by the owner (to review before publishing); for
+// anyone else it's as if it doesn't exist.
 const user = await getSessionUser(Astro.cookies);
 const owner = entry && !entry.published ? isOwner(user) : false;
 

@@ -15,7 +15,7 @@ const id = Astro.params.id ?? "";
 const user = await getSessionUser(Astro.cookies);
 if (!user) return Astro.redirect(`/auth/discord/login?next=${encodeURIComponent(Astro.url.pathname)}`);
 
-// Solo el dueño lo ve; el de otro usuario es como si no existiera.
+// only the owner sees it; another user's is treated as if it doesn't exist.
 const transcript = supportTranscriptRepository.getTranscript(id, user.id);
 if (!transcript) return Astro.redirect("/support");
 

@@ -1,10 +1,10 @@
 ---
-// Página de PRUEBA aislada para el componente <BlackHole />. No está
-// enlazada desde ninguna parte del sitio ni forma parte del flujo normal —
-// es solo para ver el diseño del agujero negro sin scrollear toda la
-// escena de intro-scene.ts. Bórrala (o el componente) si al final no se usa.
+// isolated TEST page for the <BlackHole /> component. not linked from
+// anywhere on the site and not part of the normal flow — it's just to see
+// the black hole's design without scrolling through the whole intro-scene.ts
+// scene. delete it (or the component) if it ends up unused.
 //
-// Solo existe en desarrollo: en producción responde 404.
+// only exists in development: in production it responds 404.
 if (!import.meta.env.DEV) return new Response(null, { status: 404 });
 
 import Layout from "../layouts/Layout.astro";

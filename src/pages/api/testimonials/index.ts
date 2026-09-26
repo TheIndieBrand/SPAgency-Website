@@ -13,9 +13,9 @@ const REJECTIONS: Record<string, { status: number; message: string }> = {
 	daily_limit: { status: 429, message: "Has enviado varios comentarios hoy. Inténtalo de nuevo mañana." },
 };
 
-// Envía un comentario. Queda PENDIENTE: no se ve en ninguna parte hasta que el
-// staff lo aprueba. El nombre y el avatar salen de la sesión de Discord, nunca
-// del cuerpo, así que nadie puede firmar como otra persona.
+// submits a comment. it stays PENDING: not shown anywhere until staff
+// approves it. the name and avatar come from the discord session, never from
+// the request body, so nobody can sign as someone else.
 export const POST: APIRoute = async ({ request, cookies }) => {
 	const auth = await requireUser(request, cookies);
 	if ("response" in auth) return auth.response;

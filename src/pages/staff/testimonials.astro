@@ -11,7 +11,7 @@ import { safeAvatar } from "../../lib/support-format";
 
 const user = await getSessionUser(Astro.cookies);
 if (!user) return Astro.redirect("/auth/discord/login?next=/staff/testimonials");
-// Quien no es staff no debe ni saber que esta página existe.
+// whoever isn't staff shouldn't even know this page exists.
 if (!isStaff(user)) return Astro.redirect("/");
 
 const pending = communityTestimonialsRepository.listByStatus("pending");

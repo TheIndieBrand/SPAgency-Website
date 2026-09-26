@@ -6,8 +6,8 @@ import { renderMarkdown } from "../../../lib/changelog-markdown";
 
 export const prerender = false;
 
-// Vista previa del editor: mismo render (y mismo saneado) que la página
-// pública, así lo que ves al escribir es exactamente lo que se publicará.
+// editor preview: same render (and same sanitizing) as the public page, so
+// what you see while writing is exactly what gets published.
 export const POST: APIRoute = async ({ request, cookies }) => {
 	const denied = await requireOwner(request, cookies);
 	if (denied) return denied;

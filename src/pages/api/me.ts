@@ -4,9 +4,9 @@ import { getSessionUser, json } from "../../lib/session";
 
 export const prerender = false;
 
-// Quién está conectado, para la cuenta de la navbar. Las páginas públicas (home,
-// docs) se generan sin sesión, así que la navbar lo pregunta aquí al cargar.
-// Sin sesión no es un error: responde { user: null }. Nunca se cachea.
+// who's signed in, for the navbar's account section. public pages (home,
+// docs) are rendered without a session, so the navbar asks this on load.
+// no session isn't an error: it responds { user: null }. never cached.
 export const GET: APIRoute = async ({ cookies }) => {
 	const user = await getSessionUser(cookies);
 	const response = json({

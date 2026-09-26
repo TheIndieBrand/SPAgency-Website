@@ -203,8 +203,8 @@ const published = current?.published ?? false;
 		status.className = `text-sm ${error ? "text-red-400" : "text-text-faint"}`;
 	}
 
-	// Vista previa en vivo. El HTML lo devuelve el servidor ya saneado (mismo
-	// render que la página pública); las respuestas viejas se descartan.
+	// live preview. the html comes back from the server already sanitized
+	// (same render as the public page); stale responses are discarded.
 	let previewSeq = 0;
 	let previewTimer: number | undefined;
 
@@ -220,7 +220,7 @@ const published = current?.published ?? false;
 		previewDate.textContent = data.date;
 		previewVersion.textContent = data.version;
 		previewVersion.hidden = !data.version;
-		// Sin versión, el nombre hace de título grande.
+		// with no version, the name acts as the large title.
 		previewName.textContent = data.name;
 		previewName.className = data.version
 			? "text-text-dim mt-4 block text-xl font-semibold"
@@ -261,7 +261,7 @@ const published = current?.published ?? false;
 		window.location.href = "/changelog/admin";
 	});
 
-	// Ctrl/Cmd + S guarda sin tocar el ratón.
+	// ctrl/cmd + s saves without touching the mouse.
 	window.addEventListener("keydown", (event) => {
 		if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "s") {
 			event.preventDefault();

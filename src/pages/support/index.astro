@@ -11,12 +11,12 @@ import { supportTranscriptRepository } from "../../lib/SupportTranscriptReposito
 
 const user = await getSessionUser(Astro.cookies);
 
-// Sin sesión no hay nada que ver: se salta directo al OAuth de Discord, que al
-// terminar devuelve a esta misma página (?next=).
+// with no session there's nothing to see: straight to discord oauth, which
+// on finishing returns to this same page (?next=).
 if (!user) return Astro.redirect("/auth/discord/login?next=/support");
 
-// El ticket abierto vive en el bot (Discord es su almacén); los cerrados, en la
-// web. Si el bot no responde se avisa, pero el historial se sigue viendo.
+// the open ticket lives in the bot (discord is its store); closed ones live
+// in the web. if the bot doesn't respond, it's flagged, but the history still shows.
 let openTicket: { ticketId: string; subject: string } | null = null;
 let botDown = false;
 

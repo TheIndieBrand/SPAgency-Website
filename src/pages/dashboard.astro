@@ -257,7 +257,7 @@ const skeletons = Array.from({ length: 8 });
 		members: number | null;
 		protected: boolean;
 		inviteUrl: string | null;
-		// null: sin datos todavía (la base no responde o el servidor aún no tiene configuración).
+		// null: no data yet (the database isn't responding, or the guild has no config yet).
 		stats: { raidsToday: number; modulesOn: number; modulesTotal: number } | null;
 	}
 
@@ -270,7 +270,7 @@ const skeletons = Array.from({ length: 8 });
 	let activeFilter = "all";
 
 	function cardHtml(g: Guild): string {
-		// Icono cuadrado como en Discord; sin icono, la inicial en un tono suave. Sin el bot, apagado.
+		// square icon like on discord; with no icon, the initial in a soft tone. dimmed without the bot.
 		const tone = g.protected ? "" : " opacity-60 grayscale";
 		const icon = g.icon
 			? `<img src="${escapeHtml(g.icon)}" alt="" class="h-12 w-12 shrink-0 rounded-xl object-cover${tone}" />`
@@ -287,8 +287,8 @@ const skeletons = Array.from({ length: 8 });
 
 		const data = `data-name="${escapeHtml(g.name.toLowerCase())}" data-status="${g.protected ? "protected" : "pending"}"`;
 
-		// Con el bot: toda la tarjeta es el enlace. Estado y cifras en una sola fila; sin datos
-		// (base sin respuesta o servidor sin configurar) las cifras van apagadas con «—».
+		// with the bot: the whole card is the link. status and numbers in a
+		// single row; with no data (database down or guild unconfigured) the numbers show dimmed as "—".
 		if (g.protected) {
 			const st = g.stats;
 			const dim = st ? "" : " opacity-45";
@@ -302,7 +302,7 @@ const skeletons = Array.from({ length: 8 });
 			</a>`;
 		}
 
-		// Sin el bot: tarjeta apagada, sin enlace; la única acción es invitarlo.
+		// without the bot: dimmed card, no link; the only action is inviting it.
 		return `<div class="server-card card-in border-border-soft flex h-full flex-col gap-4 rounded-[14px] border border-dashed p-5" ${data}>
 			${head}
 			<div class="flex min-h-[30px] items-center justify-between gap-3">
@@ -354,7 +354,7 @@ const skeletons = Array.from({ length: 8 });
 		$("load-error").hidden = true;
 		fetch("/api/dashboard/guilds", { headers: { Accept: "application/json" } })
 			.then(async (res) => {
-				// Sin sesión (o token caducado): a iniciarla.
+				// no session (or expired token): go start one.
 				if (res.status === 401) return void (window.location.href = "/auth/discord/login");
 				if (!res.ok) return fail();
 				show(((await res.json()) as { guilds: Guild[] }).guilds);
@@ -380,15 +380,15 @@ const skeletons = Array.from({ length: 8 });
 	});
 
 	$("retry").addEventListener("click", () => {
-		// Se vuelven a mostrar las tarjetas de carga mientras se reintenta.
+		// loading cards are shown again while it retries.
 		grid.hidden = false;
 		grid.setAttribute("aria-busy", "true");
 		$("count-skeleton").hidden = false;
 		load();
 	});
 
-	// Al abrir un servidor se muestra la carga esquemática hasta que llega su página.
-	// Solo con un clic normal (con Ctrl/Cmd o botón central se abre otra pestaña y aquí no cambia nada).
+	// opening a guild shows the skeleton loading state until its page arrives.
+	// only on a plain click (with ctrl/cmd or the middle button it opens another tab and nothing here changes).
 	grid.addEventListener("animationend", (event) => (event.target as Element).classList.remove("card-in"));
 
 	const enterLoading = $("enter-loading");
@@ -398,7 +398,7 @@ const skeletons = Array.from({ length: 8 });
 		if (link.target && link.target !== "_self") return;
 		enterLoading.hidden = false;
 	});
-	// Al volver atrás el navegador restaura esta página tal cual estaba: sin esto quedaría la carga puesta.
+	// going back restores this page exactly as it was: without this the loading state would stay stuck.
 	window.addEventListener("pageshow", () => (enterLoading.hidden = true));
 
 	load();
