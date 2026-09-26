@@ -2,6 +2,7 @@ import type { AstroCookies, AstroGlobal } from "astro";
 import { createHash } from "node:crypto";
 import { getBotGuildIds, getUserGuilds, hasAdminAccess, type DiscordGuild } from "./discord";
 import { getSessionUser, json } from "./session";
+import { sessionCookieService } from "./SessionCookieService";
 
 // Quién puede tocar un servidor: administrador de él en Discord y con SP Agency
 // dentro. Son dos llamadas a Discord, y el dashboard las repite en cada página y
@@ -88,15 +89,7 @@ export async function resolveGuildAccess(accessToken: string, guildId: string | 
 }
 
 export function tokenFromCookies(cookies: AstroCookies): { cookieName: string; token: string | null } {
-	const cookieName = process.env.SESSION_COOKIE_NAME || "spa_session";
-	const raw = cookies.get(cookieName)?.value;
-	if (!raw) return { cookieName, token: null };
-	try {
-		const token = JSON.parse(raw)?.access_token;
-		return { cookieName, token: typeof token === "string" ? token : null };
-	} catch {
-		return { cookieName, token: null };
-	}
+	return { cookieName: sessionCookieService.name, token: sessionCookieService.readAccessToken(cookies) };
 }
 
 type GuardResult = { guild: DiscordGuild } | { redirect: Response };
@@ -105,9 +98,9 @@ type GuardResult = { guild: DiscordGuild } | { redirect: Response };
 // es administrador de `guildId` y que el bot está en él (si no, no hay nada que
 // gestionar). Quien llama hace `return` de la redirección tal cual.
 export async function requireGuildAccess(Astro: AstroGlobal, guildId: string | undefined): Promise<GuardResult> {
-	const { cookieName, token } = tokenFromCookies(Astro.cookies);
+	const token = sessionCookieService.readAccessToken(Astro.cookies);
 	if (!token) {
-		if (Astro.cookies.has(cookieName)) Astro.cookies.delete(cookieName, { path: "/" });
+		if (sessionCookieService.has(Astro.cookies)) sessionCookieService.clear(Astro.cookies);
 		return { redirect: Astro.redirect("/auth/discord/login") };
 	}
 
@@ -115,7 +108,7 @@ export async function requireGuildAccess(Astro: AstroGlobal, guildId: string | u
 	if ("guild" in access) return { guild: access.guild };
 
 	if (access.error === "unauthorized") {
-		Astro.cookies.delete(cookieName, { path: "/" });
+		sessionCookieService.clear(Astro.cookies);
 		return { redirect: Astro.redirect("/auth/discord/login") };
 	}
 	return { redirect: Astro.redirect("/dashboard") };
@@ -133,7 +126,7 @@ export async function requireGuildApi(
 		return { response: json({ error: "unsupported_media_type", message: "Petición no válida." }, 415) };
 	}
 
-	const { token } = tokenFromCookies(cookies);
+	const token = sessionCookieService.readAccessToken(cookies);
 	if (!token) return { response: json({ error: "unauthorized", message: "Inicia sesión para continuar." }, 401) };
 
 	const access = await resolveGuildAccess(token, guildId);

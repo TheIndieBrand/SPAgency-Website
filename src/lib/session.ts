@@ -1,6 +1,7 @@
 import type { AstroCookies } from "astro";
 import { createHash } from "node:crypto";
 import { getCurrentUser, type DiscordUser } from "./discord";
+import { sessionCookieService } from "./SessionCookieService";
 
 // La cookie de sesión solo guarda los tokens de Discord, así que saber quién es
 // el usuario cuesta una llamada a /users/@me. El chat de soporte consulta cada
@@ -50,16 +51,7 @@ function lookupUser(accessToken: string): Promise<DiscordUser | null> {
 // borra la cookie si algo falla: estas comprobaciones también se usan en
 // páginas públicas, donde no tener sesión es lo normal.
 export async function getSessionUser(cookies: AstroCookies): Promise<DiscordUser | null> {
-	const raw = cookies.get(process.env.SESSION_COOKIE_NAME || "spa_session")?.value;
-	if (!raw) return null;
-
-	let accessToken: string | undefined;
-	try {
-		accessToken = JSON.parse(raw)?.access_token;
-	} catch {
-		return null;
-	}
-
+	const accessToken = sessionCookieService.readAccessToken(cookies);
 	return accessToken ? lookupUser(accessToken) : null;
 }
 

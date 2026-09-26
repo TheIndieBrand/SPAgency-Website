@@ -2,6 +2,7 @@ import type { APIRoute } from "astro";
 import { botInviteUrl, getBotGuildIds, getUserGuilds, guildIconUrl, hasAdminAccess } from "../../../lib/discord";
 import { MODULES_TOTAL, overviewRepository } from "../../../lib/db/OverviewRepository";
 import { json } from "../../../lib/session";
+import { sessionCookieService } from "../../../lib/SessionCookieService";
 
 export const prerender = false;
 
@@ -9,15 +10,7 @@ export const prerender = false;
 // lo único lento del dashboard (dos llamadas a Discord), así que la página se
 // pinta primero y pide esto aparte, mientras muestra tarjetas de carga.
 export const GET: APIRoute = async ({ cookies }) => {
-	const cookieName = process.env.SESSION_COOKIE_NAME || "spa_session";
-	const raw = cookies.get(cookieName)?.value;
-
-	let accessToken: string | undefined;
-	try {
-		accessToken = raw ? JSON.parse(raw)?.access_token : undefined;
-	} catch {
-		accessToken = undefined;
-	}
+	const accessToken = sessionCookieService.readAccessToken(cookies);
 	if (!accessToken) return json({ error: "unauthorized" }, 401);
 
 	try {
@@ -25,7 +18,7 @@ export const GET: APIRoute = async ({ cookies }) => {
 
 		// Discord rechazó el token: la sesión ya no vale.
 		if (!userGuilds) {
-			cookies.delete(cookieName, { path: "/" });
+			sessionCookieService.clear(cookies);
 			return json({ error: "unauthorized" }, 401);
 		}
 
