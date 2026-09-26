@@ -4,7 +4,7 @@
 import { gsap } from "gsap";
 import type { SceneRefs } from "../dom";
 import { createStarField } from "../../star-field";
-import { createStepsAct, STEP_CONTACT_OFFSETS, STEP_RADIUS, wobble } from "../../steps-act";
+import { createStepsAct, StepContactOffsets, StepRadius, wobble } from "../../steps-act";
 import { createCamera, smoothstep01 } from "./camera";
 import { createCtaRenderer } from "./cta-render";
 import {
@@ -175,7 +175,7 @@ export function createOutro(r: SceneRefs) {
 		const absorb = stepsAct.starAbsorb.k;
 		gsap.set(outroLineStar, {
 			x: cx + (tip.x + dx - shakeX - cx) * z,
-			y: cy + (tip.y + dy - shakeY - cy) * z + STEP_RADIUS * absorb * z,
+			y: cy + (tip.y + dy - shakeY - cy) * z + StepRadius * absorb * z,
 			scale: z * (1 - 0.85 * absorb),
 			opacity: 1 - absorb,
 		});
@@ -340,7 +340,7 @@ export function createOutro(r: SceneRefs) {
 		const axisWorldX = cameraAt(OUTRO_TURN_END).x + OUTRO_TIP_FINAL_X * W;
 		stepsAct.layout(
 			axisWorldX,
-			(k) => cameraAt(LINE_CENTER_AT + STEP_CONTACT_OFFSETS[k]).y + H * OUTRO_TIP_FINAL_Y + STEP_RADIUS,
+			(k) => cameraAt(LINE_CENTER_AT + StepContactOffsets[k]).y + H * OUTRO_TIP_FINAL_Y + StepRadius,
 		);
 		// El agujero negro (parte B) está en el mismo eje, a la altura a la que la
 		// punta llega cuando la cámara frena en BH_CENTER_AT: queda EXACTAMENTE bajo
