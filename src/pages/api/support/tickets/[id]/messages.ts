@@ -2,20 +2,19 @@ import type { APIRoute } from "astro";
 import { json, requireUser } from "../../../../../lib/session";
 import { botFailure, getTicketMessages, sendTicketMessage } from "../../../../../lib/support-bot";
 import { renderMessageHtml, safeAvatar } from "../../../../../lib/support-format";
+import { MaxMessageLength } from "../../../../../lib/Ticket.constants";
 
 export const prerender = false;
 
-const MAX_MESSAGE = 2000;
-
-// Consulta de mensajes nuevos (la web la repite cada pocos segundos). Devuelve
-// el contenido ya saneado y convertido a HTML: el navegador nunca recibe
-// markdown crudo para pintar.
+// polls for new messages (the web repeats this every few seconds). returns
+// the content already sanitized and turned into html: the browser never
+// receives raw markdown to render.
 export const GET: APIRoute = async ({ request, cookies, params, url }) => {
 	const auth = await requireUser(request, cookies);
 	if ("response" in auth) return auth.response;
 
-	// El cursor es un ID de mensaje de Discord (solo dígitos); cualquier otra
-	// cosa se descarta en vez de reenviarla al bot.
+	// the cursor is a discord message id (digits only); anything else is
+	// dropped instead of being forwarded to the bot.
 	const afterParam = url.searchParams.get("after");
 	const after = afterParam && /^\d{1,25}$/.test(afterParam) ? afterParam : undefined;
 
@@ -36,7 +35,7 @@ export const GET: APIRoute = async ({ request, cookies, params, url }) => {
 	return json({ messages });
 };
 
-// El usuario escribe en su ticket.
+// the user writes in their ticket.
 export const POST: APIRoute = async ({ request, cookies, params }) => {
 	const auth = await requireUser(request, cookies);
 	if ("response" in auth) return auth.response;
@@ -44,7 +43,7 @@ export const POST: APIRoute = async ({ request, cookies, params }) => {
 	const body = (await request.json().catch(() => null)) as Record<string, unknown> | null;
 	const content = typeof body?.content === "string" ? body.content.trim() : "";
 
-	if (!content || content.length > MAX_MESSAGE) {
+	if (!content || content.length > MaxMessageLength) {
 		return json({ error: "invalid_body", message: "El mensaje está vacío o es demasiado largo." }, 400);
 	}
 

@@ -1,72 +1,72 @@
-// Acto de los pasos ("Configurado en tres pasos"): cada paso es un NODO del
-// camino que sigue la asíntota. Este módulo coloca los nodos en coordenadas
-// del MUNDO de la cámara (la misma que arrastra el fondo, la línea y las
-// tarjetas — ver intro-scene.ts), detecta el instante en que la punta de la
-// asíntota toca cada nodo y dispara sus efectos.
+// steps act ("configured in three steps"): each step is a NODE on the path
+// the asymptote follows. this module places the nodes in the camera's WORLD
+// coordinates (the same one dragging the background, the line and the cards
+// — see intro-scene.ts), detects the moment the asymptote's tip touches each
+// node, and fires its effects.
 //
-// Reparto de responsabilidades:
-//  · Lo continuo (posición de la cámara, del camino, de los nodos) va atado al
-//    scroll y se recalcula en cada render(): es función pura del tiempo.
-//  · Los IMPACTOS (relleno, aro continuo, onda, chispas, shake) son animaciones
-//    en TIEMPO REAL que se disparan al cruzar cada contacto. Si fueran
-//    scrub, al scrollear despacio el shake saldría en cámara lenta. El estado
-//    "completado" sí es función del tiempo: al retroceder por debajo del
-//    contacto el nodo se restaura.
+// division of responsibilities:
+//  · the continuous part (camera position, path, nodes) is tied to scroll
+//    and recomputed on every render(): it's a pure function of time.
+//  · the IMPACTS (fill, solid ring, shockwave, sparks, shake) are REAL-TIME
+//    animations fired when crossing each contact point. if they were
+//    scrubbed, scrolling slowly would put the shake in slow motion. the
+//    "completed" state IS a function of time: scrolling back below the
+//    contact point restores the node.
 import { gsap } from "gsap";
 
-// Instantes de contacto, en unidades de timeline RELATIVAS a LINE_CENTER_AT.
-export const STEP_CONTACT_OFFSETS = [30.4, 34.0, 37.6];
+// contact moments, in timeline units RELATIVE to LINE_CENTER_AT.
+export const StepContactOffsets = [30.4, 34.0, 37.6];
 
-// Radio del aro (px): la punta toca el nodo por arriba, así que el centro del
-// nodo queda STEP_RADIUS por debajo de la punta en el instante de contacto.
-export const STEP_RADIUS = 34;
+// ring radius (px): the tip touches the node from above, so the node's
+// center sits StepRadius below the tip at the contact moment.
+export const StepRadius = 34;
 
-// "Hit-stop": la cámara se frena un instante en cada contacto para dar peso al
-// impacto (más fuerte en cada paso). La ventana empieza un poco antes del
-// contacto y dura HIT_LEN unidades; el freno sigue un sin² (suave).
-const STEP_HIT_DEPTH = [0.45, 0.55, 0.7];
-const HIT_LEAD = 0.15;
-const HIT_LEN = 1.0;
+// "hit-stop": the camera briefly slows at each contact to give the impact
+// weight (stronger with each step). the window starts a bit before contact
+// and lasts HitLen units; the brake follows a sin² curve (smooth).
+const StepHitDepth = [0.45, 0.55, 0.7];
+const HitLead = 0.15;
+const HitLen = 1.0;
 
 export function hitStopFactor(rel: number): number {
 	let factor = 1;
-	for (let k = 0; k < STEP_CONTACT_OFFSETS.length; k++) {
-		const u = (rel - (STEP_CONTACT_OFFSETS[k] - HIT_LEAD)) / HIT_LEN;
-		if (u > 0 && u < 1) factor *= 1 - STEP_HIT_DEPTH[k] * Math.sin(Math.PI * u) ** 2;
+	for (let k = 0; k < StepContactOffsets.length; k++) {
+		const u = (rel - (StepContactOffsets[k] - HitLead)) / HitLen;
+		if (u > 0 && u < 1) factor *= 1 - StepHitDepth[k] * Math.sin(Math.PI * u) ** 2;
 	}
 	return factor;
 }
 
-// Intensidad de cada impacto: cada paso "pega" más fuerte que el anterior.
+// intensity of each impact: each step "hits" harder than the previous one.
 interface Level {
-	cam: number; // amplitud del shake de cámara (px)
+	cam: number; // camera shake amplitude (px)
 	camDur: number; // s
-	text: number; // amplitud del shake del texto (px)
-	rot: number; // grados
+	text: number; // text shake amplitude (px)
+	rot: number; // degrees
 	textDur: number; // s
 	sparks: number;
 	shocks: number;
 	sparkDist: [number, number];
 }
-const LEVELS: Level[] = [
+const Levels: Level[] = [
 	{ cam: 3, camDur: 0.5, text: 6, rot: 0.8, textDur: 0.55, sparks: 12, shocks: 1, sparkDist: [46, 84] },
 	{ cam: 6, camDur: 0.6, text: 10, rot: 1.4, textDur: 0.65, sparks: 14, shocks: 1, sparkDist: [56, 100] },
 	{ cam: 13, camDur: 1.0, text: 19, rot: 2.6, textDur: 1.0, sparks: 14, shocks: 2, sparkDist: [70, 130] },
 ];
 
-// Ruido determinista de varias frecuencias (u en segundos): sacudida seca, no
-// una oscilación limpia. Sin Math.random → mismo shake en cada reproducción.
+// deterministic multi-frequency noise (u in seconds): a sharp jolt, not a
+// clean oscillation. no Math.random → same shake on every playback.
 export const wobble = (u: number, seed: number) =>
 	Math.sin(u * 46 + seed) * 0.55 + Math.sin(u * 83 + seed * 1.9) * 0.3 + Math.sin(u * 131 + seed * 2.7) * 0.15;
 
 export interface StepsFrame {
 	W: number;
 	H: number;
-	camX: number; // cámara (ya con el shake sumado)
+	camX: number; // camera (with the shake already added)
 	camY: number;
-	dx: number; // desplazamiento "settle" de la asíntota al centro
+	dx: number; // the asymptote's "settle" offset toward the center
 	dy: number;
-	zoom: number; // zoom de la cámara respecto al centro de la pantalla (cx, cy)
+	zoom: number; // camera zoom relative to the screen's center (cx, cy)
 	cx: number;
 	cy: number;
 }
@@ -82,7 +82,7 @@ interface NodeParts {
 	num: SVGElement;
 	text: HTMLElement;
 	textInner: HTMLElement;
-	side: 1 | -1; // +1: texto a la derecha del eje; -1: a la izquierda
+	side: 1 | -1; // +1: text to the right of the axis; -1: to the left
 }
 
 export function createStepsAct(nodes: HTMLElement[], requestRender: () => void) {
@@ -100,16 +100,16 @@ export function createStepsAct(nodes: HTMLElement[], requestRender: () => void) 
 		side: i % 2 === 0 ? 1 : -1,
 	}));
 
-	// Estado compartido con el render principal.
-	const shake = { x: 0, y: 0 }; // shake de CÁMARA
-	const starAbsorb = { k: 0 }; // 0 → la estrella está en la punta; 1 → absorbida por el nodo
+	// state shared with the main render.
+	const shake = { x: 0, y: 0 }; // CAMERA shake
+	const starAbsorb = { k: 0 }; // 0 → the star is at the tip; 1 → absorbed by the node
 	const worldY: number[] = parts.map(() => 0);
 	let worldX = 0;
 	const done = parts.map(() => false);
 	const effects: (gsap.core.Timeline | null)[] = parts.map(() => null);
 	let shakeTween: gsap.core.Tween | null = null;
 
-	// Estado inicial de cada nodo (también lo que se restaura al retroceder).
+	// each node's initial state (also what's restored when scrolling back).
 	const resetNode = (k: number) => {
 		const p = parts[k];
 		gsap.set(p.ringDash, { opacity: 1 });
@@ -125,32 +125,32 @@ export function createStepsAct(nodes: HTMLElement[], requestRender: () => void) 
 
 	const complete = (k: number) => {
 		const p = parts[k];
-		const lv = LEVELS[Math.min(k, LEVELS.length - 1)];
+		const lv = Levels[Math.min(k, Levels.length - 1)];
 		effects[k]?.kill();
 		resetNode(k);
 
 		const tl = gsap.timeline();
 		effects[k] = tl;
 
-		// 1) El aro punteado se apaga y se cierra a trazo continuo; el disco se
-		//    rellena con un barrido horario (círculo grueso con dashoffset).
+		// 1) the dashed ring fades and closes into a solid stroke; the disk
+		//    fills with a clockwise sweep (thick circle with dashoffset).
 		tl.to(p.ringDash, { opacity: 0, duration: 0.25, ease: "power1.out" }, 0)
 			.to(p.ringSolid, { strokeDashoffset: 0, duration: 0.55, ease: "power2.out" }, 0.05)
 			.to(p.ringFill, { strokeDashoffset: 0, duration: 0.75, ease: "power2.inOut" }, 0.1);
 
-		// 2) El número se enciende y da un pequeño rebote al cerrarse el disco.
+		// 2) the number lights up and gives a small bounce as the disk closes.
 		tl.to(p.num, { attr: { fill: "#ffffff" }, duration: 0.25 }, 0.4)
 			.to(p.num, { scale: 1.28, svgOrigin: "36 37", duration: 0.14, ease: "power2.out" }, 0.55)
 			.to(p.num, { scale: 1, svgOrigin: "36 37", duration: 0.45, ease: "elastic.out(1, 0.5)" }, 0.69);
 
-		// 3) Brillo: se enciende de golpe y se queda en un resplandor más suave.
+		// 3) glow: lights up all at once and settles into a softer shine.
 		tl.fromTo(p.glow, { opacity: 0, scale: 0.6 }, { opacity: 1, scale: 1, duration: 0.4, ease: "power2.out" }, 0.3).to(
 			p.glow,
 			{ opacity: 0.55, duration: 1.2, ease: "power1.inOut" },
 			0.7,
 		);
 
-		// 4) Onda(s) expansiva(s).
+		// 4) shockwave(s).
 		p.shocks.slice(0, lv.shocks).forEach((shock, s) => {
 			tl.fromTo(
 				shock,
@@ -160,7 +160,7 @@ export function createStepsAct(nodes: HTMLElement[], requestRender: () => void) 
 			);
 		});
 
-		// 5) Chispas: ráfaga radial, mitad blancas y mitad azules.
+		// 5) sparks: a radial burst, half white and half blue.
 		p.sparks.slice(0, lv.sparks).forEach((spark, s) => {
 			const angle = (s / lv.sparks) * Math.PI * 2 + (k + 1) * 0.37 + (s % 3) * 0.11;
 			const dist = lv.sparkDist[0] + ((s * 37) % 100) / 100 * (lv.sparkDist[1] - lv.sparkDist[0]);
@@ -180,10 +180,10 @@ export function createStepsAct(nodes: HTMLElement[], requestRender: () => void) 
 			);
 		});
 
-		// 6) El texto entra de golpe (borroso, grande, desplazado) y se sacude.
+		// 6) the text snaps in (blurred, large, offset) and shakes.
 		gsap.set(p.text, { transformOrigin: p.side === 1 ? "0% 50%" : "100% 50%" });
-		// Al terminar la entrada se quita el filtro (un blur(0px) residual crearía
-		// una capa de composición para nada).
+		// once the entrance finishes the filter is removed (a leftover
+		// blur(0px) would create a compositing layer for nothing).
 		tl.set(p.text, { filter: "none" }, 0.8);
 		tl.fromTo(
 			p.text,
@@ -214,7 +214,7 @@ export function createStepsAct(nodes: HTMLElement[], requestRender: () => void) 
 			0.42,
 		);
 
-		// 7) Shake de cámara: al golpe del contacto (no al texto).
+		// 7) camera shake: on the contact hit (not on the text).
 		const camProxy = { p: 0 };
 		shakeTween?.kill();
 		shakeTween = gsap.to(camProxy, {
@@ -236,7 +236,7 @@ export function createStepsAct(nodes: HTMLElement[], requestRender: () => void) 
 			},
 		});
 
-		// 8) La estrella de la punta se absorbe dentro del primer nodo.
+		// 8) the tip's star gets absorbed into the first node.
 		if (k === 0) {
 			gsap.to(starAbsorb, { k: 1, duration: 0.4, ease: "power2.in", onUpdate: requestRender, overwrite: true });
 		}
@@ -258,8 +258,8 @@ export function createStepsAct(nodes: HTMLElement[], requestRender: () => void) 
 		shake,
 		starAbsorb,
 
-		// Posición de los nodos en el MUNDO: todos sobre el eje (axisWorldX), cada uno
-		// a la altura donde su aro toca la punta en su instante de contacto.
+		// nodes' position in WORLD space: all on the axis (axisWorldX), each at
+		// the height where its ring touches the tip at its contact moment.
 		layout(axisWorldX: number, contactWorldY: (k: number) => number) {
 			worldX = axisWorldX;
 			for (let k = 0; k < parts.length; k++) worldY[k] = contactWorldY(k);
@@ -267,10 +267,10 @@ export function createStepsAct(nodes: HTMLElement[], requestRender: () => void) 
 		worldX: () => worldX,
 		worldY: (k: number) => worldY[k],
 
-		// Estado "completado" como función del tiempo (rel = t − LINE_CENTER_AT).
+		// "completed" state as a function of time (rel = t − LINE_CENTER_AT).
 		setTime(rel: number) {
 			for (let k = 0; k < parts.length; k++) {
-				const isDone = rel >= STEP_CONTACT_OFFSETS[k];
+				const isDone = rel >= StepContactOffsets[k];
 				if (isDone && !done[k]) {
 					done[k] = true;
 					complete(k);
@@ -283,10 +283,10 @@ export function createStepsAct(nodes: HTMLElement[], requestRender: () => void) 
 
 		render(f: StepsFrame) {
 			for (let k = 0; k < parts.length; k++) {
-				// Mundo → pantalla, con el zoom de la cámara respecto al centro.
+				// world → screen, with the camera's zoom relative to the center.
 				const x = f.cx + (worldX - f.camX + f.dx - f.cx) * f.zoom;
 				const y = f.cy + (worldY[k] - f.camY + f.dy - f.cy) * f.zoom;
-				// El nodo mide ~72px de aro, su brillo y la onda llegan a ~250px.
+				// the node's ring is ~72px, its glow and shockwave reach ~250px.
 				const margin = 260 * f.zoom;
 				const visible = y > -margin && y < f.H + margin;
 				const node = parts[k].root;

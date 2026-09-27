@@ -4,17 +4,17 @@ export const prerender = false;
 import Layout from "../../../layouts/Layout.astro";
 import DashboardShell from "../../../components/dashboard/DashboardShell.astro";
 import { requireGuildAccess } from "../../../lib/dashboard-guard";
-import { describeActivity, listActivity } from "../../../lib/db/activity";
-import { loadOrCreateGuildConfig } from "../../../lib/db/guild-config";
+import { activityRepository, describeActivity } from "../../../lib/db/ActivityRepository";
+import { guildConfigRepository } from "../../../lib/db/GuildConfigRepository";
 
 const result = await requireGuildAccess(Astro, Astro.params.guildId);
 if ("redirect" in result) return result.redirect;
 const { guild } = result;
 
-const loaded = await loadOrCreateGuildConfig(guild.id);
+const loaded = await guildConfigRepository.loadOrCreateGuildConfig(guild.id);
 if (!loaded.ok) return Astro.rewrite(`/dashboard/unavailable?reason=${loaded.reason}`);
 const { protection } = loaded.config;
-const rows = await listActivity(guild.id, 200);
+const rows = await activityRepository.listActivity(guild.id, 200);
 const activityFailed = rows === null;
 const activity = (rows ?? []).map(describeActivity);
 

@@ -1,6 +1,6 @@
-// Piezas de interfaz del chat de soporte que comparten la conversación en vivo
-// (support-chat.ts) y el transcript. El marcado es el mismo que el de
-// src/components/support/SupportMessage.astro: si se toca uno, se toca el otro.
+// support chat ui pieces shared by the live conversation (support-chat.ts)
+// and the transcript. the markup is the same as
+// src/components/support/SupportMessage.astro: if one is touched, so is the other.
 
 export interface ChatMessage {
 	id: string;

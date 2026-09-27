@@ -1,5 +1,5 @@
-// Monta la escena de entrada del Home: consulta el DOM, mide, construye el timeline
-// (un acto por módulo, en el mismo orden de siempre) y lo engancha al scroll.
+// mounts the home page's intro scene: queries the dom, measures, builds the
+// timeline (one act per module, in the usual order) and hooks it to scroll.
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { queryScene } from "./dom";
@@ -21,32 +21,32 @@ export function mountScene() {
 	const refs = queryScene();
 
 	if (!refs || reduceMotion) {
-		// Faltan piezas del DOM (o hay reduced-motion): se abandona la escena y se
-		// vuelve a la versión simple. Quitar el atributo basta: el CSS global muestra
-		// las secciones static-only y oculta las scene-only.
+		// missing dom pieces (or reduced-motion is on): the scene is abandoned
+		// and it falls back to the simple version. removing the attribute is
+		// enough: the global css shows the static-only sections and hides the scene-only ones.
 		delete document.documentElement.dataset.scene;
 		return;
 	}
 
-	// data-scene="on" ya lo puso el script de <head> de index.astro (el CSS global
-	// alterna la escena y la versión simple con él, y el footer va en negro para
-	// enlazar sin costura con el espacio).
+	// data-scene="on" was already set by index.astro's <head> script (the
+	// global css toggles between the scene and the simple version off it,
+	// and the footer goes black to blend seamlessly with space).
 	const { introScene } = refs;
 	const m = prepareScene(refs);
 
-	// El pin se crea ANTES de construir los actos, como siempre: al pinear,
-	// ScrollTrigger le pone a #intro-scene un transform y una altura fija, y eso lo
-	// convierte en el bloque contenedor de los elementos `fixed` de la escena. Las
-	// medidas de layoutOutro (al construir el acto final) dependen de ello, así que
-	// crear el pin después cambiaría la geometría del outro.
+	// the pin is created BEFORE building the acts, as always: on pinning,
+	// ScrollTrigger gives #intro-scene a transform and a fixed height, which
+	// turns it into the containing block for the scene's `fixed` elements.
+	// layoutOutro's measurements (when building the final act) depend on
+	// that, so creating the pin afterward would change the outro's geometry.
 	//
-	// Su largo, en cambio, es proporcional a la duración REAL del timeline: `end`
-	// se evalúa de forma perezosa (invalidateOnRefresh) y un refresh al terminar de
-	// construir lo recalcula con todos los actos ya añadidos. Se redondea a la
-	// décima para que un retoque mínimo de un acto no cambie el ritmo del scroll.
-	// Distancia fija en vez de "+=100%": ese porcentaje se mide sobre el alto del
-	// propio elemento pineado, que aquí no es una referencia estable y llegó a
-	// generar un spacer de más de 12000px.
+	// its length, though, is proportional to the timeline's REAL duration:
+	// `end` is evaluated lazily (invalidateOnRefresh) and a refresh once
+	// building finishes recalculates it with every act already added.
+	// rounded to a tenth so a tiny tweak to one act doesn't change the
+	// scroll pace. a fixed distance instead of "+=100%": that percentage is
+	// measured against the pinned element's own height, which isn't a
+	// stable reference here and once produced a spacer over 12000px tall.
 	const tl = gsap.timeline({ paused: true });
 	const sceneUnits = () => (tl.duration() > 0 ? Math.round(tl.duration() * 10) / 10 : TL_UNITS_BASE);
 	const st = ScrollTrigger.create({
@@ -70,14 +70,14 @@ export function mountScene() {
 	addFeaturesAct(tl, refs, starRot);
 	addFinaleAct(tl, refs, outro);
 
-	// Solo en desarrollo (Vite lo elimina del build): expone el timeline para
-	// poder inspeccionar la escena por consola — tl.scrollTrigger.disable(false)
-	// y tl.time(t) sitúan la escena en cualquier instante sin scrollear.
+	// development only (vite strips it from the build): exposes the timeline
+	// so the scene can be inspected from the console — tl.scrollTrigger.disable(false)
+	// and tl.time(t) put the scene at any moment without scrolling.
 	if (import.meta.env.DEV) (window as unknown as { __introTl?: gsap.core.Timeline }).__introTl = tl;
 
-	// El retumbo del agujero negro es en tiempo real: mientras la escena esté
-	// pinada y el tiempo haya pasado de RUMBLE_START, se repinta cada frame aunque
-	// el usuario no scrollee (si no, temblaría solo al mover el scroll).
+	// the black hole's rumble runs in real time: while the scene is pinned
+	// and time has passed RUMBLE_START, it repaints every frame even if the
+	// user isn't scrolling (otherwise it would only shake while scrolling).
 	gsap.ticker.add(() => {
 		if (outro.clock.t < RUMBLE_START || !tl.scrollTrigger?.isActive) return;
 		outro.render(outro.clock.t);
@@ -85,7 +85,7 @@ export function mountScene() {
 
 	tl.addLabel("features", ANCHOR_FEATURES_AT).addLabel("how", ANCHOR_HOW_AT);
 
-	// Con todos los actos añadidos, la duración ya es la real: recalcula el largo.
+	// with every act added, the duration is now the real one: recalculates the length.
 	st.refresh();
 
 	bindNavAnchors(tl);

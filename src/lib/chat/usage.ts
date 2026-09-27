@@ -1,10 +1,10 @@
 import { dailyLimit } from "./config";
-import { addUsage, getUsage, getUsageDays } from "./db";
+import { chatRepository } from "./ChatRepository";
 
-// El límite diario se mide en "unidades" ponderadas por lo que cuesta cada tipo
-// de token en el proveedor, no en tokens brutos: si no, el contexto cacheado
-// (que casi sale gratis) se comería el cupo igual que la salida (que es lo caro).
-// Con estos pesos, 100.000 unidades son unas decenas de conversaciones al día.
+// the daily limit is measured in "units" weighted by what each token type
+// costs the provider, not raw tokens: otherwise cached context (which is
+// nearly free) would eat the quota the same as output (which is the expensive
+// part). with these weights, 100,000 units is a few dozen conversations a day.
 export const WEIGHTS = { input: 1, cachedInput: 0.1, output: 4 };
 
 export interface TokenUsage {
@@ -20,8 +20,8 @@ export function weighted(usage: TokenUsage): number {
 	);
 }
 
-// Cuando no llega el uso real (corte de conexión, cancelación) se estima por
-// longitud: ~3,5 caracteres por token en español. Sesgado al alza a propósito.
+// when the real usage doesn't arrive (dropped connection, cancellation) it's
+// estimated by length: ~3.5 characters per token in spanish. biased upward on purpose.
 export function estimateUsage(promptChars: number, completionChars: number): TokenUsage {
 	return {
 		promptTokens: Math.ceil(promptChars / 3.5),
@@ -30,8 +30,7 @@ export function estimateUsage(promptChars: number, completionChars: number): Tok
 	};
 }
 
-// El día cambia a medianoche de Madrid, que es cuando esperan el reinicio los
-// usuarios de la web.
+// the day rolls over at midnight in madrid, which is when web users expect the reset.
 const TIME_ZONE = "Europe/Madrid";
 
 export function usageDay(now = new Date()): string {
@@ -59,7 +58,7 @@ export interface UsageState {
 
 export function usageState(userId: string): UsageState {
 	const limit = dailyLimit();
-	const used = getUsage(userId, usageDay());
+	const used = chatRepository.getUsage(userId, usageDay());
 	return {
 		used,
 		limit,
@@ -68,14 +67,14 @@ export function usageState(userId: string): UsageState {
 	};
 }
 
-// Anota el gasto de una llamada al modelo y devuelve las unidades que costó.
+// records the cost of a model call and returns the units it cost.
 export function recordUsage(userId: string, usage: TokenUsage): number {
 	const units = weighted(usage);
-	addUsage(userId, usageDay(), { units, ...usage });
+	chatRepository.addUsage(userId, usageDay(), { units, ...usage });
 	return units;
 }
 
-// Detalle para el comando /usage del chat.
+// detail for the chat's /usage command.
 export interface UsageReport extends UsageState {
 	percent: number;
 	requests: number;
@@ -96,7 +95,7 @@ function lastDays(count: number): string[] {
 export function usageReport(userId: string): UsageReport {
 	const state = usageState(userId);
 	const days = lastDays(7);
-	const rows = new Map(getUsageDays(userId, days).map((r) => [r.day, r]));
+	const rows = new Map(chatRepository.getUsageDays(userId, days).map((r) => [r.day, r]));
 	const today = rows.get(days[6]);
 
 	const requests = today?.requests ?? 0;

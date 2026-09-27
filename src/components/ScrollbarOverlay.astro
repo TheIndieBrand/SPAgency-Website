@@ -1,11 +1,12 @@
 ---
-// Scrollbar propia para todas las páginas menos el home (que no lleva ninguna).
-// Se oculta la nativa y se dibuja esta encima: aparece al hacer scroll, al acercar
-// el ratón al borde derecho o al arrastrarla, y se desvanece sola pasado un rato.
-// Rueda, teclado y táctil siguen siendo el scroll nativo del documento; esto solo
-// dibuja y permite arrastrar. El atributo data-overlay-scroll lo pone Layout antes
-// del primer pintado (solo con ratón: en táctil se queda la nativa, que ya es
-// superpuesta), para que no haya salto de layout al quitarla.
+// custom scrollbar for every page except the home page (which has none). the
+// native one is hidden and this one is drawn on top: it appears on scroll,
+// when the mouse nears the right edge, or while dragging it, and fades out
+// on its own after a while. wheel, keyboard and touch scrolling stay the
+// document's native scroll; this only draws and allows dragging. the
+// data-overlay-scroll attribute is set by Layout before the first paint
+// (mouse only: on touch the native one stays, which is already overlaid),
+// so removing it causes no layout shift.
 ---
 
 <div id="scrollbar-overlay" class="sb-track" aria-hidden="true">
@@ -20,7 +21,7 @@
 		display: none;
 	}
 
-	/* Franja del borde derecho: invisible y sin capturar clics hasta que se muestra. */
+	/* right-edge strip: invisible and not capturing clicks until shown. */
 	.sb-track {
 		position: fixed;
 		top: 0;
@@ -46,7 +47,7 @@
 		background-color: rgba(255, 255, 255, 0.035);
 	}
 
-	/* Pulgar: gris discreto; azul de marca al acercar el ratón, más vivo al arrastrar. */
+	/* thumb: discreet gray; brand blue on hover, brighter while dragging. */
 	.sb-thumb {
 		position: absolute;
 		top: 0;
@@ -82,9 +83,9 @@
 	const thumb = track?.querySelector<HTMLElement>(".sb-thumb");
 
 	if (track && thumb && root.hasAttribute("data-overlay-scroll")) {
-		const HIDE_DELAY = 900; // ms visible tras la última señal
-		const EDGE = 28; // px del borde derecho que cuentan como "pegado"
-		const MIN_THUMB = 40;
+		const HideDelay = 900; // ms visible after the last signal
+		const Edge = 28; // px from the right edge that count as "against it"
+		const MinThumb = 40;
 
 		let hideTimer = 0;
 		let frame = 0;
@@ -98,7 +99,7 @@
 			const el = scroller();
 			const view = el.clientHeight;
 			const max = el.scrollHeight - view;
-			const size = Math.max(MIN_THUMB, (view / el.scrollHeight) * view);
+			const size = Math.max(MinThumb, (view / el.scrollHeight) * view);
 			return { el, max, size, free: view - size, view };
 		};
 
@@ -123,7 +124,7 @@
 			window.clearTimeout(hideTimer);
 			hideTimer = window.setTimeout(() => {
 				if (!dragging && !hovering && !nearEdge) track.removeAttribute("data-visible");
-			}, HIDE_DELAY);
+			}, HideDelay);
 		};
 
 		window.addEventListener(
@@ -136,11 +137,11 @@
 			{ passive: true },
 		);
 
-		// Ratón pegado al borde derecho: aparece; al alejarlo, se desvanece.
+		// mouse against the right edge: it appears; moving away, it fades out.
 		document.addEventListener(
 			"mousemove",
 			(event) => {
-				const near = event.clientX >= window.innerWidth - EDGE;
+				const near = event.clientX >= window.innerWidth - Edge;
 				if (near === nearEdge) return;
 				nearEdge = near;
 				if (near) {
@@ -168,7 +169,7 @@
 			scheduleHide();
 		});
 
-		// Arrastrar el pulgar.
+		// dragging the thumb.
 		let startY = 0;
 		let startScroll = 0;
 		thumb.addEventListener("pointerdown", (event) => {
@@ -196,7 +197,7 @@
 		thumb.addEventListener("pointerup", endDrag);
 		thumb.addEventListener("pointercancel", endDrag);
 
-		// Clic en el hueco: salta una página hacia allí, como la nativa.
+		// click on the empty track: jumps a page in that direction, like the native one.
 		track.addEventListener("pointerdown", (event) => {
 			if (event.target !== track) return;
 			const m = metrics();

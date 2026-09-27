@@ -1,5 +1,5 @@
-// Formulario de /testimonios: contador de caracteres y envío. El comentario queda
-// PENDIENTE hasta que lo apruebe el staff; aquí solo se avisa de ello.
+// /testimonios form: character counter and submission. the comment stays
+// PENDING until staff approves it; this just informs the user of that.
 const form = document.getElementById("comment-form") as HTMLFormElement | null;
 
 if (form) {

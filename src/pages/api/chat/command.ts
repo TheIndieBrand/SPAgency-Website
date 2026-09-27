@@ -8,8 +8,8 @@ export const prerender = false;
 const NAMES = new Set<DashboardCommand>(["servidor", "config", "panico", "registros"]);
 
 // Comandos del chat sobre el dashboard (/servidor, /config, /panico, /registros).
-// No llaman al modelo. La identidad sale de la sesión; qué servidor se toca lo decide
-// la elección guardada del usuario, comprobada contra Discord en cada uso.
+// these don't call the model. identity comes from the session; which guild is
+// touched is decided by the user's saved choice, checked against discord on every use.
 export const POST: APIRoute = async ({ request, cookies }) => {
 	const auth = await requireUser(request, cookies);
 	if ("response" in auth) return auth.response;

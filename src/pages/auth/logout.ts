@@ -1,9 +1,9 @@
 import type { APIRoute } from "astro";
+import { sessionCookieService } from "../../lib/SessionCookieService";
 
 export const prerender = false;
 
 export const GET: APIRoute = ({ cookies, redirect }) => {
-	const cookieName = process.env.SESSION_COOKIE_NAME || "spa_session";
-	cookies.delete(cookieName, { path: "/" });
+	sessionCookieService.clear(cookies);
 	return redirect("/");
 };

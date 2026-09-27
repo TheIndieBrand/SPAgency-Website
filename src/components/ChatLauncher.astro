@@ -1,8 +1,8 @@
 ---
-// Botón flotante que abre el asistente en un panel, sin salir de la página.
-// El panel es la propia página /support/assistant en modo embebido (?embed=1),
-// dentro de un iframe: así hay una sola implementación del chat y no se carga
-// nada hasta que se abre por primera vez.
+// floating button that opens the assistant in a panel, without leaving the
+// page. the panel is the /support/assistant page itself in embedded mode
+// (?embed=1), inside an iframe: that way there's a single chat
+// implementation and nothing loads until it's opened for the first time.
 ---
 
 <div id="chat-launcher" class="fixed right-4 bottom-4 z-50 flex flex-col items-end gap-3 sm:right-6 sm:bottom-6">
@@ -37,7 +37,7 @@
 			panel.hidden = !open;
 			toggle.setAttribute("aria-expanded", String(open));
 			label.textContent = open ? "Cerrar" : "Asistente";
-			// Se carga la primera vez que se abre.
+			// loaded the first time it's opened.
 			if (open && !frame.src) frame.src = "/support/assistant?embed=1";
 		};
 

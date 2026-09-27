@@ -1,16 +1,16 @@
 ---
-// Botón de "me gusta" (corazón + contador). Se usa en las tarjetas de /testimonios
-// y en las entradas del changelog. El estado inicial lo pinta el servidor; el
-// script de abajo alterna al pulsar (de forma optimista) contra /api/likes. Si
-// hay varios botones del mismo target en la página, se actualizan a la vez.
-// Sin sesión, pulsarlo lleva al login de Discord y vuelve a la misma página.
+// "like" button (heart + counter). used on /testimonios cards and changelog
+// entries. the initial state is rendered by the server; the script below
+// toggles it on click (optimistically) against /api/likes. if several
+// buttons share the same target on the page, they update together. with no
+// session, clicking it goes to discord login and back to the same page.
 interface Props {
 	target: string;
 	count: number;
 	liked: boolean;
-	// Es un comentario del propio usuario: se ve el contador, pero no se puede pulsar.
+	// it's the user's own comment: the count shows, but it can't be clicked.
 	own?: boolean;
-	// Hay sesión (solo cambia la etiqueta que se anuncia).
+	// whether there's a session (only changes the announced label).
 	signedIn?: boolean;
 	class?: string;
 }
@@ -102,7 +102,7 @@ const label = own ? "Tu propio comentario" : !signedIn ? "Inicia sesión con Dis
 </style>
 
 <script>
-	// Un solo escuchador para todos los botones de la página (delegación).
+	// a single listener for every button on the page (delegation).
 	function paint(target: string, liked: boolean, count: number, pop = false) {
 		document.querySelectorAll<HTMLButtonElement>(`[data-like][data-target="${CSS.escape(target)}"]`).forEach((button) => {
 			button.setAttribute("aria-pressed", liked ? "true" : "false");
@@ -110,7 +110,7 @@ const label = own ? "Tu propio comentario" : !signedIn ? "Inicia sesión con Dis
 			if (counter) counter.textContent = String(count);
 			if (pop && liked) {
 				button.classList.remove("like-pop");
-				// Reinicia la animación aunque se pulse rápido.
+				// restarts the animation even on a rapid click.
 				void button.offsetWidth;
 				button.classList.add("like-pop");
 			}
@@ -125,7 +125,7 @@ const label = own ? "Tu propio comentario" : !signedIn ? "Inicia sesión con Dis
 		const wasLiked = button.getAttribute("aria-pressed") === "true";
 		const wasCount = Number(button.querySelector("[data-like-count]")?.textContent ?? 0);
 
-		// Optimista: se ve al instante y se corrige con lo que responda el servidor.
+		// optimistic: shows instantly and corrects with whatever the server responds.
 		button.dataset.busy = "1";
 		paint(target, !wasLiked, Math.max(0, wasCount + (wasLiked ? -1 : 1)), true);
 

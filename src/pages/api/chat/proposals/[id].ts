@@ -1,19 +1,18 @@
 import type { APIRoute } from "astro";
-import { PROPOSAL_TTL_MS, SETTINGS_PROPOSAL_TTL_MS } from "../../../../lib/chat/config";
-import { applySettings, outcomeNote, parsePayload } from "../../../../lib/chat/dashboard";
+import { ProposalTtlMs, SettingsProposalTtlMs } from "../../../../lib/chat/config";
+import { dashboardAssistantService } from "../../../../lib/chat/DashboardAssistantService";
 import { requireGuildApi } from "../../../../lib/dashboard-guard";
-import { renderMessageHtml } from "../../../../lib/support-format";
-import { addMessage, getProposal, moveProposal, setConversationTicket } from "../../../../lib/chat/db";
-import { ticketFirstMessage } from "../../../../lib/chat/ticket";
-import { userAvatarUrl } from "../../../../lib/discord";
+import { chatRepository } from "../../../../lib/chat/ChatRepository";
 import { json, requireUser } from "../../../../lib/session";
-import { botFailure, createTicket } from "../../../../lib/support-bot";
+import { botFailure } from "../../../../lib/support-bot";
+import { proposalConfirmationService } from "../../../../lib/ProposalConfirmationService";
 
 export const prerender = false;
 
-// Confirma o descarta la propuesta de ticket del asistente. El modelo solo
-// propone: quien abre el ticket es esta ruta, y solo si el dueño de la propuesta
-// pulsa el botón. El asunto y el resumen salen de lo guardado, no del cuerpo.
+// confirms or dismisses the assistant's ticket proposal. the model only
+// proposes: this route is what opens the ticket, and only if the proposal's
+// owner clicks the button. the subject and summary come from what's stored,
+// never from the request body.
 export const POST: APIRoute = async ({ request, cookies, params }) => {
 	const auth = await requireUser(request, cookies);
 	if ("response" in auth) return auth.response;
@@ -25,79 +24,47 @@ export const POST: APIRoute = async ({ request, cookies, params }) => {
 		return json({ error: "invalid_body", message: "Acción no válida." }, 400);
 	}
 
-	const proposal = getProposal(params.id ?? "");
+	const proposal = chatRepository.getProposal(params.id ?? "");
 	if (!proposal || proposal.userId !== user.id) {
 		return json({ error: "not_found", message: "Esa propuesta no existe." }, 404);
 	}
 
 	if (action === "dismiss") {
-		moveProposal(proposal.id, "pending", "dismissed");
+		chatRepository.moveProposal(proposal.id, { from: "pending", to: "dismissed" });
 		return json({ ok: true });
 	}
 
-	// Doble clic o dos pestañas: el ticket ya está abierto, se devuelve el mismo.
+	// double click or two tabs: the ticket is already open, the same one is returned.
 	if (proposal.status === "confirmed" && proposal.ticketId) {
 		return json({ ticketId: proposal.ticketId, url: `/support/tickets/${encodeURIComponent(proposal.ticketId)}` });
 	}
 	if (proposal.status !== "pending") {
 		return json({ error: "conflict", message: "Esta propuesta ya no está disponible." }, 409);
 	}
-	if (Date.now() - Date.parse(proposal.createdAt) > (proposal.kind === "settings" ? SETTINGS_PROPOSAL_TTL_MS : PROPOSAL_TTL_MS)) {
+	if (Date.now() - Date.parse(proposal.createdAt) > (proposal.kind === "settings" ? SettingsProposalTtlMs : ProposalTtlMs)) {
 		return json({ error: "expired", message: "Esta propuesta ha caducado. Pídele al asistente que la vuelva a preparar." }, 410);
 	}
-	// Cambios de configuración: quien confirma debe seguir siendo administrador del servidor
-	// (se comprueba ahora, no cuando se propuso) y cada cambio se vuelve a validar.
+
+	// settings changes: whoever confirms must still be an administrator of the
+	// guild (checked now, not when it was proposed), and every change is validated again.
 	if (proposal.kind === "settings") {
-		const payload = parsePayload(proposal.payload);
+		const payload = dashboardAssistantService.parsePayload(proposal.payload);
 		if (!payload) {
-			moveProposal(proposal.id, "pending", "dismissed");
+			chatRepository.moveProposal(proposal.id, { from: "pending", to: "dismissed" });
 			return json({ error: "invalid", message: "Esta propuesta ya no es válida. Pídele al asistente que la prepare de nuevo." }, 410);
 		}
 		const guard = await requireGuildApi(request, cookies, payload.guildId);
 		if ("response" in guard) return guard.response;
-		if (!moveProposal(proposal.id, "pending", "confirming")) {
-			return json({ error: "conflict", message: "Esta propuesta ya se está procesando." }, 409);
-		}
 
-		const outcomes = await applySettings(payload, user.id);
-		if (outcomes.every((o) => !o.ok && o.unavailable)) {
-			// La base no respondió: no se cambió nada y se puede reintentar.
-			moveProposal(proposal.id, "confirming", "pending");
-			return json({ error: "unavailable", message: "No se pudo guardar: la base de datos no responde. Inténtalo de nuevo." }, 503);
-		}
-		moveProposal(proposal.id, "confirming", "confirmed");
-		const note = outcomeNote(payload, outcomes);
-		addMessage({ conversationId: proposal.conversationId, role: "note", content: note });
-		return json({ applied: outcomes.filter((o) => o.ok).length, failed: outcomes.filter((o) => !o.ok).length, html: renderMessageHtml(note) });
+		const result = await proposalConfirmationService.confirmSettings(proposal, payload, user.id);
+		if (!result.ok) return json({ error: result.error, message: result.message }, result.status);
+		return json({ applied: result.applied, failed: result.failed, html: result.html });
 	}
 
-	if (!moveProposal(proposal.id, "pending", "confirming")) {
-		return json({ error: "conflict", message: "Esta propuesta ya se está procesando." }, 409);
-	}
-
-	const result = await createTicket({
-		userId: user.id,
-		username: user.global_name || user.username,
-		avatarUrl: userAvatarUrl(user),
-		subject: proposal.subject,
-		message: ticketFirstMessage(proposal, proposal.conversationId),
-	});
-
+	const result = await proposalConfirmationService.confirmTicket(proposal, user);
 	if (!result.ok) {
-		// No se abrió: la propuesta vuelve a estar disponible para reintentar.
-		moveProposal(proposal.id, "confirming", "pending");
-		return botFailure(result);
+		if ("botError" in result) return botFailure(result.botError);
+		return json({ error: result.error, message: result.message }, result.status);
 	}
-
-	const { ticketId } = result.data;
-	moveProposal(proposal.id, "confirming", "confirmed", ticketId);
-	setConversationTicket(proposal.conversationId, ticketId);
-	const url = `/support/tickets/${encodeURIComponent(ticketId)}`;
-	addMessage({
-		conversationId: proposal.conversationId,
-		role: "note",
-		content: `Ticket abierto: **${proposal.subject}**. Sigue la conversación con el staff en [tu ticket](${url}); su primer mensaje lo ha generado la IA con el resumen de este chat.`,
-	});
-
-	return json({ ticketId, url }, 201);
+	return json({ ticketId: result.ticketId, url: result.url }, 201);
 };

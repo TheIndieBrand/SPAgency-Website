@@ -1,6 +1,6 @@
 import type { DocPage } from "./types.ts";
 
-// Cómo se usa la propia web (no el bot): dashboard, asistente y soporte.
+// how to use the web itself (not the bot): dashboard, assistant and support.
 export const web: DocPage[] = [
 	{
 		slug: "dashboard",

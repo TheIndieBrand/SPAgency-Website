@@ -4,9 +4,9 @@ import { botFailure, closeTicket } from "../../../../../lib/support-bot";
 
 export const prerender = false;
 
-// El usuario cierra su ticket. El bot responde en cuanto empieza el cierre; el
-// transcript llega después por /api/support/transcripts y, con él guardado, el
-// bot borra el canal (entonces la consulta de mensajes empieza a dar 404).
+// the user closes their ticket. the bot responds as soon as closing starts;
+// the transcript arrives later via /api/support/transcripts, and once it's
+// stored the bot deletes the channel (message queries then start returning 404).
 export const POST: APIRoute = async ({ request, cookies, params }) => {
 	const auth = await requireUser(request, cookies);
 	if ("response" in auth) return auth.response;

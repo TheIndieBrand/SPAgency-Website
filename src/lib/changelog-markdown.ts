@@ -1,9 +1,9 @@
 import { Marked, type Tokens } from "marked";
 import sanitizeHtml from "sanitize-html";
 
-// Secciones habituales de un changelog → clase de acento (ver .changelog-prose
-// en global.css). Se reconocen por el texto del `###`, sin acentos y en
-// minúsculas, así que basta con escribir "### Agregado" y se colorea solo.
+// common changelog sections → accent class (see .changelog-prose in
+// global.css). recognized by the `###` text, lowercased with accents
+// stripped, so just writing "### Agregado" colors it automatically.
 const SECTION_KINDS: Record<string, "added" | "changed" | "fixed" | "removed"> = {
 	agregado: "added",
 	agregados: "added",
@@ -39,8 +39,8 @@ function normalize(text: string): string {
 const isSubtext = (text: string) => text.startsWith("-# ");
 const stripSubtext = (text: string) => text.replace(/^-# /gm, "");
 
-// Instancia aparte, sin renderer propio, solo para el markdown en línea de los
-// subtextos (así el renderer de abajo no depende de sí mismo).
+// separate instance, no renderer of its own, only for the inline markdown of
+// subtexts (so the renderer below doesn't depend on itself).
 const inline = new Marked({ gfm: true });
 
 const marked = new Marked({
@@ -51,7 +51,7 @@ const marked = new Marked({
 			const kind = depth === 3 ? SECTION_KINDS[normalize(text)] : undefined;
 			return `<h${depth}${kind ? ` class="cl-${kind}"` : ""}>${inner}</h${depth}>\n`;
 		},
-		// `-# texto` es el subtexto de Discord: un párrafo pequeño y apagado.
+		// `-# text` is discord's subtext: a small, muted paragraph.
 		paragraph({ text, tokens }: Tokens.Paragraph) {
 			if (!isSubtext(text)) return `<p>${this.parser.parseInline(tokens)}</p>\n`;
 			return `<p class="cl-sub">${inline.parseInline(stripSubtext(text))}</p>\n`;
@@ -59,10 +59,10 @@ const marked = new Marked({
 	},
 });
 
-// El markdown puede traer HTML crudo (incluido <script>): aunque solo lo
-// escriba el dueño, siempre se filtra antes de mostrarlo. Solo pasan las
-// etiquetas de texto habituales; nada de imágenes, iframes, estilos ni
-// manejadores de eventos, y solo enlaces http(s) y mailto.
+// the markdown can carry raw html (including <script>): even though only the
+// owner writes it, it's always filtered before display. only the usual text
+// tags pass through; no images, iframes, styles or event handlers, and only
+// http(s) and mailto links.
 function sanitize(html: string): string {
 	return sanitizeHtml(html, {
 		allowedTags: [
@@ -103,16 +103,16 @@ function sanitize(html: string): string {
 		allowedSchemes: ["http", "https", "mailto"],
 		allowProtocolRelative: false,
 		transformTags: {
-			// Un segundo `# ` dentro del cuerpo no compite con el título de la entrada.
+			// a second `# ` inside the body doesn't compete with the entry's title.
 			h1: "h2",
 			a: sanitizeHtml.simpleTransform("a", { rel: "noopener noreferrer" }),
 		},
 	});
 }
 
-// "DisChord Code Studio v1.9.1" → versión "v1.9.1" + nombre "DisChord Code Studio".
-// La versión se pinta grande y el nombre queda como texto secundario. Si el
-// título no lleva versión (algo tipo v1.9, 2.0.1-beta), version queda vacía.
+// "DisChord Code Studio v1.9.1" → version "v1.9.1" + name "DisChord Code Studio".
+// the version is shown large and the name stays as secondary text. if the
+// title carries no version (something like v1.9, 2.0.1-beta), version stays empty.
 const VERSION_RE = /\bv?\d+\.\d+(?:\.\d+)*(?:[-+][0-9A-Za-z.]+)?/;
 
 function splitTitle(title: string): { name: string; version: string } {
@@ -132,14 +132,14 @@ export interface RenderedMarkdown {
 	title: string;
 	name: string;
 	version: string;
-	// HTML en línea (ya saneado) del `-# **Actualízate**` bajo el título; "" si no hay.
+	// inline html (already sanitized) of the `-# **Actualízate**` under the title; "" if there is none.
 	subtitle: string;
 	html: string;
 }
 
-// El primer `# ` del markdown es el título (y la versión: "SP Agency v1.9.1");
-// se separa del cuerpo para que la página lo pinte con su propio estilo. Si
-// justo debajo hay un `-# subtítulo`, también se separa y va pegado al título.
+// the markdown's first `# ` is the title (and the version: "SP Agency v1.9.1");
+// separated from the body so the page can style it on its own. if there's a
+// `-# subtitle` right below it, that's also split out and shown next to the title.
 export function renderMarkdown(source: string): RenderedMarkdown {
 	const tokens = marked.lexer(source);
 	const h1 = tokens.findIndex((t) => t.type === "heading" && t.depth === 1);

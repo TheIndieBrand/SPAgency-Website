@@ -1,21 +1,20 @@
-// Convierte en botones las rutas de la web que cita el asistente, tanto las que
-// vienen como enlace de Markdown ([Anti-Raid](/docs/anti-raid)) como las que
-// escribe sueltas en el texto (/docs/anti-raid#lista-blanca), con o sin
-// `código` alrededor. Solo se convierten las que existen (la lista sale del mapa
-// del sitio): una ruta inventada por el modelo se queda como texto normal, en vez
-// de un botón que lleva a un 404.
+// turns the site routes the assistant cites into buttons, whether they come
+// as a markdown link ([Anti-Raid](/docs/anti-raid)) or written bare in the
+// text (/docs/anti-raid#lista-blanca), with or without surrounding `code`.
+// only the ones that exist are converted (the list comes from the sitemap):
+// a route the model made up stays as plain text, instead of a button leading to a 404.
 
 export type Routes = Record<string, string>;
 
-// Secciones cuyas rutas no salen del mapa (de ellas cuelgan páginas dinámicas).
-const BASE_SECTIONS = ["docs", "support", "changelog", "dashboard"];
+// sections whose routes don't come from the sitemap (dynamic pages hang off these).
+const BaseSections = ["docs", "support", "changelog", "dashboard"];
 
-// Ruta suelta: empieza por una sección real de la web y no va pegada a otra cosa
-// (así no se confunde con un comando como /backup ni con parte de una URL). Las
-// secciones salen de las rutas del mapa del sitio, así que una página nueva
-// (/terminos, /privacidad…) se reconoce sola.
+// a bare route: starts with a real site section and isn't attached to
+// anything else (so it isn't confused with a command like /backup, or part
+// of a url). the sections come from the sitemap's routes, so a new page
+// (/terminos, /privacidad…) is recognized on its own.
 function bareRoute(routes: Routes): RegExp {
-	const sections = new Set(BASE_SECTIONS);
+	const sections = new Set(BaseSections);
 	for (const path of Object.keys(routes)) {
 		const first = path.split("/")[1];
 		if (first) sections.add(first);
@@ -35,7 +34,7 @@ function iconFor(path: string): string {
 	if (path.startsWith("/changelog")) return "bi-clock-history";
 	if (path.startsWith("/privacidad")) return "bi-shield-lock";
 	if (path.startsWith("/testimonios")) return "bi-chat-quote";
-	return "bi-file-earmark-text"; // cualquier página nueva
+	return "bi-file-earmark-text"; // any new page
 }
 
 // "/docs/anti-raid#lista-blanca" → "Anti-Raid › lista blanca"
@@ -65,7 +64,7 @@ function chip(href: string, label: string): HTMLAnchorElement {
 }
 
 export function decorateRoutes(root: Element, routes: Routes): void {
-	// 1. Enlaces de Markdown a rutas del sitio.
+	// 1. markdown links to site routes.
 	root.querySelectorAll<HTMLAnchorElement>('a[href^="/"]:not(.route-chip)').forEach((a) => {
 		const href = a.getAttribute("href") ?? "";
 		if (href.startsWith("//") || !isKnown(href.split("#")[0], routes)) return;
@@ -75,7 +74,7 @@ export function decorateRoutes(root: Element, routes: Routes): void {
 
 	const bare = bareRoute(routes);
 
-	// 2. Rutas sueltas en el texto (fuera de enlaces, botones y bloques de código).
+	// 2. bare routes in the text (outside links, buttons and code blocks).
 	const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
 		acceptNode: (node) =>
 			node.parentElement?.closest("a, pre, button") ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT,
@@ -88,7 +87,7 @@ export function decorateRoutes(root: Element, routes: Routes): void {
 		const matches = [...text.matchAll(bare)].filter((m) => isKnown(m[0].split("#")[0], routes));
 		if (!matches.length) continue;
 
-		// `/docs/anti-raid` a secas dentro de <code>: se sustituye el <code> entero.
+		// a bare `/docs/anti-raid` inside <code>: the whole <code> is replaced.
 		const parent = node.parentElement;
 		if (parent?.tagName === "CODE" && matches.length === 1 && matches[0][0] === text.trim() && parent.childNodes.length === 1) {
 			parent.replaceWith(chip(matches[0][0], labelFor(matches[0][0], routes)));

@@ -3,7 +3,7 @@ export const prerender = false;
 
 import Layout from "../../layouts/Layout.astro";
 import Navbar from "../../components/Navbar.astro";
-import { formatChangelogDate, getChangelogById, listChangelogs, todayIso } from "../../lib/changelog";
+import { changelogRepository, formatChangelogDate, todayIso } from "../../lib/ChangelogRepository";
 import { isOwner } from "../../lib/changelog-auth";
 import { getSessionUser } from "../../lib/session";
 
@@ -11,10 +11,10 @@ const user = await getSessionUser(Astro.cookies);
 if (!user) return Astro.redirect("/auth/discord/login");
 if (!isOwner(user)) return Astro.redirect("/changelog");
 
-const entries = listChangelogs({ includeDrafts: true });
+const entries = changelogRepository.listChangelogs({ includeDrafts: true });
 
 const idParam = Number(Astro.url.searchParams.get("id"));
-const current = Number.isInteger(idParam) && idParam > 0 ? getChangelogById(idParam) : null;
+const current = Number.isInteger(idParam) && idParam > 0 ? changelogRepository.getChangelogById(idParam) : null;
 
 // Plantilla de una entrada nueva: la estructura que ya usas en tus changelogs.
 const TEMPLATE = `# SP Agency v1.0.0
@@ -203,8 +203,8 @@ const published = current?.published ?? false;
 		status.className = `text-sm ${error ? "text-red-400" : "text-text-faint"}`;
 	}
 
-	// Vista previa en vivo. El HTML lo devuelve el servidor ya saneado (mismo
-	// render que la página pública); las respuestas viejas se descartan.
+	// live preview. the html comes back from the server already sanitized
+	// (same render as the public page); stale responses are discarded.
 	let previewSeq = 0;
 	let previewTimer: number | undefined;
 
@@ -220,7 +220,7 @@ const published = current?.published ?? false;
 		previewDate.textContent = data.date;
 		previewVersion.textContent = data.version;
 		previewVersion.hidden = !data.version;
-		// Sin versión, el nombre hace de título grande.
+		// with no version, the name acts as the large title.
 		previewName.textContent = data.name;
 		previewName.className = data.version
 			? "text-text-dim mt-4 block text-xl font-semibold"
@@ -261,7 +261,7 @@ const published = current?.published ?? false;
 		window.location.href = "/changelog/admin";
 	});
 
-	// Ctrl/Cmd + S guarda sin tocar el ratón.
+	// ctrl/cmd + s saves without touching the mouse.
 	window.addEventListener("keydown", (event) => {
 		if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "s") {
 			event.preventDefault();

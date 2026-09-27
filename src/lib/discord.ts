@@ -1,5 +1,5 @@
-const API = "https://discord.com/api/v10";
-const ADMINISTRATOR = 0x8n;
+const DiscordApiBase = "https://discord.com/api/v10";
+const AdministratorPermission = 0x8n;
 
 export interface DiscordGuild {
 	id: string;
@@ -19,7 +19,7 @@ export interface DiscordUser {
 
 // Permission bundle requested when inviting the bot: kick, ban, view audit
 // log, manage channels/roles, read/send/manage messages, timeout members.
-const BOT_PERMISSIONS = "1099780074646";
+const BotPermissions = "1099780074646";
 
 export interface DiscordToken {
 	access_token: string;
@@ -28,7 +28,7 @@ export interface DiscordToken {
 }
 
 export async function exchangeCodeForToken(code: string): Promise<DiscordToken | null> {
-	const res = await fetch(`${API}/oauth2/token`, {
+	const res = await fetch(`${DiscordApiBase}/oauth2/token`, {
 		method: "POST",
 		headers: { "Content-Type": "application/x-www-form-urlencoded" },
 		body: new URLSearchParams({
@@ -45,7 +45,7 @@ export async function exchangeCodeForToken(code: string): Promise<DiscordToken |
 }
 
 export async function getUserGuilds(accessToken: string): Promise<DiscordGuild[] | null> {
-	const res = await fetch(`${API}/users/@me/guilds?with_counts=true`, {
+	const res = await fetch(`${DiscordApiBase}/users/@me/guilds?with_counts=true`, {
 		headers: { Authorization: `Bearer ${accessToken}` },
 	});
 
@@ -54,7 +54,7 @@ export async function getUserGuilds(accessToken: string): Promise<DiscordGuild[]
 }
 
 export async function getCurrentUser(accessToken: string): Promise<DiscordUser | null> {
-	const res = await fetch(`${API}/users/@me`, {
+	const res = await fetch(`${DiscordApiBase}/users/@me`, {
 		headers: { Authorization: `Bearer ${accessToken}` },
 	});
 
@@ -66,7 +66,7 @@ export async function getBotGuildIds(): Promise<Set<string>> {
 	const botToken = process.env.DISCORD_BOT_TOKEN;
 	if (!botToken) return new Set();
 
-	const res = await fetch(`${API}/users/@me/guilds?limit=200`, {
+	const res = await fetch(`${DiscordApiBase}/users/@me/guilds?limit=200`, {
 		headers: { Authorization: `Bot ${botToken}` },
 	});
 
@@ -75,13 +75,13 @@ export async function getBotGuildIds(): Promise<Set<string>> {
 	return new Set(guilds.map((g) => g.id));
 }
 
-// Dueño del servidor, con el token del bot (la lista de servidores del usuario solo
-// dice si ÉL es el dueño, no quién lo es).
+// the guild's owner, using the bot's token (the user's guild list only says
+// whether THEY are the owner, not who is).
 export async function getGuildOwnerId(guildId: string): Promise<string | null> {
 	const botToken = process.env.DISCORD_BOT_TOKEN;
 	if (!botToken) return null;
 
-	const res = await fetch(`${API}/guilds/${encodeURIComponent(guildId)}`, {
+	const res = await fetch(`${DiscordApiBase}/guilds/${encodeURIComponent(guildId)}`, {
 		headers: { Authorization: `Bot ${botToken}` },
 	});
 	if (!res.ok) return null;
@@ -91,7 +91,7 @@ export async function getGuildOwnerId(guildId: string): Promise<string | null> {
 
 export function hasAdminAccess(guild: DiscordGuild): boolean {
 	if (guild.owner) return true;
-	return (BigInt(guild.permissions) & ADMINISTRATOR) === ADMINISTRATOR;
+	return (BigInt(guild.permissions) & AdministratorPermission) === AdministratorPermission;
 }
 
 export function guildIconUrl(guild: DiscordGuild): string | null {
@@ -109,10 +109,11 @@ export function userAvatarUrl(user: DiscordUser): string {
 	return `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.${ext}`;
 }
 
-// A dónde vuelve Discord tras invitar al bot: la página de agradecimiento (/gracias),
-// en el mismo dominio que el login. Esa URL tiene que estar entre los Redirects de la
-// aplicación en el Developer Portal (OAuth2), como la del login. Con INVITE_REDIRECT="off"
-// la invitación se hace sin redirección (Discord se queda en su pantalla de "Autorizado").
+// where discord returns to after inviting the bot: the thank-you page
+// (/gracias), on the same domain as the login. that url must be among the
+// application's Redirects in the developer portal (oauth2), same as the
+// login's. with INVITE_REDIRECT="off" the invite happens with no redirect
+// (discord stays on its "authorized" screen).
 function thanksRedirect(): Record<string, string> {
 	const login = process.env.DISCORD_REDIRECT_URI;
 	if (!login || process.env.INVITE_REDIRECT === "off") return {};
@@ -123,15 +124,16 @@ function thanksRedirect(): Record<string, string> {
 	}
 }
 
-// Invitación general (botón «Añadir a Discord»): el usuario elige el servidor en Discord.
-// Conserva el client_id que ya tenía el botón (el de la invitación pública del bot), que
-// no coincide con DISCORD_CLIENT_ID (el del login): la redirección a /gracias hay que
-// registrarla en ESA aplicación. INVITE_CLIENT_ID lo cambia sin tocar el código.
-const PUBLIC_INVITE_CLIENT_ID = "1038614901394002020";
+// general invite (the "add to discord" button): the user picks the guild on
+// discord. keeps the client_id the button already had (the bot's public
+// invite one), which doesn't match DISCORD_CLIENT_ID (the login's): the
+// /gracias redirect has to be registered on THAT application. INVITE_CLIENT_ID
+// changes it without touching the code.
+const PublicInviteClientId = "1038614901394002020";
 
 export function generalInviteUrl(): string {
 	const params = new URLSearchParams({
-		client_id: process.env.INVITE_CLIENT_ID || PUBLIC_INVITE_CLIENT_ID,
+		client_id: process.env.INVITE_CLIENT_ID || PublicInviteClientId,
 		permissions: "8",
 		scope: "bot applications.commands",
 		...thanksRedirect(),
@@ -143,7 +145,7 @@ export function botInviteUrl(guildId: string): string {
 	const params = new URLSearchParams({
 		client_id: process.env.DISCORD_CLIENT_ID!,
 		scope: "bot",
-		permissions: BOT_PERMISSIONS,
+		permissions: BotPermissions,
 		guild_id: guildId,
 		disable_guild_select: "true",
 		...thanksRedirect(),
@@ -156,15 +158,15 @@ export interface GuildPreview {
 	iconUrl: string | null;
 }
 
-// Nombre e icono de un servidor donde está el bot, para decirle a quien se
-// verifica "a qué" servidor entra. Es solo cosmético: cualquier fallo devuelve
-// null y la página sigue sin él.
+// name and icon of a guild the bot is in, to tell whoever is verifying
+// "which" guild they're joining. purely cosmetic: any failure returns null
+// and the page carries on without it.
 export async function getGuildPreview(guildId: string): Promise<GuildPreview | null> {
 	const botToken = process.env.DISCORD_BOT_TOKEN;
 	if (!botToken || !/^\d{15,25}$/.test(guildId)) return null;
 
 	try {
-		const res = await fetch(`${API}/guilds/${guildId}`, {
+		const res = await fetch(`${DiscordApiBase}/guilds/${guildId}`, {
 			headers: { Authorization: `Bot ${botToken}` },
 			signal: AbortSignal.timeout(4000),
 		});

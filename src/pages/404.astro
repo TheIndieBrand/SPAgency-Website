@@ -6,7 +6,7 @@ import Navbar from "../components/Navbar.astro";
 import Footer from "../components/Footer.astro";
 import { navLinks, site } from "../lib/site";
 
-// Astro sirve esta página (con estado 404) para cualquier ruta que no exista.
+// astro serves this page (with a 404 status) for any route that doesn't exist.
 // Se muestra la ruta pedida, recortada, para que se vea si es una errata.
 const requested = Astro.url.pathname.length > 60 ? `${Astro.url.pathname.slice(0, 57)}…` : Astro.url.pathname;
 Astro.response.status = 404;

@@ -5,7 +5,7 @@ import Layout from "../../../layouts/Layout.astro";
 import Navbar from "../../../components/Navbar.astro";
 import { getSessionUser } from "../../../lib/session";
 import { listOpenTickets } from "../../../lib/support-bot";
-import { getTranscript } from "../../../lib/support-transcripts";
+import { supportTranscriptRepository } from "../../../lib/SupportTranscriptRepository";
 
 const id = Astro.params.id ?? "";
 
@@ -18,7 +18,7 @@ if (!result.ok) return Astro.redirect("/support");
 const ticket = result.data.tickets.find((t) => t.ticketId === id);
 if (!ticket) {
 	// Ya cerrado → su transcript; si no es suyo o no existe → al inicio de soporte.
-	return Astro.redirect(getTranscript(id, user.id) ? `/support/history/${encodeURIComponent(id)}` : "/support");
+	return Astro.redirect(supportTranscriptRepository.getTranscript(id, user.id) ? `/support/history/${encodeURIComponent(id)}` : "/support");
 }
 ---
 

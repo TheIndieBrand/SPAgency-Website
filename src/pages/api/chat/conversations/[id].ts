@@ -1,5 +1,5 @@
 import type { APIRoute } from "astro";
-import { getConversation, getConversationGuild, listMessages, listProposals } from "../../../../lib/chat/db";
+import { chatRepository } from "../../../../lib/chat/ChatRepository";
 import { messageViews } from "../../../../lib/chat/view";
 import { json, requireUser } from "../../../../lib/session";
 
@@ -10,8 +10,8 @@ export const GET: APIRoute = async ({ request, cookies, params }) => {
 	if ("response" in auth) return auth.response;
 
 	const id = params.id ?? "";
-	const conversation = getConversation(id);
-	// Una conversación ajena es como si no existiera.
+	const conversation = chatRepository.getConversation(id);
+	// someone else's conversation is treated as if it doesn't exist.
 	if (!conversation || conversation.userId !== auth.user.id) {
 		return json({ error: "not_found", message: "Esa conversación no existe." }, 404);
 	}
@@ -20,7 +20,7 @@ export const GET: APIRoute = async ({ request, cookies, params }) => {
 		id: conversation.id,
 		title: conversation.title,
 		ticketId: conversation.ticketId,
-		guild: getConversationGuild(id),
-		messages: messageViews(listMessages(id), listProposals(id)),
+		guild: chatRepository.getConversationGuild(id),
+		messages: messageViews(chatRepository.listMessages(id), chatRepository.listProposals(id)),
 	});
 };

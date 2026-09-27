@@ -1,13 +1,13 @@
-// Conversación de un ticket: consulta los mensajes nuevos cada pocos segundos
-// (cursor = ID del último mensaje, ver docs/support.md), envía los del usuario
-// y permite cerrar el ticket. Cuando el bot borra el canal, la consulta da 404 y
-// se pasa al transcript.
+// a ticket's conversation: polls for new messages every few seconds (cursor
+// = the last message's id, see docs/support.md), sends the user's, and
+// allows closing the ticket. once the bot deletes the channel, the query
+// returns 404 and it falls back to the transcript.
 import { localizeTimes, messageHtml, type ChatMessage } from "./support-ui";
 
-const POLL_MS = 3000;
-const POLL_HIDDEN_MS = 15000;
-const POLL_CLOSING_MS = 1500;
-const PAGE_SIZE = 50;
+const PollMs = 3000;
+const PollHiddenMs = 15000;
+const PollClosingMs = 1500;
+const PageSize = 50;
 
 const root = document.getElementById("chat");
 if (root) init(root);
@@ -36,7 +36,7 @@ function init(root: HTMLElement) {
 
 	function schedule(delay: number) {
 		window.clearTimeout(timer);
-		timer = window.setTimeout(poll, document.hidden ? Math.max(delay, POLL_HIDDEN_MS) : delay);
+		timer = window.setTimeout(poll, document.hidden ? Math.max(delay, PollHiddenMs) : delay);
 	}
 
 	function append(messages: ChatMessage[]) {
@@ -60,7 +60,7 @@ function init(root: HTMLElement) {
 				headers: { Accept: "application/json" },
 			});
 
-			// El bot ya no conoce el ticket: se cerró (y su transcript ya está en la web).
+			// the bot no longer knows this ticket: it closed (and its transcript is already on the web).
 			if (res.status === 404) return void (window.location.href = historyUrl);
 			if (res.status === 401) {
 				return void (window.location.href = `/auth/discord/login?next=${encodeURIComponent(window.location.pathname)}`);
@@ -74,7 +74,7 @@ function init(root: HTMLElement) {
 
 			if (!closing) setStatus("");
 			if (data.messages.length) append(data.messages);
-			schedule(data.messages.length >= PAGE_SIZE ? 0 : closing ? POLL_CLOSING_MS : POLL_MS);
+			schedule(data.messages.length >= PageSize ? 0 : closing ? PollClosingMs : PollMs);
 		} catch {
 			setStatus("Reconectando…", true);
 			schedule(6000);
@@ -107,7 +107,7 @@ function init(root: HTMLElement) {
 		schedule(0);
 	});
 
-	// Enter envía; Shift+Enter hace un salto de línea.
+	// enter sends; shift+enter adds a line break.
 	input.addEventListener("keydown", (event) => {
 		if (event.key === "Enter" && !event.shiftKey && !event.isComposing) {
 			event.preventDefault();

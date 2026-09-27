@@ -1,66 +1,67 @@
 import type { AstroCookies } from "astro";
 import { createHash } from "node:crypto";
 import { getCurrentUser, type DiscordUser } from "./discord";
+import { sessionCookieService } from "./SessionCookieService";
 
-// La cookie de sesión solo guarda los tokens de Discord, así que saber quién es
-// el usuario cuesta una llamada a /users/@me. El chat de soporte consulta cada
-// pocos segundos: sin caché, cada consulta sería también una llamada a Discord
-// (con su latencia y sus límites). Se recuerda la identidad un rato, por token.
-//
-// Solo en memoria del proceso, y con la clave hasheada. Coste: un token
-// revocado en Discord puede seguir valiendo hasta USER_TTL_MS. Los fallos
-// (token inválido) se recuerdan menos, para no martillear a Discord con un
-// token malo y a la vez recuperarse pronto.
-const USER_TTL_MS = 60_000;
-const MISS_TTL_MS = 10_000;
-const MAX_ENTRIES = 500;
+const UserTtlMs = 60_000;
+const MissTtlMs = 10_000;
+const MaxEntries = 500;
 
-const identityCache = new Map<string, { user: DiscordUser | null; expires: number }>();
-const inFlight = new Map<string, Promise<DiscordUser | null>>();
+/**
+ * caches a discord user's identity by access token, so knowing who a
+ * session belongs to doesn't cost a discord call on every request.
+ *
+ * the session cookie only stores discord's tokens, so knowing who the user is
+ * costs a call to /users/@me. the support chat polls every few seconds:
+ * without a cache, every poll would also be a discord call (with its latency
+ * and its rate limits). the identity is remembered for a while, per token.
+ *
+ * only in the process's own memory, and keyed by a hash. cost: a token
+ * revoked on discord can still be valid for up to UserTtlMs. failures
+ * (an invalid token) are remembered for less time, so a bad token doesn't
+ * hammer discord while still recovering quickly.
+ */
+class DiscordIdentityCache {
+	private readonly entries = new Map<string, { user: DiscordUser | null; expires: number }>();
+	private readonly inFlight = new Map<string, Promise<DiscordUser | null>>();
 
-function lookupUser(accessToken: string): Promise<DiscordUser | null> {
-	const key = createHash("sha256").update(accessToken).digest("hex");
+	lookupUser(accessToken: string): Promise<DiscordUser | null> {
+		const key = createHash("sha256").update(accessToken).digest("hex");
 
-	const cached = identityCache.get(key);
-	if (cached && cached.expires > Date.now()) return Promise.resolve(cached.user);
+		const cached = this.entries.get(key);
+		if (cached && cached.expires > Date.now()) return Promise.resolve(cached.user);
 
-	// Varias peticiones a la vez del mismo usuario comparten una sola llamada.
-	const pending = inFlight.get(key);
-	if (pending) return pending;
+		// several requests for the same user at once share a single call.
+		const pending = this.inFlight.get(key);
+		if (pending) return pending;
 
-	const request = getCurrentUser(accessToken)
-		.then((user) => {
-			if (identityCache.size >= MAX_ENTRIES) {
-				const now = Date.now();
-				for (const [k, v] of identityCache) if (v.expires <= now) identityCache.delete(k);
-				if (identityCache.size >= MAX_ENTRIES) identityCache.clear();
-			}
-			identityCache.set(key, { user, expires: Date.now() + (user ? USER_TTL_MS : MISS_TTL_MS) });
-			return user;
-		})
-		// Un fallo de red no es una respuesta de Discord: no se cachea.
-		.catch(() => null)
-		.finally(() => inFlight.delete(key));
+		const request = getCurrentUser(accessToken)
+			.then((user) => {
+				if (this.entries.size >= MaxEntries) {
+					const now = Date.now();
+					for (const [k, v] of this.entries) if (v.expires <= now) this.entries.delete(k);
+					if (this.entries.size >= MaxEntries) this.entries.clear();
+				}
+				this.entries.set(key, { user, expires: Date.now() + (user ? UserTtlMs : MissTtlMs) });
+				return user;
+			})
+			// a network failure isn't a response from discord: it isn't cached.
+			.catch(() => null)
+			.finally(() => this.inFlight.delete(key));
 
-	inFlight.set(key, request);
-	return request;
+		this.inFlight.set(key, request);
+		return request;
+	}
 }
 
-// Reutiliza la sesión del login con Discord (cookie con el access_token). No
-// borra la cookie si algo falla: estas comprobaciones también se usan en
-// páginas públicas, donde no tener sesión es lo normal.
+const discordIdentityCache = new DiscordIdentityCache();
+
+// reuses the session from the discord login (cookie with the access_token).
+// doesn't delete the cookie on failure: these checks are also used on public
+// pages, where having no session is the normal case.
 export async function getSessionUser(cookies: AstroCookies): Promise<DiscordUser | null> {
-	const raw = cookies.get(process.env.SESSION_COOKIE_NAME || "spa_session")?.value;
-	if (!raw) return null;
-
-	let accessToken: string | undefined;
-	try {
-		accessToken = JSON.parse(raw)?.access_token;
-	} catch {
-		return null;
-	}
-
-	return accessToken ? lookupUser(accessToken) : null;
+	const accessToken = sessionCookieService.readAccessToken(cookies);
+	return accessToken ? discordIdentityCache.lookupUser(accessToken) : null;
 }
 
 export function json(data: unknown, status = 200): Response {
@@ -70,9 +71,9 @@ export function json(data: unknown, status = 200): Response {
 	});
 }
 
-// Guardia de los endpoints con sesión. Las peticiones que escriben exigen
-// Content-Type JSON: un formulario de otra web no puede enviarlo así sin pasar
-// por CORS (que aquí no está habilitado), lo que evita el CSRF.
+// guard for endpoints that need a session. requests that write require a
+// json content-type: a form on another site can't send that without going
+// through cors (not enabled here), which is what stops csrf.
 export async function requireUser(
 	request: Request,
 	cookies: AstroCookies,
@@ -89,8 +90,8 @@ export async function requireUser(
 	return { user };
 }
 
-// Ruta interna a la que volver tras el login (?next=/support). Solo rutas
-// relativas del propio sitio: nada de "//otro.com" ni "\" (open redirect).
+// internal route to return to after login (?next=/support). only routes
+// relative to the site itself: nothing like "//other.com" or "\" (open redirect).
 export function safeNextPath(value: string | null | undefined): string | null {
 	if (!value || !value.startsWith("/") || value.startsWith("//") || value.includes("\\")) return null;
 	return /^\/[\w\-./%?=&]*$/.test(value) ? value : null;

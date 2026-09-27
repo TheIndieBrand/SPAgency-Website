@@ -1,9 +1,10 @@
 import { getSql, isoUtc } from "./client";
 
-// Registro de actividad de un servidor: une los eventos que detecta el bot
-// (`server_event_logs`) y las acciones que se le piden (`bot_action_logs`). La
-// base guarda el tipo y los datos, no el texto: aquí se traduce cada tipo a una
-// frase (las plantillas del bot viven en sus locales, en el servidor).
+// a guild's activity log: merges the events the bot detects
+// (`server_event_logs`) with the actions requested of it (`bot_action_logs`).
+// the database stores the type and the data, not the text — this is where
+// each type is turned into a sentence (the bot's own templates live on its
+// side, in its locale files).
 
 export type Tone = "danger" | "warning" | "info" | "success";
 
@@ -27,28 +28,45 @@ export interface Activity {
 	at: string; // ISO UTC
 }
 
-export async function listActivity(guildId: string, limit = 200): Promise<ActivityRow[] | null> {
-	try {
-		const sql = getSql();
-		return await sql<ActivityRow[]>`
-			select source, id, type, target_id, executor_id, reason, data, ${sql.unsafe(isoUtc("created_at"))} as created_at
-			from (
-				select 'event' as source, id, type, target_id, null::text as executor_id, null::text as reason, data, created_at
-				from server_event_logs where guild_id = ${guildId}
-				union all
-				select 'action', id, type, target_id, executor_id, reason, data, created_at
-				from bot_action_logs where guild_id = ${guildId}
-			) t
-			order by t.created_at desc, t.id desc
-			limit ${limit}
-		`;
-	} catch (error) {
-		console.error("[db] no se pudo leer la actividad:", error instanceof Error ? error.message : error);
-		return null;
+/**
+ * reads a guild's activity log, merging the bot's detected events and its
+ * requested actions into one timeline.
+ *
+ * the query here mirrors what already existed — this class only wraps it, it
+ * never changes a column, a table or what the query returns.
+ */
+export class ActivityRepository {
+	/**
+	 * lists the most recent activity rows for a guild.
+	 * @param guildId - the discord guild id.
+	 * @param limit - the maximum number of rows to return.
+	 * @returns the rows, or null if the query failed.
+	 */
+	async listActivity(guildId: string, limit = 200): Promise<ActivityRow[] | null> {
+		try {
+			const sql = getSql();
+			return await sql<ActivityRow[]>`
+				select source, id, type, target_id, executor_id, reason, data, ${sql.unsafe(isoUtc("created_at"))} as created_at
+				from (
+					select 'event' as source, id, type, target_id, null::text as executor_id, null::text as reason, data, created_at
+					from server_event_logs where guild_id = ${guildId}
+					union all
+					select 'action', id, type, target_id, executor_id, reason, data, created_at
+					from bot_action_logs where guild_id = ${guildId}
+				) t
+				order by t.created_at desc, t.id desc
+				limit ${limit}
+			`;
+		} catch (error) {
+			console.error("[db] no se pudo leer la actividad:", error instanceof Error ? error.message : error);
+			return null;
+		}
 	}
 }
 
-// ── Traducción a texto ──────────────────────────────────────────────────────
+export const activityRepository = new ActivityRepository();
+
+// ── translation to text ─────────────────────────────────────────────────────
 
 interface Presentation {
 	label: string;
@@ -69,8 +87,8 @@ const ACTIONS: Record<string, string> = { none: "sin acción", mark: "marcado", 
 
 const str = (value: unknown): string => (typeof value === "string" ? value : "");
 
-// Los IDs de Discord no dicen nada a quien lee: se muestran como `@id` hasta que
-// haya nombres (los tiene Discord, no la base de datos).
+// discord ids mean nothing to a reader: shown as `@id` until there are names
+// (discord has those, the database doesn't).
 const user = (id: string | null) => (id ? `@${id}` : "alguien");
 const by = (row: ActivityRow) => (!row.executorId ? "" : row.executorId === "system" ? " por SP Agency" : ` por ${user(row.executorId)}`);
 const why = (row: ActivityRow) => (row.reason ? ` — ${row.reason}` : "");
@@ -144,10 +162,15 @@ const ACTION_TYPES: Record<string, (r: ActivityRow) => Presentation> = {
 	unmarkMalicious: (r) => ({ label: `${user(r.targetId)} ya no está marcado como malicioso${by(r)}`, icon: "bi-person-check", tone: "success" }),
 };
 
+/**
+ * turns a raw activity row into the label, icon and tone shown in the ui.
+ * @param row - the activity row read from the database.
+ * @returns the presentation-ready activity.
+ */
 export function describeActivity(row: ActivityRow): Activity {
 	const table = row.source === "event" ? EVENTS : ACTION_TYPES;
-	// Un tipo que la web aún no conoce (el bot puede ser más nuevo) se muestra
-	// tal cual en vez de esconderse.
+	// a type the web doesn't know yet (the bot may be newer) is shown as-is
+	// instead of being hidden.
 	const p: Presentation = table[row.type]?.(row) ?? { label: `${row.type}${row.targetId ? ` (${row.targetId})` : ""}`, icon: "bi-dot", tone: "info" };
 	return { id: `${row.source}-${row.id}`, type: row.type, at: row.createdAt, ...p };
 }

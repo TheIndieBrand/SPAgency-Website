@@ -1,29 +1,29 @@
-// Constantes y variables de entorno del asistente de IA. Los límites están aquí
-// juntos porque son la palanca del gasto de tokens: tocar uno cambia el coste
-// de cada mensaje.
+// constants and environment variables for the ai assistant. the limits sit
+// together here because they're the lever on token spend: touching one
+// changes the cost of every message.
 
-// Versión del aviso que el usuario acepta antes de chatear. Si cambia el texto
-// (ver pages/support/assistant.astro), se sube esta versión y se le vuelve
-// a pedir.
-export const CONSENT_VERSION = "2026-09-21";
+// version of the notice the user accepts before chatting. if the text
+// changes (see pages/support/assistant.astro), this version is bumped and
+// it's asked again.
+export const ConsentVersion = "2026-09-21";
 
-export const MAX_INPUT_CHARS = 1200; // por mensaje del usuario (~300 tokens)
-export const MAX_OUTPUT_TOKENS = 500; // por respuesta; la salida es lo más caro
-export const HISTORY_MESSAGES = 8; // mensajes previos que se reenvían al modelo
-export const CONTEXT_CHUNKS = 3; // fragmentos de la web que se inyectan por pregunta
-export const CONTEXT_CHARS = 1500; // tope de cada fragmento
-export const RATE_PER_MINUTE = 10; // mensajes por usuario y minuto
-export const PROPOSAL_TTL_MS = 24 * 60 * 60 * 1000; // caducidad de una propuesta de ticket
+export const MaxInputChars = 1200; // per user message (~300 tokens)
+export const MaxOutputTokens = 500; // per response; output is the expensive part
+export const HistoryMessages = 8; // previous messages replayed to the model
+export const ContextChunks = 3; // site fragments injected per question
+export const ContextChars = 1500; // cap on each fragment
+export const RatePerMinute = 10; // messages per user per minute
+export const ProposalTtlMs = 24 * 60 * 60 * 1000; // how long a ticket proposal lasts
 
-// Una propuesta de cambios caduca antes que un ticket: la configuración puede haber cambiado.
-export const SETTINGS_PROPOSAL_TTL_MS = 60 * 60 * 1000;
-export const MAX_SETTING_CHANGES = 8; // cambios por propuesta
+// a settings-change proposal expires sooner than a ticket: the config may have changed.
+export const SettingsProposalTtlMs = 60 * 60 * 1000;
+export const MaxSettingChanges = 8; // changes per proposal
 
-export const DEFAULT_DAILY_LIMIT = 100_000;
+export const DefaultDailyLimit = 100_000;
 
 export function dailyLimit(): number {
 	const value = Number(process.env.CHAT_DAILY_TOKEN_LIMIT);
-	return Number.isFinite(value) && value > 0 ? value : DEFAULT_DAILY_LIMIT;
+	return Number.isFinite(value) && value > 0 ? value : DefaultDailyLimit;
 }
 
 export function llmSettings() {

@@ -1,6 +1,5 @@
-// Todas las piezas del DOM que necesita la escena de entrada. Si falta
-// cualquiera de las obligatorias, `queryScene()` devuelve null y la página se
-// queda con la versión simple (ver mount.ts).
+// every dom piece the intro scene needs. if any of the required ones is
+// missing, `queryScene()` returns null and the page stays with the simple version (see mount.ts).
 
 function collectRefs() {
 	const navbar = document.getElementById("navbar");
@@ -13,14 +12,14 @@ function collectRefs() {
 	const radarPlane = document.querySelector<HTMLElement>(".radar-plane");
 	const statsSection = document.getElementById("stats");
 	const statNumbers = document.querySelectorAll<HTMLElement>(".stat-number");
-	// El título "89K+ Raids bloqueados" del Acto 2 se forma con estas dos piezas
-	// REALES de <Stats/> (segunda celda): el número y la etiqueta que va debajo.
+	// act 2's "89K+ Raids bloqueados" title is formed from these two REAL
+	// <Stats/> pieces (second cell): the number and the label below it.
 	const raidsNumber = (statNumbers[1] as HTMLElement | undefined) ?? null;
 	const raidsLabel = (raidsNumber?.nextElementSibling as HTMLElement | null) ?? null;
 	const raidsCell = (raidsNumber?.parentElement as HTMLElement | null) ?? null;
-	// Las cuatro casillas de la grilla: en el Acto 2 se separan y caen mientras la
-	// sección se desvanece. La de "Raids bloqueados" también (aunque ya tenga el
-	// contenido despegado), para que no quede parada y descolocada.
+	// the grid's four cells: in act 2 they separate and fall away as the
+	// section fades out. the "Raids bloqueados" one too (even with its
+	// content already detached), so it doesn't sit there stranded and out of place.
 	const statCells = Array.from(statNumbers)
 		.map((n) => n.parentElement as HTMLElement | null)
 		.filter((cell): cell is HTMLElement => cell != null);

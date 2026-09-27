@@ -1,14 +1,14 @@
-// Lista de testimonios: agregá o quitá objetos acá para actualizar la sección.
-// `avatar` apunta a un archivo dentro de public/avatars/ — solo hace falta
-// colocar la imagen ahí con ese nombre para que se muestre.
+// list of testimonials: add or remove objects here to update the section.
+// `avatar` points to a file inside public/avatars/ — just drop the image
+// there under that name and it shows up.
 //
-// `decoration` es opcional: si el usuario tiene un "avatar decoration" de
-// Discord, apuntá al PNG transparente del aro (sin componerlo con el avatar
-// a mano) y se superpone en su propia capa, más grande, sin recortar. Con
-// decoration, el avatar base no lleva el borde azul para que no choquen.
+// `decoration` is optional: if the user has a discord "avatar decoration",
+// point to the ring's transparent png (without compositing it onto the
+// avatar by hand) and it's layered on its own, larger, uncropped. with a
+// decoration, the base avatar carries no blue border so they don't clash.
 //
-// Se muestran en el carrusel final de la escena de entrada (AsymptoteScene) y
-// en la sección estática de respaldo (Testimonials) cuando no hay animación.
+// shown in the intro scene's final carousel (AsymptoteScene) and in the
+// static fallback section (Testimonials) when there's no animation.
 
 export interface Testimonial {
 	username: string;

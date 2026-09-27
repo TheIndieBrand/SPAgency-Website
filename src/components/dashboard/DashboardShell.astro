@@ -18,7 +18,7 @@ const icon = guildIconUrl(guild);
 const base = `/dashboard/${guild.id}`;
 
 
-// Dos grupos separados por una línea, sin rótulos: lo del servidor y lo que se configura.
+// two groups split by a line, with no labels: the guild itself, and what gets configured.
 const groups = [
 	[
 		{ key: "general" as const, label: "General", href: base, icon: "bi-grid" },
@@ -132,8 +132,8 @@ const allItems = groups.flat();
 </script>
 
 <style>
-	/* Al llegar desde la carga esquemática de /dashboard, el contenido real entra con
-	   un fundido corto en vez de aparecer de golpe. */
+	/* arriving from /dashboard's skeleton loading state, the real content fades
+	   in briefly instead of popping in all at once. */
 	.dash-fade {
 		animation: dash-fade 0.3s ease-out both;
 	}

@@ -1,35 +1,35 @@
-// Campo de estrellas INFINITO del fondo de la escena de entrada, dibujado en un
-// <canvas> 2D. Sustituye a las ~800 <span> que había antes: esas solo cubrían
-// un rectángulo finito (había que dimensionarlo a mano para todo el recorrido
-// de la cámara y no aguantaba más descenso). Aquí las estrellas se repiten en
-// mosaico, así que la cámara puede ir tan lejos como haga falta, y además
-// permite zoom y líneas de velocidad sin bordes ni coste extra.
+// INFINITE star field for the intro scene's background, drawn on a 2d
+// <canvas>. replaces the ~800 <span>s there used to be: those only covered a
+// finite rectangle (it had to be sized by hand for the camera's whole
+// journey and couldn't take any more descent). here stars repeat as a tile,
+// so the camera can go as far as needed, and it also allows zoom and speed
+// lines with no edges or extra cost.
 //
-// El estado que ya animaban los tweens de GSAP (opacidad y `y` de bajada
-// durante el ascenso) vive en un elemento "controlador" invisible: aquí solo
-// se LEE con gsap.getProperty, así esos tweens no han cambiado. La cámara
-// llega por setCamera(), con un zoom opcional respecto al centro de la pantalla
-// (la escena hace zoom out / zoom in en los pasos finales). Las estrellas son
-// lejanas: siguen solo la mitad del zoom (paralaje) y no cambian de tamaño.
+// the state gsap's tweens already animate (opacity and the descending `y`
+// during the ascent) lives on an invisible "controller" element: this only
+// READS it via gsap.getProperty, so those tweens stay untouched. the camera
+// arrives via setCamera(), with an optional zoom relative to the screen's
+// center (the scene zooms out / in during the final steps). stars are far
+// away: they only follow half the zoom (parallax) and don't change size.
 import { gsap } from "gsap";
 
-const TILE_W = 1600;
-const TILE_H = 1200;
-// ~41 estrellas por pantalla de 1280×800, como tenía el campo original.
-const STARS_PER_TILE = 77;
-const TWINKLE_PERIOD = 3.6; // s
-const TWINKLE_DEPTH = 0.65; // el parpadeo lleva la opacidad a 35% de la base
+const TileW = 1600;
+const TileH = 1200;
+// ~41 stars per 1280×800 screen, same as the original field.
+const StarsPerTile = 77;
+const TwinklePeriod = 3.6; // s
+const TwinkleDepth = 0.65; // the flicker takes opacity down to 35% of its base
 
 interface Star {
 	x: number;
 	y: number;
 	size: number;
 	alpha: number;
-	phase: number; // solo parpadean 1 de cada 3 (twinkle = true)
+	phase: number; // only 1 in 3 flicker (twinkle = true)
 	twinkle: boolean;
 }
 
-// PRNG determinista: el mismo cielo en cada carga y en cada teselado.
+// deterministic prng: the same sky on every load and every tile.
 function mulberry32(seed: number) {
 	let a = seed >>> 0;
 	return () => {
@@ -43,9 +43,9 @@ function mulberry32(seed: number) {
 
 function makeTile(): Star[] {
 	const rand = mulberry32(0x5eed);
-	return Array.from({ length: STARS_PER_TILE }, (_, i) => ({
-		x: rand() * TILE_W,
-		y: rand() * TILE_H,
+	return Array.from({ length: StarsPerTile }, (_, i) => ({
+		x: rand() * TileW,
+		y: rand() * TileH,
 		size: 1 + Math.floor(rand() * 3),
 		alpha: 0.35 + rand() * 0.45,
 		phase: rand() * Math.PI * 2,
@@ -81,15 +81,15 @@ export function createStarField(canvas: HTMLCanvasElement, controller: HTMLEleme
 		const opacity = Number(gsap.getProperty(controller, "opacity")) || 0;
 		if (opacity <= 0.005) return;
 
-		// Los tweens del ascenso bajan las estrellas `ascent` px: equivale a que
-		// la cámara esté `ascent` px más arriba en el mundo.
+		// the ascent tweens move the stars down `ascent` px: equivalent to the
+		// camera being `ascent` px higher in the world.
 		const ascent = Number(gsap.getProperty(controller, "y")) || 0;
 		const ox = camX;
 		const oy = camY - ascent;
 		const time = performance.now() / 1000;
 
-		// Zoom respecto al centro de la pantalla (medio zoom: paralaje). Con zoom < 1
-		// se ve más mundo, así que el rango de teselas a recorrer crece 1/zs.
+		// zoom relative to the screen's center (half zoom: parallax). with zoom
+		// < 1 more of the world is visible, so the range of tiles to cover grows by 1/zs.
 		const zs = 1 + (zoom - 1) * 0.5;
 		const cx = cssW / 2;
 		const cy = cssH / 2;
@@ -99,12 +99,12 @@ export function createStarField(canvas: HTMLCanvasElement, controller: HTMLEleme
 		const maxY = oy + cy + (cssH - cy) / zs;
 
 		ctx.fillStyle = "#ffffff";
-		const i0 = Math.floor(minX / TILE_W);
-		const j0 = Math.floor(minY / TILE_H);
-		for (let i = i0; i * TILE_W < maxX; i++) {
-			for (let j = j0; j * TILE_H < maxY; j++) {
-				const bx = i * TILE_W;
-				const by = j * TILE_H;
+		const i0 = Math.floor(minX / TileW);
+		const j0 = Math.floor(minY / TileH);
+		for (let i = i0; i * TileW < maxX; i++) {
+			for (let j = j0; j * TileH < maxY; j++) {
+				const bx = i * TileW;
+				const by = j * TileH;
 				for (let s = 0; s < tile.length; s++) {
 					const star = tile[s];
 					const x = cx + (bx + star.x - ox - cx) * zs;
@@ -112,8 +112,8 @@ export function createStarField(canvas: HTMLCanvasElement, controller: HTMLEleme
 					if (x < -3 || x > cssW || y < -3 || y > cssH) continue;
 					let a = star.alpha;
 					if (star.twinkle) {
-						const k = 0.5 + 0.5 * Math.cos((time * Math.PI * 2) / TWINKLE_PERIOD + star.phase);
-						a *= 1 - TWINKLE_DEPTH * (1 - k);
+						const k = 0.5 + 0.5 * Math.cos((time * Math.PI * 2) / TwinklePeriod + star.phase);
+						a *= 1 - TwinkleDepth * (1 - k);
 					}
 					ctx.globalAlpha = a * opacity;
 					ctx.fillRect(x, y, star.size, star.size);

@@ -1,6 +1,6 @@
-// Página de verificación (/verify/<token>): espera a que el captcha se resuelva y
-// manda el token + la respuesta del captcha a /api/verify/complete. La identidad
-// no se manda: la pone el servidor a partir de la sesión de Discord.
+// verification page (/verify/<token>): waits for the captcha to be solved
+// and sends the token + captcha response to /api/verify/complete. identity
+// isn't sent: the server derives it from the discord session.
 type Turnstile = { reset: () => void };
 
 const root = document.getElementById("verify");
@@ -14,7 +14,7 @@ function init(root: HTMLElement) {
 
 	let captcha = "";
 
-	// Turnstile llama a estas funciones por nombre (data-callback), así que tienen que ser globales.
+	// turnstile calls these functions by name (data-callback), so they have to be global.
 	const w = window as unknown as {
 		onCaptchaSolved: (response: string) => void;
 		onCaptchaExpired: () => void;
@@ -31,7 +31,7 @@ function init(root: HTMLElement) {
 		button.disabled = true;
 	};
 
-	// Un token de captcha solo vale una vez: tras cualquier intento hay que pedir otro.
+	// a captcha token is only valid once: after any attempt a new one must be requested.
 	function resetCaptcha() {
 		captcha = "";
 		button.disabled = true;

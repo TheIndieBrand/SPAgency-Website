@@ -1,7 +1,6 @@
-// Interfaz del asistente: conversaciones, aviso de consentimiento, envío con
-// respuesta en streaming (SSE sobre fetch, porque el envío es un POST) y la
-// tarjeta de propuesta de ticket. El HTML de los mensajes lo forma y sanea el
-// servidor; aquí solo se pinta.
+// assistant ui: conversations, the consent notice, sending with a streamed
+// response (sse over fetch, since sending is a post) and the ticket
+// proposal card. messages' html is built and sanitized by the server; this only renders it.
 import { decorateRoutes, type Routes } from "./chat-links";
 import { usageCardHtml } from "./chat-usage";
 import { escapeHtml, localizeTimes } from "./support-ui";
@@ -15,7 +14,7 @@ interface Usage {
 interface Proposal {
 	id: string;
 	kind?: "ticket" | "settings";
-	// Solo en cambios de configuración: el servidor donde se aplicarían.
+	// only on settings changes: the guild they'd be applied to.
 	guild?: string | null;
 	subject: string;
 	summary: string;
@@ -71,7 +70,7 @@ async function init(root: HTMLElement) {
 
 	const setStatus = (text: string) => (statusEl.textContent = text);
 
-	// El servidor sobre el que actúa la conversación, siempre a la vista.
+	// the guild the conversation acts on, always visible.
 	let guildName: string | null = null;
 	const guildChip = root.querySelector<HTMLElement>("#guild-chip");
 	function setGuild(name: string | null | undefined) {
@@ -139,8 +138,8 @@ async function init(root: HTMLElement) {
 		return `<div class="border-border bg-bg-soft mt-3 rounded-xl border p-4" data-proposal="${escapeHtml(p.id)}" data-kind="${settings ? "settings" : "ticket"}" data-guild="${escapeHtml(p.guild ?? "")}">${head}${foot}</div>`;
 	}
 
-	// Un botón por servidor. `retry` es la petición que el usuario acababa de hacer: se repite
-	// en cuanto elige, para que no tenga que escribirla otra vez.
+	// one button per guild. `retry` is the request the user had just made: it
+	// repeats as soon as they choose, so they don't have to type it again.
 	function serverChips(guilds: { id: string; name: string; current?: boolean }[], retry?: string): string {
 		return `<div class="mt-3 flex flex-wrap gap-2" ${retry ? `data-retry="${escapeHtml(retry)}"` : ""}>${guilds
 			.map(
@@ -222,7 +221,7 @@ async function init(root: HTMLElement) {
 		input.focus();
 	}
 
-	// ── Envío y streaming ──────────────────────────────────────────────────────
+	// ── sending and streaming ───────────────────────────────────────────────────
 	function setBusy(value: boolean) {
 		busy = value;
 		sendBtn.innerHTML = value ? '<i class="bi bi-stop-fill"></i>' : '<i class="bi bi-arrow-up"></i>';
@@ -301,18 +300,18 @@ async function init(root: HTMLElement) {
 	}
 
 	// ── Comandos ───────────────────────────────────────────────────────────────
-	// Se resuelven en el servidor. Solo /ticket llama al modelo (una llamada para
-	// redactar el ticket) y cuenta en el cupo; el resto no gasta nada.
+	// resolved on the server. only /ticket calls the model (one call to draft
+	// the ticket) and counts against the quota; the rest cost nothing.
 	type CommandName = "usage" | "ticket" | "servidor" | "config" | "panico" | "registros";
-	// Como los slash commands de Discord: cada comando declara sus parámetros (nombre,
-	// si son obligatorios, qué piden y, si procede, valores sugeridos).
+	// like discord's slash commands: each command declares its parameters
+	// (name, whether required, what they ask for and, if any, suggested values).
 	interface Param {
 		name: string;
 		required: boolean;
 		desc: string;
 		choices?: string[];
 	}
-	const COMMANDS: { name: string; desc: string; params: Param[] }[] = [
+	const Commands: { name: string; desc: string; params: Param[] }[] = [
 		{
 			name: "/servidor",
 			desc: "Elige el servidor sobre el que actúo",
@@ -343,8 +342,8 @@ async function init(root: HTMLElement) {
 		if (menu) menu.hidden = true;
 	}
 
-	// Un parámetro se dibuja como en Discord: una caja con su nombre. Discontinua si es
-	// opcional, con el color de la marca si es obligatoria, y rellena cuando ya tiene valor.
+	// a parameter is drawn like on discord: a box with its name. dashed if
+	// optional, brand-colored if required, and filled once it has a value.
 	function paramBox(p: Param, value = ""): string {
 		const tone = value
 			? "border-brand bg-brand/10 text-text"
@@ -356,14 +355,14 @@ async function init(root: HTMLElement) {
 		}</span>`;
 	}
 
-	// Mientras se escribe el nombre: la lista de comandos, cada uno con sus parámetros.
-	// Al escribir un comando y un espacio: el panel de sus parámetros.
+	// while typing the name: the list of commands, each with its parameters.
+	// once a command and a space are typed: the panel of its parameters.
 	function updateMenu() {
 		if (!menu) return;
 		const typed = input.value;
 
 		const withArgs = /^(\/\S+)\s([\s\S]*)$/.exec(typed);
-		const active = withArgs ? COMMANDS.find((c) => c.name === withArgs[1].toLowerCase()) : undefined;
+		const active = withArgs ? Commands.find((c) => c.name === withArgs[1].toLowerCase()) : undefined;
 		if (active?.params.length) {
 			const value = withArgs![2].trim();
 			menu.innerHTML = `<div class="px-3.5 py-3">
@@ -388,7 +387,7 @@ async function init(root: HTMLElement) {
 			return;
 		}
 
-		const matches = /^\/\S*$/.test(typed) ? COMMANDS.filter((c) => c.name.startsWith(typed.toLowerCase())) : [];
+		const matches = /^\/\S*$/.test(typed) ? Commands.filter((c) => c.name.startsWith(typed.toLowerCase())) : [];
 		if (!matches.length) return hideMenu();
 		menu.innerHTML = matches
 			.map(
@@ -408,10 +407,10 @@ async function init(root: HTMLElement) {
 		hideMenu();
 	}
 
-	// Elegir un comando: los que no tienen parámetros se ejecutan; los demás se dejan
-	// escritos con el panel de parámetros abierto (todos son opcionales: Enter los envía tal cual).
+	// picking a command: ones with no parameters run right away; the rest are
+	// left typed with the parameter panel open (all optional: enter sends them as-is).
 	function pickCommand(name: string) {
-		const command = COMMANDS.find((c) => c.name === name);
+		const command = Commands.find((c) => c.name === name);
 		if (!command?.params.length) return void send(name);
 		input.value = `${name} `;
 		autosize();
@@ -471,7 +470,7 @@ async function init(root: HTMLElement) {
 					return showConsent();
 				}
 				if (data.usage) setUsage(data.usage);
-				// Con un ticket ya abierto, se ofrece el botón para ir a él.
+				// with a ticket already open, the button to go to it is offered.
 				const link = data.url ? `<p><a href="${escapeHtml(data.url)}">Ir a tu ticket</a></p>` : "";
 				return failure(data.message ?? "No se pudo completar el comando.", link);
 			}
@@ -488,7 +487,7 @@ async function init(root: HTMLElement) {
 				body.innerHTML = data.html;
 				decorate(body);
 				if (data.proposal) extras.innerHTML = proposalCard({ ...data.proposal, status: "pending", ticketId: null });
-				// /servidor: un botón por servidor.
+				// /servidor: one button per guild.
 				if (Array.isArray(data.guilds) && data.guilds.length) extras.innerHTML = serverChips(data.guilds);
 				if (data.usage) setUsage(data.usage);
 				if (data.proposal || data.conversationId) {
@@ -509,7 +508,7 @@ async function init(root: HTMLElement) {
 		}
 	}
 
-	// Lee el flujo SSE (eventos separados por línea en blanco).
+	// reads the sse stream (events separated by a blank line).
 	async function readEvents(res: Response, onEvent: (event: string, data: any) => void) {
 		const reader = res.body!.getReader();
 		const decoder = new TextDecoder();
@@ -536,7 +535,7 @@ async function init(root: HTMLElement) {
 			const retry = server.closest<HTMLElement>("[data-retry]")?.dataset.retry;
 			chosenGuild = false;
 			await send(`/servidor ${server.dataset.server}`);
-			// Si venía de «¿en qué servidor?», se repite lo que había pedido, ya con servidor.
+			// if it came from "which guild?", whatever was asked repeats, now with a guild chosen.
 			if (retry && chosenGuild) await send(retry);
 			return;
 		}
@@ -575,7 +574,7 @@ async function init(root: HTMLElement) {
 				? { id, kind, guild: card.dataset.guild || null, subject: title, summary, status: "confirmed", ticketId: data.ticketId ?? null }
 				: { id, kind, guild: card.dataset.guild || null, subject: title, summary, status: "dismissed", ticketId: null };
 		card.outerHTML = proposalCard(done);
-		// El resultado de los cambios (qué se aplicó y qué no) va como nota debajo.
+		// the result of the changes (what applied and what didn't) goes as a note below.
 		if (isSettings && data.html) {
 			messagesEl.insertAdjacentHTML("beforeend", noteBubble(data.html));
 			decorate(messagesEl.lastElementChild);

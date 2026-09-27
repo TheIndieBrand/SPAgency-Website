@@ -14,31 +14,29 @@ import OutroStar from "./scene/OutroStar.astro";
 import DiveLayers from "./scene/DiveLayers.astro";
 import SpaceFeatures from "./scene/SpaceFeatures.astro";
 
-// Segundo acto de la escena de scroll (ver src/scripts/intro-scene.ts):
+// second act of the scroll scene (see src/scripts/intro-scene.ts):
 //
-// 1. Aparece "lim" con "x ⟶ ∞" como subíndice, en el hueco que dejaba el
-//    título del hero.
-// 2. El título "89K+ Raids bloqueados" se FORMA a partir de la grilla de
-//    stats: el script despega el número y la etiqueta REALES de la segunda
-//    celda de <Stats/> (no un clon) y los recoloca, ya "formados", debajo
-//    del límite. Mientras se recoloca: aparecen más símbolos matemáticos por
-//    toda la pantalla, el radar gira un poco más y las otras casillas de
-//    stats se separan y caen desvaneciéndose.
-// 3. El número se encoge y viaja hasta ocupar la "x" del límite (que se
-//    desvanece); la etiqueta "Raids bloqueados" se queda quieta donde estaba.
-// 4. Desenlace: el "89K+" se dispara contando hasta un número titánico y el ∞
-//    empieza a temblar pronto, cada vez más fuerte. Entonces el ∞ ESTALLA:
-//    desaparece y su onda expansiva se lleva por delante el radar, el bloque
-//    del límite y el título "89K+ Raids bloqueados" — salen despedidos y se
-//    desintegran en partículas azules y blancas que se arrastran hacia fuera.
-//    De ese punto estallado emerge el plano cartesiano, un círculo que crece
-//    desde el infinito hasta ocupar toda la pantalla, y la curva crece. Solo
-//    queda el plano (y los símbolos tenues del fondo). El límite NO crece.
+// 1. "lim" appears with "x ⟶ ∞" as a subscript, in the gap the hero's title left behind.
+// 2. the "89K+ Raids bloqueados" title FORMS out of the stats grid: the
+//    script detaches the REAL number and label from <Stats/>'s second cell
+//    (not a clone) and repositions them, already "formed", below the limit.
+//    while it repositions: more math symbols appear across the whole
+//    screen, the radar spins a bit more, and the other stat cells separate and fall away fading out.
+// 3. the number shrinks and travels to occupy the limit's "x" (which fades
+//    out); the "Raids bloqueados" label stays put where it was.
+// 4. climax: the "89K+" shoots up counting to a titanic number and the ∞
+//    starts shaking early on, growing stronger. then the ∞ BURSTS: it
+//    disappears and its shockwave sweeps away the radar, the limit block
+//    and the "89K+ Raids bloqueados" title — they fly off and disintegrate
+//    into blue and white particles dragged outward. from that burst point
+//    the cartesian plane emerges, a circle growing from infinity until it
+//    fills the whole screen, and the curve grows. only the plane is left
+//    (plus the faint background symbols). the limit does NOT grow.
 //
-// Cada capa vive en su propio componente (src/components/scene/). El ORDEN de
-// abajo es el orden del DOM y es importante: es el orden de apilado (por ejemplo,
-// el agujero negro va antes que la asíntota y la comunidad porque su canvas es
-// opaco) y no debe alterarse sin comprobar la escena.
+// each layer lives in its own component (src/components/scene/). the ORDER
+// below is the dom order and it matters: it's the stacking order (for
+// example, the black hole comes before the asymptote and the community
+// because its canvas is opaque) and shouldn't be changed without checking the scene.
 ---
 
 <div id="asymptote-scene" class="scene-only pointer-events-none absolute inset-0 z-10 overflow-hidden opacity-0" aria-hidden="true">
@@ -50,12 +48,12 @@ import SpaceFeatures from "./scene/SpaceFeatures.astro";
 	<TravelCaptions />
 	<ProjectionLabels />
 
-	<!-- Agujero negro (WebGL) que se cruza en el tramo final: entra por la
-	     derecha, BAJO (solo asoma la mitad superior), y la "cámara" pasa de
-	     largo → deriva a la izquierda y sale. Arriba, la asíntota sigue
-	     avanzando. El script (intro-scene.ts) lo posiciona y anima.
-	     Va ANTES (debajo) de la asíntota y de la comunidad en el DOM: su canvas
-	     es opaco y cuadrado (1400px), taparía todo lo que quedase detrás. -->
+	<!-- black hole (webgl) crossed in the final stretch: enters from the
+	     right, LOW (only the top half pokes through), and the "camera" sails
+	     past → drifts left and exits. above it, the asymptote keeps going.
+	     the script (intro-scene.ts) positions and animates it.
+	     placed BEFORE (below) the asymptote and the community in the dom:
+	     its canvas is opaque and square (1400px), it would cover anything left behind it. -->
 	<div id="outro-blackhole" class="pointer-events-none fixed left-1/2 top-1/2 opacity-0" aria-hidden="true">
 		<BlackHole size={1400} />
 	</div>

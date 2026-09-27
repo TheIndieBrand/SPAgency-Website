@@ -1,6 +1,6 @@
-// Cliente de la API de soporte del bot (ver docs/support.md). El bot escucha
-// solo en 127.0.0.1 y se autentica con INTERNAL_API_KEY, que nunca sale de aquí:
-// el navegador habla con la web, y la web con el bot.
+// client for the bot's support api (see docs/support.md). the bot only
+// listens on 127.0.0.1 and authenticates with INTERNAL_API_KEY, which never
+// leaves here: the browser talks to the web, and the web talks to the bot.
 
 import { callBot as call } from "./bot-api";
 import { json } from "./session";
@@ -49,9 +49,9 @@ export function closeTicket(ticketId: string, userId: string) {
 	return call<{ closing: true }>("POST", `${ticketPath(ticketId)}/close`, { body: { userId } });
 }
 
-// Traduce un fallo del bot a la respuesta que ve el navegador. Que el bot
-// rechace nuestra clave (401/403) es un problema de configuración, no del
-// usuario: para él, soporte simplemente no está disponible.
+// translates a bot failure into the response the browser sees. the bot
+// rejecting our key (401/403) is a configuration problem, not the user's:
+// to them, support is simply unavailable.
 export function botFailure(result: { status: number; error: string }): Response {
 	const misconfigured = result.status === 401 || result.status === 403;
 	const status = misconfigured ? 503 : result.status;

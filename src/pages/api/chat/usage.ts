@@ -4,8 +4,8 @@ import { json, requireUser } from "../../../lib/session";
 
 export const prerender = false;
 
-// Comando /usage: el consumo detallado de quien pregunta. No llama al modelo, así
-// que no gasta nada (y no exige haber aceptado el aviso: solo son sus propios datos).
+// /usage command: the detailed usage of whoever asks. doesn't call the
+// model, so it costs nothing (and doesn't require having accepted the notice: it's just their own data).
 export const GET: APIRoute = async ({ request, cookies }) => {
 	const auth = await requireUser(request, cookies);
 	if ("response" in auth) return auth.response;

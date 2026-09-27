@@ -6,13 +6,12 @@ import Navbar from "../../components/Navbar.astro";
 import { getSessionUser } from "../../lib/session";
 
 const user = await getSessionUser(Astro.cookies);
-// ?embed=1: se muestra dentro del panel flotante de la documentación (iframe),
-// sin navbar y ocupando todo el alto.
+// ?embed=1: shown inside the docs' floating panel (iframe), with no navbar and full height.
 const embed = Astro.url.searchParams.get("embed") === "1";
 
-// Sin sesión, al OAuth de Discord y de vuelta aquí. En el panel embebido no se
-// puede (Discord no se deja enmarcar), así que se ofrece un enlace a la ventana
-// completa.
+// with no session, off to discord oauth and back here. that can't be done in
+// the embedded panel (discord won't allow being framed), so a link to the
+// full window is offered instead.
 if (!user && !embed) return Astro.redirect("/auth/discord/login?next=/support/assistant");
 ---
 

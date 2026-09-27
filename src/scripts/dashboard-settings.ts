@@ -1,13 +1,13 @@
-// Autoguardado del dashboard. Cada control con `name` guarda su ajuste en cuanto
-// cambia (PATCH /api/dashboard/<servidor>/settings); si el servidor lo rechaza, el
-// control vuelve al último valor guardado y se avisa del motivo. El servidor es
-// quien valida: aquí solo se manda lo que el usuario ha hecho.
+// dashboard autosave. every control with a `name` saves its setting as soon
+// as it changes (PATCH /api/dashboard/<guild>/settings); if the server
+// rejects it, the control reverts to its last saved value and the reason is
+// shown. the server is what validates: this only sends what the user did.
 //
-//   input[type=checkbox][name] / select[name]   → al cambiar
-//   input[type=number|text][name]               → al salir del campo (los números, también al dejar de teclear)
-//   [data-duration=clave] con un número y una unidad dentro → "15m", "30d"…
-//   [data-list=clave] con chips [data-item] y su input/botón de añadir → un elemento cada vez
-//   [data-depends=clave] → se deshabilita mientras ese interruptor está apagado
+//   input[type=checkbox][name] / select[name]   → on change
+//   input[type=number|text][name]               → on blur (numbers also debounce while typing)
+//   [data-duration=key] with a number and a unit inside → "15m", "30d"…
+//   [data-list=key] with [data-item] chips and its add input/button → one element at a time
+//   [data-depends=key] → disabled while that toggle is off
 import { escapeHtml, localizeTimes } from "./support-ui";
 
 type SaveResult = { ok: true; data: { value: unknown; activatedAt?: string | null } } | { ok: false; message: string; status: number };
@@ -19,38 +19,38 @@ function init(root: HTMLElement) {
 	const endpoint = `/api/dashboard/${encodeURIComponent(root.dataset.guild!)}/settings`;
 	localizeTimes(root);
 
-	// ── Aviso de guardado ─────────────────────────────────────────────────────
+	// ── save toast ────────────────────────────────────────────────────────────
 	const toastEl = document.createElement("div");
 	toastEl.setAttribute("role", "status");
 	toastEl.setAttribute("aria-live", "polite");
 	document.body.append(toastEl);
 
-	const TOAST_BASE =
+	const ToastBase =
 		"pointer-events-none fixed bottom-6 left-1/2 z-50 flex -translate-x-1/2 items-center gap-2 rounded-full border px-4 py-2 text-[13px] font-semibold shadow-[0_12px_30px_-10px_rgba(0,0,0,0.7)] transition-opacity duration-200";
-	const TOAST_STYLES = {
+	const ToastStyles = {
 		saving: { classes: "border-border bg-bg-soft text-text-dim", icon: "bi-arrow-repeat" },
 		saved: { classes: "border-emerald/40 bg-bg-soft text-emerald", icon: "bi-check-circle-fill" },
 		error: { classes: "border-[#ef4444]/50 bg-bg-soft text-[#ef4444]", icon: "bi-exclamation-circle-fill" },
 	};
 	let toastTimer = 0;
-	let toastKind: keyof typeof TOAST_STYLES = "saved";
-	toastEl.className = `${TOAST_BASE} ${TOAST_STYLES.saved.classes} opacity-0`;
+	let toastKind: keyof typeof ToastStyles = "saved";
+	toastEl.className = `${ToastBase} ${ToastStyles.saved.classes} opacity-0`;
 
-	function toast(kind: keyof typeof TOAST_STYLES, text: string) {
+	function toast(kind: keyof typeof ToastStyles, text: string) {
 		window.clearTimeout(toastTimer);
 		toastKind = kind;
-		toastEl.className = `${TOAST_BASE} ${TOAST_STYLES[kind].classes} opacity-100`;
-		toastEl.innerHTML = `<i class="bi ${TOAST_STYLES[kind].icon}"></i><span>${escapeHtml(text)}</span>`;
-		// "Guardando…" se queda hasta que llegue la respuesta; lo demás se retira solo.
+		toastEl.className = `${ToastBase} ${ToastStyles[kind].classes} opacity-100`;
+		toastEl.innerHTML = `<i class="bi ${ToastStyles[kind].icon}"></i><span>${escapeHtml(text)}</span>`;
+		// "saving…" stays until the response arrives; everything else retreats on its own.
 		if (kind !== "saving") {
 			toastTimer = window.setTimeout(
-				() => (toastEl.className = `${TOAST_BASE} ${TOAST_STYLES[toastKind].classes} opacity-0`),
+				() => (toastEl.className = `${ToastBase} ${ToastStyles[toastKind].classes} opacity-0`),
 				kind === "error" ? 5000 : 1600,
 			);
 		}
 	}
 
-	// ── Envío (uno detrás de otro por ajuste, para que el último cambio gane) ──
+	// ── submission (one after another per setting, so the last change wins) ──
 	const queues = new Map<string, Promise<unknown>>();
 
 	function save(key: string, body: Record<string, unknown>): Promise<SaveResult> {
@@ -74,7 +74,7 @@ function init(root: HTMLElement) {
 		return next;
 	}
 
-	// Guarda y avisa; devuelve el resultado para que quien llama actualice o revierta.
+	// saves and notifies; returns the result so the caller can update or revert.
 	async function commit(key: string, body: Record<string, unknown>, doneText = "Guardado"): Promise<SaveResult> {
 		toast("saving", "Guardando…");
 		const result = await save(key, body);
@@ -83,7 +83,7 @@ function init(root: HTMLElement) {
 		return result;
 	}
 
-	// ── Dependencias (un campo depende de un interruptor) ─────────────────────
+	// ── dependencies (a field depends on a toggle) ────────────────────────────
 	function applyDepends() {
 		root!.querySelectorAll<HTMLElement>("[data-depends]").forEach((el) => {
 			const toggle = root!.querySelector<HTMLInputElement>(`input[type=checkbox][name="${el.dataset.depends}"]`);
@@ -92,7 +92,7 @@ function init(root: HTMLElement) {
 	}
 	applyDepends();
 
-	// ── Interruptores y opciones ──────────────────────────────────────────────
+	// ── toggles and options ───────────────────────────────────────────────────
 	root.querySelectorAll<HTMLInputElement>("input[type=checkbox][name]").forEach((box) => {
 		let saved = box.checked;
 		box.addEventListener("change", async () => {
@@ -106,7 +106,7 @@ function init(root: HTMLElement) {
 			}
 			saved = Boolean(result.data.value);
 			if (box.name === "raidmodeEnable") {
-				// El estado del Modo Pánico se ve también en la barra lateral y en su tarjeta.
+				// panic mode's state also shows in the sidebar and on its card.
 				toast("saved", saved ? "Modo Pánico activado" : "Modo Pánico desactivado");
 				window.setTimeout(() => window.location.reload(), 700);
 			}
@@ -122,7 +122,7 @@ function init(root: HTMLElement) {
 		});
 	});
 
-	// Números y textos: al salir del campo; los números, además al dejar de teclear.
+	// numbers and text: on blur; numbers also debounce while typing.
 	root.querySelectorAll<HTMLInputElement>("input[type=number][name], input[type=text][name]").forEach((input) => {
 		let saved = input.value;
 		let timer = 0;
@@ -159,7 +159,7 @@ function init(root: HTMLElement) {
 		}
 	});
 
-	// Duraciones: un número y una unidad que se guardan juntos ("30d").
+	// durations: a number and a unit saved together ("30d").
 	root.querySelectorAll<HTMLElement>("[data-duration]").forEach((box) => {
 		const amount = box.querySelector<HTMLInputElement>("input[type=number]")!;
 		const unit = box.querySelector<HTMLSelectElement>("select")!;
@@ -192,7 +192,7 @@ function init(root: HTMLElement) {
 		unit.addEventListener("change", submit);
 	});
 
-	// ── Listas (lista blanca, razones predefinidas) ───────────────────────────
+	// ── lists (whitelist, preset reasons) ─────────────────────────────────────
 	function renderList(box: HTMLElement, items: string[]) {
 		const icon = box.dataset.icon ? `<i class="bi ${escapeHtml(box.dataset.icon)} text-brand text-[11px]"></i>` : "";
 		box.innerHTML = items.length

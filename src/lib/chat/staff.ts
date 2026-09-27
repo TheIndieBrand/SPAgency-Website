@@ -2,8 +2,8 @@ import type { AstroCookies } from "astro";
 import type { DiscordUser } from "../discord";
 import { getSessionUser, json } from "../session";
 
-// El staff es la lista de IDs de Discord de STAFF_IDS (separados por comas).
-// Sin la variable, nadie lo es: falla cerrado.
+// staff is the list of discord ids in STAFF_IDS (comma-separated). without
+// the variable, nobody is staff: fails closed.
 function staffIds(): Set<string> {
 	return new Set(
 		(process.env.STAFF_IDS ?? "")
@@ -17,9 +17,9 @@ export function isStaff(user: DiscordUser | null): boolean {
 	return Boolean(user && staffIds().has(user.id));
 }
 
-// Guardia de los endpoints de staff. Se comprueba en el servidor en cada
-// petición; ocultar el enlace no protege nada. Las que escriben exigen JSON
-// (mismo motivo anti-CSRF que requireUser).
+// guard for staff endpoints. checked on the server on every request; hiding
+// the link protects nothing. the ones that write require json (same
+// anti-csrf reason as requireUser).
 export async function requireStaff(
 	request: Request,
 	cookies: AstroCookies,

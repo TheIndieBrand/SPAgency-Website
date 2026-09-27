@@ -1,7 +1,7 @@
-// Enlaces del navbar a secciones que viven DENTRO de la escena (no hay un ancla
-// en el DOM a la que saltar): llevan al punto del scroll donde esa parte de la
-// animación está en pantalla. El destino es la etiqueta del timeline con el mismo
-// nombre que el href (`#features` -> etiqueta "features"; ver timing.ts y mount.ts).
+// navbar links to sections that live INSIDE the scene (there's no dom anchor
+// to jump to): they scroll to the point where that part of the animation is
+// on screen. the destination is the timeline label with the same name as
+// the href (`#features` -> label "features"; see timing.ts and mount.ts).
 export function bindNavAnchors(tl: gsap.core.Timeline) {
 	document.querySelectorAll<HTMLAnchorElement>('a[href^="#"]').forEach((link) => {
 		const label = (link.getAttribute("href") ?? "").slice(1);

@@ -4,9 +4,9 @@ export const prerender = false;
 import Layout from "../../layouts/Layout.astro";
 import Navbar from "../../components/Navbar.astro";
 
-// Se muestra (con Astro.rewrite, sin cambiar la URL) cuando una página de un
-// servidor no puede cargar su configuración: o la base de datos no responde o el
-// bot aún no ha creado las filas de ese servidor.
+// shown (via Astro.rewrite, without changing the url) when a guild page
+// can't load its config: either the database isn't responding, or the bot
+// hasn't created that guild's rows yet.
 const reason = Astro.url.searchParams.get("reason") === "missing" ? "missing" : "unavailable";
 Astro.response.status = 503;
 

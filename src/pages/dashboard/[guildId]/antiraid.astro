@@ -6,14 +6,14 @@ import DashboardShell from "../../../components/dashboard/DashboardShell.astro";
 import SettingCard from "../../../components/dashboard/SettingCard.astro";
 import FieldRow from "../../../components/dashboard/FieldRow.astro";
 import { requireGuildAccess } from "../../../lib/dashboard-guard";
-import { loadOrCreateGuildConfig } from "../../../lib/db/guild-config";
+import { guildConfigRepository } from "../../../lib/db/GuildConfigRepository";
 import { inputClass, selectClass, durationToParts } from "../../../lib/dashboard-ui";
 
 const result = await requireGuildAccess(Astro, Astro.params.guildId);
 if ("redirect" in result) return result.redirect;
 const { guild } = result;
 
-const loaded = await loadOrCreateGuildConfig(guild.id);
+const loaded = await guildConfigRepository.loadOrCreateGuildConfig(guild.id);
 if (!loaded.ok) return Astro.rewrite(`/dashboard/unavailable?reason=${loaded.reason}`);
 const { protection } = loaded.config;
 const selfbotAge = durationToParts(protection.selfbotMinAccountAge);
