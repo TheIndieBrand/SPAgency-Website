@@ -7,6 +7,7 @@ import Footer from "../../components/Footer.astro";
 import { formatChangelogDate } from "../../lib/ChangelogRepository";
 import { getSessionUser } from "../../lib/session";
 import { listOpenTickets } from "../../lib/support-bot";
+import { site } from "../../lib/site";
 import { supportTranscriptRepository } from "../../lib/SupportTranscriptRepository";
 
 const user = await getSessionUser(Astro.cookies);
@@ -50,6 +51,19 @@ const transcripts = supportTranscriptRepository.listTranscripts(user.id);
 				<span class="min-w-0 flex-1">
 					<span class="text-text group-hover:text-brand-hover block text-sm font-bold transition-colors">¿Una duda rápida? Pregunta al asistente de IA</span>
 					<span class="text-text-faint block text-[13px]">Responde al momento y, si no puede resolverlo, te prepara el ticket.</span>
+				</span>
+				<i class="bi bi-arrow-right text-text-dim group-hover:text-brand-hover transition-colors" />
+			</a>
+			<a
+				href={site.discordUrl}
+				class="border-border-soft hover:border-brand/50 bg-bg-soft group mt-3 flex items-center gap-3.5 rounded-xl border px-4 py-3.5 transition-colors"
+			>
+				<span class="bg-brand-soft text-brand-hover flex h-9 w-9 shrink-0 items-center justify-center rounded-full">
+					<i class="bi bi-discord" />
+				</span>
+				<span class="min-w-0 flex-1">
+					<span class="text-text group-hover:text-brand-hover block text-sm font-bold transition-colors">¿Prefieres preguntar en Discord?</span>
+					<span class="text-text-faint block text-[13px]">Únete a nuestro servidor y pregunta a la comunidad y al equipo.</span>
 				</span>
 				<i class="bi bi-arrow-right text-text-dim group-hover:text-brand-hover transition-colors" />
 			</a>

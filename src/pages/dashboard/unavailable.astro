@@ -3,6 +3,7 @@ export const prerender = false;
 
 import Layout from "../../layouts/Layout.astro";
 import Navbar from "../../components/Navbar.astro";
+import { site } from "../../lib/site";
 
 // shown (via Astro.rewrite, without changing the url) when a guild page
 // can't load its config: either the database isn't responding, or the bot
@@ -49,6 +50,9 @@ const copy = {
 				Mis servidores
 			</a>
 		</div>
+		<p class="text-text-faint mt-8 text-sm">
+			¿Sigue sin funcionar? Pregunta en nuestro <a href={site.discordUrl} class="text-brand hover:text-brand-hover underline underline-offset-2">servidor de Discord</a>.
+		</p>
 	</main>
 </Layout>
 

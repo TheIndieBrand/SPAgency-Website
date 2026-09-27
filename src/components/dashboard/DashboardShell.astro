@@ -2,6 +2,7 @@
 import Navbar from "../Navbar.astro";
 import type { DiscordGuild } from "../../lib/discord";
 import { guildIconUrl } from "../../lib/discord";
+import { site } from "../../lib/site";
 
 export type DashboardSection = "general" | "antiraid" | "automod" | "alerts" | "settings" | "logs";
 
@@ -90,6 +91,18 @@ const allItems = groups.flat();
 					))
 				}
 			</nav>
+
+			<!-- Pinned to the bottom (the aside is a flex column): a quiet way out to human help,
+			     since these guild pages have no footer of their own. -->
+			<div class="border-border-soft mt-auto border-t px-2 pt-3">
+				<a
+					href={site.discordUrl}
+					class="text-text-faint hover:text-brand flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors"
+				>
+					<i class="bi bi-discord text-[15px]" />
+					Soporte en Discord
+				</a>
+			</div>
 		</aside>
 
 		<!-- ============ MOBILE NAV ============ -->
@@ -112,6 +125,13 @@ const allItems = groups.flat();
 					</a>
 				))
 			}
+			<a
+				href={site.discordUrl}
+				class="border-border text-text-faint hover:text-brand ml-1 flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-bold whitespace-nowrap transition-colors"
+			>
+				<i class="bi bi-discord" />
+				Discord
+			</a>
 		</nav>
 
 		<!-- ============ MAIN CONTENT ============ -->

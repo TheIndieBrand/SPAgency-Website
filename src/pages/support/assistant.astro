@@ -4,6 +4,7 @@ export const prerender = false;
 import Layout from "../../layouts/Layout.astro";
 import Navbar from "../../components/Navbar.astro";
 import { getSessionUser } from "../../lib/session";
+import { site } from "../../lib/site";
 
 const user = await getSessionUser(Astro.cookies);
 // ?embed=1: shown inside the docs' floating panel (iframe), with no navbar and full height.
@@ -165,7 +166,7 @@ if (!user && !embed) return Astro.redirect("/auth/discord/login?next=/support/as
 					</div>
 
 					<div id="unavailable" hidden class="text-text-dim min-h-0 flex-1 border-t border-border-soft px-4 py-16 text-center text-sm">
-						El asistente no está disponible ahora mismo. Puedes abrir un <a href="/support" target="_top" class="text-brand hover:text-brand-hover underline underline-offset-2">ticket de soporte</a> y el equipo te ayudará.
+						El asistente no está disponible ahora mismo. Puedes abrir un <a href="/support" target="_top" class="text-brand hover:text-brand-hover underline underline-offset-2">ticket de soporte</a> o preguntar en nuestro <a href={site.discordUrl} class="text-brand hover:text-brand-hover underline underline-offset-2">servidor de Discord</a>.
 					</div>
 
 					<div id="composer-wrap" class="pb-3">
