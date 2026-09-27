@@ -14,6 +14,10 @@ export const site = {
 	// that page itself goes to the actual donateUrl (Buy Me a Coffee).
 	donatePageUrl: "/donaciones",
 	donateUrl: "https://buymeacoffee.com/theindiebrand",
+	// SP Agency Canary: a separate Discord application (own token, own client_id) for
+	// testing upcoming features. Not connected to the web (see the "canary" doc page
+	// in src/lib/docs/recovery.ts).
+	canaryInviteUrl: "https://discord.com/oauth2/authorize?client_id=1553834270982807673&permissions=8&scope=bot+applications.commands",
 	docsUrl: "/docs",
 	supportUrl: "/support",
 	changelogUrl: "/changelog",

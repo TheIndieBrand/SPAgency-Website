@@ -1,3 +1,4 @@
+import { site } from "../site.ts";
 import type { DocPage } from "./types.ts";
 
 export const recovery: DocPage[] = [
@@ -201,6 +202,44 @@ export const help: DocPage[] = [
 			{
 				type: "p",
 				text: "Abre un ticket desde [Soporte](/docs/soporte). Si estás en plena emergencia, `/sos` avisa al equipo de SP Agency al momento.",
+			},
+		],
+	},
+	{
+		slug: "canary",
+		title: "SP Agency Canary",
+		summary: "La versión de pruebas del bot: una aplicación de Discord distinta para probar novedades antes que nadie.",
+		icon: "bi-flask",
+		blocks: [
+			{
+				type: "p",
+				text: "**SP Agency Canary** es la versión de pruebas del bot: una aplicación de Discord **distinta** a la de producción (propio token, propio icono), pensada para quien quiere probar los cambios antes de que lleguen a todo el mundo.",
+			},
+			{
+				type: "callout",
+				tone: "warning",
+				title: "Qué esperar",
+				text: "Puede fallar, comportarse distinto o reiniciarse sin aviso: es para probar, no para proteger un servidor importante. Invítalo a un servidor de pruebas, no al que de verdad quieres proteger.",
+			},
+			{ type: "h", text: "En qué se diferencia de producción" },
+			{
+				type: "list",
+				items: [
+					"**No está conectado a la web**: sin tickets de soporte, sin enlaces de verificación y sin nada que hable con el dashboard por su cuenta.",
+					"**La configuración del dashboard sí le llega igual que a producción**: cambiar una protección o el canal de logs viaja por la base de datos compartida, no por la web, así que afecta a los dos por igual.",
+					"Las novedades llegan aquí primero. Con el tiempo, lo que funciona bien pasa a producción.",
+				],
+			},
+			{ type: "h", text: "Cómo probarlo" },
+			{
+				type: "p",
+				text: `[Invita a SP Agency Canary](${site.canaryInviteUrl}) a un servidor de pruebas, úsalo con normalidad e intenta romperlo. Cuéntanos qué encuentras en nuestro [Discord](${site.discordUrl}) o en [GitHub](${site.githubUrl}).`,
+			},
+			{
+				type: "callout",
+				tone: "info",
+				title: "Existe un tercer entorno, pero no es público",
+				text: "Además de producción y canary hay un tercer proceso (`developing`) que solo corre en el ordenador de quien programa el bot, sin invitación pública: no es algo a lo que puedas unirte.",
 			},
 		],
 	},
