@@ -10,6 +10,10 @@ export const site = {
 	inviteUrl: "/invite",
 	discordUrl: "https://discord.gg/mG5CaDvKsk",
 	githubUrl: "https://github.com/devEthan6737/SPAgency",
+	// the nav/footer point to donatePageUrl (context first); only the button on
+	// that page itself goes to the actual donateUrl (Buy Me a Coffee).
+	donatePageUrl: "/donaciones",
+	donateUrl: "https://buymeacoffee.com/theindiebrand",
 	docsUrl: "/docs",
 	supportUrl: "/support",
 	changelogUrl: "/changelog",
@@ -32,6 +36,7 @@ export const navLinks: NavLink[] = [
 	{ label: "Soporte", href: site.supportUrl },
 	{ label: "Asistente", href: site.assistantUrl, icon: "bi-stars" },
 	{ label: "Dashboard", href: site.dashboardUrl },
+	{ label: "Donar", href: site.donatePageUrl, icon: "bi-cup-hot-fill" },
 ];
 
 export const footerColumns = [
@@ -57,6 +62,7 @@ export const footerColumns = [
 			{ label: "Testimonios", href: "/testimonios" },
 			{ label: "Discord", href: site.discordUrl },
 			{ label: "GitHub", href: site.githubUrl },
+			{ label: "Donaciones", href: site.donatePageUrl },
 			{ label: "Términos", href: site.termsUrl },
 			{ label: "Privacidad", href: site.privacyUrl },
 		],
