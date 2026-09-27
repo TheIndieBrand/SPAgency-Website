@@ -3,6 +3,9 @@
 // need changing here, and the navbar, hero, cta and footer all update.
 export const site = {
 	name: "SP Agency",
+	// production domain, no trailing slash. used for canonical urls, og:url, og:image
+	// and the sitemap (see astro.config.mjs, Layout.astro and pages/sitemap.xml.ts).
+	url: "https://spagency.theindiebrand.es",
 	title: "SP Agency — Seguridad anti-raid para Discord",
 	description:
 		"SP Agency detecta y bloquea raids, spam y cuentas falsas en tu servidor de Discord en tiempo real.",

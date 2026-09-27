@@ -18,7 +18,7 @@ if (!loaded.ok) return Astro.rewrite(`/dashboard/unavailable?reason=${loaded.rea
 const { configuration, protection } = loaded.config;
 ---
 
-<Layout title={`Alertas y Canales — ${guild.name}`}>
+<Layout title={`Alertas y Canales — ${guild.name}`} noindex>
 	<DashboardShell
 		guild={guild}
 		active="alerts"

@@ -19,7 +19,7 @@ const { core, protection } = loaded.config;
 const lastBackup = await guildConfigRepository.getLastBackup(guild.id);
 ---
 
-<Layout title={`Ajustes — ${guild.name}`}>
+<Layout title={`Ajustes — ${guild.name}`} noindex>
 	<DashboardShell guild={guild} active="settings" title="Ajustes" subtitle="Preferencias generales del bot y copias de seguridad del servidor." raidmodeActive={protection.raidmodeEnable}>
 		<div class="flex flex-col gap-6">
 			<SettingCard title="General">

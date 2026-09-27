@@ -45,7 +45,7 @@ const toneClass: Record<string, string> = {
 };
 ---
 
-<Layout title={`${guild.name} — SP Agency`}>
+<Layout title={`${guild.name} — SP Agency`} noindex>
 	<DashboardShell guild={guild} active="general" title="General" subtitle="Estado general de la protección de tu servidor." raidmodeActive={config.protection.raidmodeEnable}>
 		<!-- Cifras: una sola pieza con separadores finos, sin iconos -->
 		<div class="border-border-soft bg-border-soft mb-6 grid grid-cols-2 gap-px overflow-hidden rounded-[14px] border xl:grid-cols-4">

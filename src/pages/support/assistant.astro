@@ -19,6 +19,7 @@ if (!user && !embed) return Astro.redirect("/auth/discord/login?next=/support/as
 <Layout
 	title="Asistente — SP Agency"
 	description="Pregunta al asistente de IA de SP Agency sobre el bot, su configuración y sus comandos."
+	noindex
 >
 	{!embed && <Navbar />}
 

@@ -12,7 +12,7 @@ if (!user) return Astro.redirect("/auth/discord/login?next=/staff/chat");
 if (!isStaff(user)) return Astro.redirect("/");
 ---
 
-<Layout title="Conversaciones del asistente — Staff" description="Panel interno de SP Agency.">
+<Layout title="Conversaciones del asistente — Staff" description="Panel interno de SP Agency." noindex>
 	<Navbar />
 
 	<main id="staff-chat" class="mx-auto max-w-[1180px] px-4 py-8 sm:px-8">

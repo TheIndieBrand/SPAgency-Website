@@ -9,13 +9,22 @@ interface Props {
 	// custom scrollbar that appears on scroll or when the mouse nears the
 	// edge. the home page disables it: there's none there (see index.astro).
 	customScrollbar?: boolean;
+	// pages with no value as a generic search result (dashboard, staff, a specific
+	// ticket…): kept crawlable is fine, just not indexed.
+	noindex?: boolean;
 }
 
 const {
 	title = site.title,
 	description = site.description,
 	customScrollbar = true,
+	noindex = false,
 } = Astro.props;
+
+// canonical always drops the query string and uses the production domain, even in
+// dev: a page fetched through the ssh tunnel or localhost still declares its real url.
+const canonicalUrl = new URL(Astro.url.pathname, site.url).toString();
+const ogImageUrl = new URL("/og-image.png", site.url).toString();
 ---
 
 <!doctype html>
@@ -23,6 +32,10 @@ const {
 	<head>
 		<meta charset="utf-8" />
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<!-- fallback for browsers that don't support svg favicons, and the icon ios
+		     uses when someone adds the site to their home screen. -->
+		<link rel="icon" href="/logo.png" sizes="128x128" />
+		<link rel="apple-touch-icon" href="/logo.png" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
 		<meta name="generator" content={Astro.generator} />
 		<slot name="head" />
@@ -35,14 +48,22 @@ const {
 		}
 		<meta name="description" content={description} />
 		<meta name="theme-color" content="#191919" />
+		<link rel="canonical" href={canonicalUrl} />
+		{noindex && <meta name="robots" content="noindex" />}
 		<meta property="og:type" content="website" />
 		<meta property="og:site_name" content={site.name} />
 		<meta property="og:locale" content="es_ES" />
+		<meta property="og:url" content={canonicalUrl} />
 		<meta property="og:title" content={title} />
 		<meta property="og:description" content={description} />
-		<meta name="twitter:card" content="summary" />
+		<meta property="og:image" content={ogImageUrl} />
+		<meta property="og:image:width" content="1200" />
+		<meta property="og:image:height" content="630" />
+		<meta property="og:image:alt" content={`${site.name} — seguridad anti-raid para Discord`} />
+		<meta name="twitter:card" content="summary_large_image" />
 		<meta name="twitter:title" content={title} />
 		<meta name="twitter:description" content={description} />
+		<meta name="twitter:image" content={ogImageUrl} />
 		<title>{title}</title>
 		<!-- self-hosted fonts (see styles/fonts.css). only the "latin" subsets
 		     are preloaded, which is what the above-the-fold text uses. -->

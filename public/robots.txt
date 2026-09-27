@@ -1,0 +1,13 @@
+User-agent: *
+Allow: /
+Disallow: /dashboard
+Disallow: /staff
+Disallow: /support/tickets
+Disallow: /support/history
+Disallow: /verify
+Disallow: /auth
+Disallow: /api
+Disallow: /gracias
+Disallow: /changelog/admin
+
+Sitemap: https://spagency.theindiebrand.es/sitemap.xml

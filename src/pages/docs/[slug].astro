@@ -11,9 +11,31 @@ export function getStaticPaths() {
 
 const { page } = Astro.props;
 const { prev, next } = getNeighbors(page.slug);
+
+// Datos estructurados de la FAQ para Google, solo en esa página: pares pregunta (h)
+// + respuesta (el párrafo que va justo después), en texto plano (sin el markdown propio).
+const stripMarkdown = (text: string) =>
+	text
+		.replace(/\*\*([^*]+)\*\*/g, "$1")
+		.replace(/\[([^\]]+)\]\([^)\s]+\)/g, "$1")
+		.replace(/`([^`]+)`/g, "$1");
+
+const faqSchema =
+	page.slug === "preguntas-frecuentes"
+		? {
+				"@context": "https://schema.org",
+				"@type": "FAQPage",
+				mainEntity: page.blocks.flatMap((block, i) => {
+					const answer = page.blocks[i + 1];
+					if (block.type !== "h" || answer?.type !== "p") return [];
+					return [{ "@type": "Question", name: block.text, acceptedAnswer: { "@type": "Answer", text: stripMarkdown(answer.text) } }];
+				}),
+			}
+		: null;
 ---
 
 <DocsLayout title={page.title} description={page.summary} activeSlug={page.slug} headings={getHeadings(page)}>
+	{faqSchema && <script type="application/ld+json" set:html={JSON.stringify(faqSchema)} />}
 	<header class="mb-8">
 		<h1 class="font-display text-3xl font-bold tracking-tight sm:text-4xl">{page.title}</h1>
 		<p class="text-text-dim mt-3 text-[16px] leading-relaxed">{page.summary}</p>

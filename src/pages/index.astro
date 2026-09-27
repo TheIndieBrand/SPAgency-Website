@@ -15,9 +15,26 @@ import FeaturesA11y from "../components/FeaturesA11y.astro";
 import StepsA11y from "../components/StepsA11y.astro";
 import TestimonialsA11y from "../components/TestimonialsA11y.astro";
 import Footer from "../components/Footer.astro";
+import { site } from "../lib/site";
+
+// Datos estructurados para buscadores: solo hechos ya verdaderos en otro sitio de la
+// web (gratis, categoría, enlace), nada que no podamos sostener.
+const structuredData = {
+	"@context": "https://schema.org",
+	"@type": "SoftwareApplication",
+	name: site.name,
+	description: site.description,
+	applicationCategory: "SecurityApplication",
+	operatingSystem: "Discord",
+	url: site.url,
+	image: `${site.url}/logo.png`,
+	offers: { "@type": "Offer", price: "0", priceCurrency: "EUR" },
+};
 ---
 
 <Layout customScrollbar={false}>
+	<script type="application/ld+json" slot="head" set:html={JSON.stringify(structuredData)} />
+
 	<!-- Decide, antes del primer pintado, si se ve la escena animada o la versión
 	     simple. La escena solo con ancho >= 1024px y sin prefers-reduced-motion;
 	     en cualquier otro caso (móvil, tablet, reduced-motion, sin JS) queda la

@@ -10,6 +10,9 @@ import node from '@astrojs/node';
 export default defineConfig({
   output: 'server',
 
+  // canonical urls, and the base sitemap/robots tooling assume, resolve against this.
+  site: 'https://spagency.theindiebrand.es',
+
   server: {
     port: Number(process.env.PORT) || 4321
   },

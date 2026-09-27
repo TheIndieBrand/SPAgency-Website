@@ -20,7 +20,7 @@ const selfbotAge = durationToParts(protection.selfbotMinAccountAge);
 const raidmodeDuration = durationToParts(protection.raidmodeTimeToDisable);
 ---
 
-<Layout title={`Anti-Raid & Bots — ${guild.name}`}>
+<Layout title={`Anti-Raid & Bots — ${guild.name}`} noindex>
 	<DashboardShell
 		guild={guild}
 		active="antiraid"

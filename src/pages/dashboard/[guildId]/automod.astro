@@ -19,7 +19,7 @@ if (!loaded.ok) return Astro.rewrite(`/dashboard/unavailable?reason=${loaded.rea
 const { moderation, protection } = loaded.config;
 ---
 
-<Layout title={`Automoderación — ${guild.name}`}>
+<Layout title={`Automoderación — ${guild.name}`} noindex>
 	<DashboardShell
 		guild={guild}
 		active="automod"
