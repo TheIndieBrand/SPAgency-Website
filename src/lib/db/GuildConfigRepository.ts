@@ -83,7 +83,7 @@ export class GuildConfigRepository {
 				join guild_protection p on p.guild_id = g.id
 				join guild_moderation m on m.guild_id = g.id
 				join guild_configuration c on c.guild_id = g.id
-				where g.id = ${guildId}
+				where g.id = ${guildId} and g.left_at is null
 			`;
 			if (!r) return { ok: false, reason: "missing" };
 
@@ -133,13 +133,14 @@ export class GuildConfigRepository {
 	/**
 	 * creates a guild's four config rows with the database's own defaults, same
 	 * as the bot does on join. `on conflict do nothing`: safe if the bot (or
-	 * another request) creates them at the same time.
+	 * another request) creates them at the same time. a row the bot flagged as
+	 * left is un-flagged, since this only runs once the bot is known to be in the guild.
 	 * @param guildId - the discord guild id.
 	 * @param ownerId - the guild owner's discord id.
 	 */
 	private async createGuildConfig(guildId: string, ownerId: string): Promise<void> {
 		await getSql().begin(async (tx) => {
-			await tx`insert into guilds (id, owner_id) values (${guildId}, ${ownerId}) on conflict (id) do nothing`;
+			await tx`insert into guilds (id, owner_id) values (${guildId}, ${ownerId}) on conflict (id) do update set left_at = null`;
 			await tx`insert into guild_protection (guild_id) values (${guildId}) on conflict (guild_id) do nothing`;
 			await tx`insert into guild_moderation (guild_id) values (${guildId}) on conflict (guild_id) do nothing`;
 			await tx`insert into guild_configuration (guild_id) values (${guildId}) on conflict (guild_id) do nothing`;
