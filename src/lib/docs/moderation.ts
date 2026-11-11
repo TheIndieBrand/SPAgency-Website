@@ -164,6 +164,9 @@ export const moderation: DocPage[] = [
 				rows: [
 					["`/comandos`", "Lista todos los comandos, o explica uno concreto."],
 					["`/ping`", "Muestra la latencia del bot."],
+					["`/info`", "Estadísticas del bot y enlaces: invitar al bot, servidor de soporte, donar, web y GitHub."],
+					["`/verify`", "Te reenvía por mensaje privado tu enlace de [verificación](/docs/verificacion), si no te llegó o caducó."],
+					["`/canary`", "Explica qué es el bot canary. Solo existe en [SP Agency Canary](/docs/canary)."],
 					["`/me`, `/reporte`, `/apelar`", "Consulta, reporte y apelación en la lista de [miembros maliciosos](/docs/miembros-maliciosos)."],
 				],
 			},

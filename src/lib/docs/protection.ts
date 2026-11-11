@@ -311,7 +311,7 @@ export const protection: DocPage[] = [
 			},
 			{
 				type: "p",
-				text: "El enlace **caduca a los 15 minutos** y solo sirve para esa persona en ese servidor.",
+				text: "El enlace **caduca a los 15 minutos** y solo sirve para esa persona en ese servidor. Si no te llegó el mensaje (por ejemplo, con los mensajes privados cerrados) o caducó, escribe `/verify` en el servidor y te enviamos uno nuevo.",
 			},
 			{ type: "h", text: "Configurarlo" },
 			{
